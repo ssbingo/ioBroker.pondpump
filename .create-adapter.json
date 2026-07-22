@@ -1,0 +1,51 @@
+{
+    "cli": true,
+    "adapterName": "pondpump",
+    "title": "Pond Pump",
+    "description": "Control and monitor OASE AquaMax Eco Titanium pond pumps via the OASE Garden Controller Cloud (EGC) — locally and via cloud",
+    "expert": "yes",
+    "keywords": [
+        "pond",
+        "pump",
+        "oase",
+        "aquamax",
+        "titanium",
+        "egc",
+        "garden",
+        "koi"
+    ],
+    "contributors": [],
+    "features": [
+        "adapter"
+    ],
+    "adminFeatures": [],
+    "type": "garden",
+    "startMode": "daemon",
+    "connectionType": "local",
+    "dataSource": "poll",
+    "connectionIndicator": "yes",
+    "language": "TypeScript",
+    "nodeVersion": "20",
+    "adminUi": "json",
+    "tabReact": "no",
+    "releaseScript": "yes",
+    "devServer": "yes",
+    "devServerPort": 8081,
+    "indentation": "Space (4)",
+    "quotes": "double",
+    "es6class": "yes",
+    "authorName": "ssbingo",
+    "authorGithub": "ssbingo",
+    "authorEmail": "silvio.sternitzke@googlemail.com",
+    "gitRemoteProtocol": "HTTPS",
+    "gitCommit": "no",
+    "defaultBranch": "main",
+    "license": "MIT License",
+    "dependabot": "yes",
+    "replay": "/tmp/claude-1000/-home-ssternitzke-ioBroker-pondpump/12d5fce6-4ccf-47cf-87e1-34e898c02f3e/scratchpad/create-adapter-answers.json",
+    "tools": [
+        "ESLint"
+    ],
+    "eslintConfig": "official",
+    "creatorVersion": "3.1.5"
+}

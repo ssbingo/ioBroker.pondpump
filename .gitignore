@@ -1,0 +1,28 @@
+# Sensible Daten — NIEMALS committen
+secrets/
+
+# No dot-directories except github/vscode/claude
+.*/
+!.vscode/
+!.github/
+!.claude/
+
+*.code-workspace
+node_modules
+nbproject
+
+# Build-Artefakte
+build/
+
+# npm package files
+iobroker.*.tgz
+
+Thumbs.db
+.commitinfo
+*.log
+*.tmp
+.DS_Store
+
+# i18n intermediate files
+admin/i18n/flat.txt
+admin/i18n/*/flat.txt

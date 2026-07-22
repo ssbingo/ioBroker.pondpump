@@ -1,0 +1,129 @@
+{
+    "i18n": true,
+    "type": "panel",
+    "items": {
+        "_headerConnection": {
+            "type": "header",
+            "text": "Connection",
+            "size": 2
+        },
+        "connectionMode": {
+            "type": "select",
+            "label": "Connection mode",
+            "options": [
+                {
+                    "label": "Cloud",
+                    "value": "cloud"
+                },
+                {
+                    "label": "Local",
+                    "value": "local"
+                },
+                {
+                    "label": "Both (local preferred)",
+                    "value": "both"
+                }
+            ],
+            "newLine": true,
+            "xs": 12,
+            "sm": 12,
+            "md": 6,
+            "lg": 4,
+            "xl": 4
+        },
+        "pollInterval": {
+            "type": "number",
+            "label": "Poll interval (seconds)",
+            "help": "How often the adapter polls data from the controller",
+            "min": 5,
+            "max": 3600,
+            "xs": 12,
+            "sm": 12,
+            "md": 6,
+            "lg": 4,
+            "xl": 4
+        },
+        "_headerCloud": {
+            "type": "header",
+            "text": "Cloud account",
+            "size": 2,
+            "hidden": "data.connectionMode === 'local'"
+        },
+        "cloudUser": {
+            "type": "text",
+            "label": "Cloud user (e-mail)",
+            "hidden": "data.connectionMode === 'local'",
+            "newLine": true,
+            "xs": 12,
+            "sm": 12,
+            "md": 6,
+            "lg": 4,
+            "xl": 4
+        },
+        "cloudPassword": {
+            "type": "password",
+            "repeat": false,
+            "label": "Cloud password",
+            "hidden": "data.connectionMode === 'local'",
+            "xs": 12,
+            "sm": 12,
+            "md": 6,
+            "lg": 4,
+            "xl": 4
+        },
+        "_headerLocal": {
+            "type": "header",
+            "text": "Local connection",
+            "size": 2,
+            "hidden": "data.connectionMode === 'cloud'"
+        },
+        "ip": {
+            "type": "text",
+            "label": "Controller IP address",
+            "help": "IP address of the OASE Garden Controller Cloud gateway",
+            "hidden": "data.connectionMode === 'cloud'",
+            "newLine": true,
+            "xs": 12,
+            "sm": 12,
+            "md": 6,
+            "lg": 4,
+            "xl": 4
+        },
+        "devicePassword": {
+            "type": "password",
+            "repeat": false,
+            "label": "Device password",
+            "hidden": "data.connectionMode === 'cloud'",
+            "xs": 12,
+            "sm": 12,
+            "md": 6,
+            "lg": 4,
+            "xl": 4
+        },
+        "bind": {
+            "type": "ip",
+            "label": "Local server bind address",
+            "listenOnAllPorts": true,
+            "onlyIp4": true,
+            "hidden": "data.connectionMode === 'cloud'",
+            "newLine": true,
+            "xs": 12,
+            "sm": 12,
+            "md": 6,
+            "lg": 4,
+            "xl": 4
+        },
+        "port": {
+            "type": "port",
+            "label": "Local server port",
+            "min": 1,
+            "max": 65535,
+            "hidden": "data.connectionMode === 'cloud'",
+            "xs": 12,
+            "sm": 12,
+            "md": 6,
+            "lg": 4,
+            "xl": 4
+        }
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "pondpump adapter settings": "Adapterinstellingen voor pondpump",
+    "Connection": "Verbinding",
+    "Connection mode": "Verbindingsmodus",
+    "Cloud": "Cloud",
+    "Local": "Lokaal",
+    "Both (local preferred)": "Beide (lokaal heeft voorkeur)",
+    "Poll interval (seconds)": "Pollinterval (seconden)",
+    "How often the adapter polls data from the controller": "Hoe vaak de adapter gegevens van de controller opvraagt",
+    "Cloud account": "Cloudaccount",
+    "Cloud user (e-mail)": "Cloudgebruiker (e-mail)",
+    "Cloud password": "Cloudwachtwoord",
+    "Local connection": "Lokale verbinding",
+    "Controller IP address": "IP-adres van de controller",
+    "IP address of the OASE Garden Controller Cloud gateway": "IP-adres van de OASE Garden Controller Cloud gateway",
+    "Local server bind address": "Bind-adres van de lokale server",
+    "Local server port": "Poort van de lokale server",
+    "Device password": "Apparaatwachtwoord"
+}

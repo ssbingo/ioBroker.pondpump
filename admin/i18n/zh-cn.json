@@ -1,0 +1,19 @@
+{
+    "pondpump adapter settings": "pondpump 适配器设置",
+    "Connection": "连接",
+    "Connection mode": "连接模式",
+    "Cloud": "云端",
+    "Local": "本地",
+    "Both (local preferred)": "两者（优先本地）",
+    "Poll interval (seconds)": "轮询间隔（秒）",
+    "How often the adapter polls data from the controller": "适配器从控制器轮询数据的频率",
+    "Cloud account": "云账户",
+    "Cloud user (e-mail)": "云用户（电子邮件）",
+    "Cloud password": "云密码",
+    "Local connection": "本地连接",
+    "Controller IP address": "控制器 IP 地址",
+    "IP address of the OASE Garden Controller Cloud gateway": "OASE Garden Controller Cloud 网关的 IP 地址",
+    "Local server bind address": "本地服务器绑定地址",
+    "Local server port": "本地服务器端口",
+    "Device password": "设备密码"
+}

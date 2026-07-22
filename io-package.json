@@ -1,0 +1,131 @@
+{
+    "common": {
+        "name": "pondpump",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "uk": "Початкова версія",
+                "zh-cn": "首次出版"
+            }
+        },
+        "titleLang": {
+            "en": "Pond Pump",
+            "de": "Teichpumpe",
+            "ru": "Насос для пруда",
+            "pt": "Bomba para Lagoa",
+            "nl": "Vijverpomp",
+            "fr": "Pompe de bassin",
+            "it": "Pompa per stagno",
+            "es": "Bomba de estanque",
+            "pl": "Pompa stawowa",
+            "uk": "Ставковий насос",
+            "zh-cn": "池塘泵"
+        },
+        "desc": {
+            "en": "Control and monitor OASE AquaMax Eco Titanium pond pumps via the OASE Garden Controller Cloud (EGC) — locally and via cloud",
+            "de": "Steuern und überwachen Sie OASE AquaMax Eco Titanium Teichpumpen über die OASE Garden Controller Cloud (EGC) – lokal und über die Cloud",
+            "ru": "Управляйте и контролируйте прудовые насосы OASE AquaMax Eco Titanium через OASE Garden Controller Cloud (EGC) — локально и через облако.",
+            "pt": "Controle e monitore as bombas de lago OASE AquaMax Eco Titanium por meio do OASE Garden Controller Cloud (EGC) - localmente e via nuvem",
+            "nl": "Bedien en monitor OASE AquaMax Eco Titanium vijverpompen via de OASE Garden Controller Cloud (EGC) – lokaal en via de cloud",
+            "fr": "Contrôlez et surveillez les pompes de bassin OASE AquaMax Eco Titanium via l'OASE Garden Controller Cloud (EGC) — localement et via le cloud.",
+            "it": "Controlla e monitora le pompe per laghetto OASE AquaMax Eco Titanium tramite OASE Garden Controller Cloud (EGC) - localmente e tramite cloud",
+            "es": "Controle y supervise las bombas para estanques OASE AquaMax Eco Titanium a través de OASE Garden Controller Cloud (EGC), localmente y a través de la nube",
+            "pl": "Kontroluj i monitoruj pompy stawowe OASE AquaMax Eco Titanium za pośrednictwem OASE Garden Controller Cloud (EGC) — lokalnie i przez chmurę",
+            "uk": "Контролюйте та контролюйте насоси для ставків OASE AquaMax Eco Titanium через OASE Garden Controller Cloud (EGC) — локально та через хмару",
+            "zh-cn": "通过 OASE 花园控制器云 (EGC) 在本地和云端控制和监控 OASE AquaMax Eco Titanium 池塘泵"
+        },
+        "authors": [
+            "ssbingo <silvio.sternitzke@googlemail.com>"
+        ],
+        "keywords": [
+            "pond",
+            "pump",
+            "oase",
+            "aquamax",
+            "titanium",
+            "egc",
+            "garden",
+            "koi"
+        ],
+        "licenseInformation": {
+            "type": "free",
+            "license": "MIT"
+        },
+        "platform": "Javascript/Node.js",
+        "icon": "pondpump.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/ssbingo/ioBroker.pondpump/main/admin/pondpump.png",
+        "readme": "https://github.com/ssbingo/ioBroker.pondpump/blob/main/README.md",
+        "loglevel": "info",
+        "tier": 3,
+        "mode": "daemon",
+        "type": "garden",
+        "compact": true,
+        "connectionType": "both",
+        "dataSource": "poll",
+        "adminUI": {
+            "config": "json"
+        },
+        "dependencies": [
+            {
+                "js-controller": ">=6.0.11"
+            }
+        ],
+        "globalDependencies": [
+            {
+                "admin": ">=7.0.23"
+            }
+        ]
+    },
+    "encryptedNative": [
+        "devicePassword",
+        "cloudPassword"
+    ],
+    "protectedNative": [
+        "devicePassword",
+        "cloudPassword"
+    ],
+    "native": {
+        "connectionMode": "cloud",
+        "ip": "",
+        "bind": "0.0.0.0",
+        "port": 5999,
+        "devicePassword": "",
+        "cloudUser": "",
+        "cloudPassword": "",
+        "pollInterval": 30
+    },
+    "objects": [],
+    "instanceObjects": [
+        {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "Device or service connected",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
+    ]
+}
