@@ -15,5 +15,9 @@
     "IP address of the OASE Garden Controller Cloud gateway": "OASE Garden Controller Cloud 网关的 IP 地址",
     "Local server bind address": "本地服务器绑定地址",
     "Local server port": "本地服务器端口",
-    "Device password": "设备密码"
+    "Device password": "设备密码",
+    "Cloud API base URL": "云 API 基础 URL",
+    "Advanced — only change if the OASE cloud endpoint moves": "高级 — 仅在 OASE 云端点更改时才修改",
+    "Cloud login path": "云登录路径",
+    "Advanced — login route relative to the base URL (e.g. /User/Login)": "高级 — 相对于基础 URL 的登录路由（例如 /User/Login）"
 }

@@ -38,8 +38,13 @@ smart pond pumps and was written from scratch.
 
 ### Project status
 
-**Phase 0 — compliant TypeScript skeleton.** The adapter starts and stops cleanly (incl. compact mode) but does not
-talk to any device yet. Next: **Phase 1 — cloud read-only** (pump status/speed visible in ioBroker).
+**Phase 1 — cloud read-only.** The adapter polls the OASE cloud inventory and shows the gateway plus both pumps
+with live speed/on-off/status as read-only states. Writing (pump control) follows in phase 2, the local transport
+in phase 3.
+
+> **Note:** the exact cloud **login route** is not part of the available protocol capture yet. Until it is captured
+> from the OASE app and entered in the adapter settings (advanced field "Cloud login path"), the adapter starts but
+> reports `info.connection = false` with a clear warning.
 
 ### Configuration
 
@@ -74,6 +79,7 @@ Releases are created with `npm run release` (release-script) and published autom
 
 ### **WORK IN PROGRESS**
 
+- (ssbingo) Phase 1 (cloud read-only): CloudClient with bearer session handling, defensive inventory parser, gateway/pump objects with live speed and status states, chained poll loop
 - (ssbingo) initial release
 
 ## License

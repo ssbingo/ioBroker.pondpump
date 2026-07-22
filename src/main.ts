@@ -6,7 +6,20 @@
 // you need to create an adapter
 import * as utils from "@iobroker/adapter-core";
 
+import { CloudAuthError, CloudClient, DEFAULT_BASE_URL } from "./lib/cloud/client";
+import { parseInventory } from "./lib/cloud/inventory";
+import { applyGateway, applyPump } from "./lib/objects";
+
+/** Minimum poll interval enforced regardless of configuration (seconds). */
+const MIN_POLL_INTERVAL_S = 5;
+
 class Pondpump extends utils.Adapter {
+    private cloud?: CloudClient;
+    private pollTimer?: ioBroker.Timeout;
+    private pollIntervalMs = 30_000;
+    /** Set true in onUnload so a poll in flight does not reschedule. */
+    private stopping = false;
+
     public constructor(options: Partial<utils.AdapterOptions> = {}) {
         super({
             ...options,
@@ -14,7 +27,6 @@ class Pondpump extends utils.Adapter {
         });
         this.on("ready", this.onReady.bind(this));
         this.on("stateChange", this.onStateChange.bind(this));
-        // this.on("message", this.onMessage.bind(this)); // Phase 1+: cloud login / discovery assist
         this.on("unload", this.onUnload.bind(this));
     }
 
@@ -25,26 +37,91 @@ class Pondpump extends utils.Adapter {
         // Reset the connection indicator during startup
         await this.setState("info.connection", false, true);
 
-        // Validate configuration (values come from admin/jsonConfig.json, mirrored in io-package.json -> native)
         const mode = this.config.connectionMode;
         if (mode !== "cloud" && mode !== "local" && mode !== "both") {
             this.log.error(`Invalid connection mode: ${JSON.stringify(mode)} — please check the adapter configuration`);
             return;
         }
-        if ((mode === "cloud" || mode === "both") && (!this.config.cloudUser || !this.config.cloudPassword)) {
-            this.log.warn("Cloud mode selected, but the cloud credentials are not configured yet");
-        }
-        if ((mode === "local" || mode === "both") && (!this.config.ip || !this.config.devicePassword)) {
-            this.log.warn("Local mode selected, but controller IP / device password are not configured yet");
+
+        this.pollIntervalMs = Math.max(MIN_POLL_INTERVAL_S, this.config.pollInterval || 30) * 1000;
+
+        // Phase 3 delivers the local transport; for now only the cloud path is active.
+        if (mode === "local") {
+            this.log.warn("Connection mode 'local' is not implemented yet (planned for phase 3) — nothing to do");
+            return;
         }
 
-        this.log.info(
-            `Adapter started in "${mode}" mode (poll interval: ${this.config.pollInterval}s) — ` +
-                "transports are implemented in the next project phases",
-        );
+        if (!this.config.cloudUser || !this.config.cloudPassword) {
+            this.log.warn("Cloud credentials are not configured — set the cloud user and password in the settings");
+            return;
+        }
 
-        // Phase 1+: create CloudClient / LocalClient here, connect, create device objects
-        // and start the chained-setTimeout poll loop.
+        const loginPath = (this.config.cloudLoginPath || "").trim();
+        if (!loginPath) {
+            this.log.warn(
+                "Cloud login path is not configured. The OASE login endpoint must be captured once and entered " +
+                    "in the adapter settings (advanced) before the cloud connection can be established.",
+            );
+        }
+
+        this.cloud = new CloudClient({
+            baseUrl: this.config.cloudBaseUrl || DEFAULT_BASE_URL,
+            loginPath,
+            user: this.config.cloudUser,
+            password: this.config.cloudPassword,
+            log: {
+                debug: m => this.log.debug(m),
+                info: m => this.log.info(m),
+                warn: m => this.log.warn(m),
+                error: m => this.log.error(m),
+            },
+        });
+
+        this.log.info(`Adapter started in "${mode}" mode, polling the OASE cloud every ${this.pollIntervalMs / 1000}s`);
+
+        // Start the chained-setTimeout poll loop (never setInterval with external requests).
+        void this.poll();
+    }
+
+    /** One poll cycle: fetch inventory, update objects/states, reschedule. */
+    private async poll(): Promise<void> {
+        if (this.stopping || !this.cloud) {
+            return;
+        }
+        try {
+            const raw = await this.cloud.fetchInventory();
+            const inventory = parseInventory(raw);
+
+            await applyGateway(this, inventory.gateway, true);
+            for (const pump of inventory.pumps) {
+                await applyPump(this, pump);
+            }
+
+            await this.setState("info.connection", true, true);
+            this.log.debug(`Poll ok: gateway ${inventory.gateway.serialNumber}, ${inventory.pumps.length} pump(s)`);
+        } catch (error) {
+            await this.setState("info.connection", false, true);
+            const message = error instanceof Error ? error.message : String(error);
+            if (error instanceof CloudAuthError) {
+                // Configuration/credential problem — will not fix itself by retrying quickly, but keep polling.
+                this.log.warn(`Cloud authentication problem: ${message}`);
+            } else {
+                this.log.warn(`Poll failed: ${message}`);
+            }
+        } finally {
+            this.scheduleNextPoll();
+        }
+    }
+
+    private scheduleNextPoll(): void {
+        if (this.stopping) {
+            return;
+        }
+        // adapter.setTimeout is auto-cancelled on unload; the chain guarantees no overlapping requests.
+        this.pollTimer = this.setTimeout(() => {
+            this.pollTimer = undefined;
+            void this.poll();
+        }, this.pollIntervalMs);
     }
 
     /**
@@ -54,8 +131,13 @@ class Pondpump extends utils.Adapter {
      */
     private onUnload(callback: () => void): void {
         try {
-            // Phase 1+: close cloud session, TLS server and UDP sockets here.
-            // Timers created via this.setTimeout / this.setInterval are cancelled automatically on unload.
+            this.stopping = true;
+            if (this.pollTimer) {
+                this.clearTimeout(this.pollTimer);
+                this.pollTimer = undefined;
+            }
+            this.cloud?.reset();
+            this.cloud = undefined;
             callback();
         } catch (error) {
             this.log.error(`Error during unloading: ${(error as Error).message}`);

@@ -15,5 +15,9 @@
     "IP address of the OASE Garden Controller Cloud gateway": "IP-Adresse des OASE Garden Controller Cloud Gateways",
     "Local server bind address": "Bind-Adresse des lokalen Servers",
     "Local server port": "Port des lokalen Servers",
-    "Device password": "Gerätepasswort"
+    "Device password": "Gerätepasswort",
+    "Cloud API base URL": "Cloud-API-Basis-URL",
+    "Advanced — only change if the OASE cloud endpoint moves": "Erweitert — nur ändern, wenn sich der OASE-Cloud-Endpunkt ändert",
+    "Cloud login path": "Cloud-Login-Pfad",
+    "Advanced — login route relative to the base URL (e.g. /User/Login)": "Erweitert — Login-Route relativ zur Basis-URL (z. B. /User/Login)"
 }

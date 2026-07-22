@@ -18,6 +18,10 @@ declare global {
             cloudUser: string;
             /** OASE cloud account password (encrypted) */
             cloudPassword: string;
+            /** Cloud API base URL (advanced; default is the known OASE endpoint) */
+            cloudBaseUrl: string;
+            /** Cloud login route relative to the base URL (advanced; empty = not configured) */
+            cloudLoginPath: string;
             /** Poll interval in seconds */
             pollInterval: number;
         }
