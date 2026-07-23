@@ -62,12 +62,18 @@ export function buildPasswordCheck(password: string, txn: number): Buffer {
     return buildFrame(PACKET_PASSWORD_CHECK, [...encodePassword(password)], txn);
 }
 
+/** Leading count/flag byte of the TCP_REQ payload (one connect-back target). */
+export const TCP_REQ_PREFIX = 0x01;
+
 /**
  * Build the UDP wake packet (TCP_REQ, 0x1400) that asks the controller to connect back to our
- * TLS server. Payload layout (confirmed against a real GatewayCloud controller): the **TLS port**
- * as the first two bytes (UInt16 LE), followed by our IPv4. The controller reads the port from the
- * first two payload bytes and connects back to the **UDP source address** on that port (it ignores
- * the IP bytes — they are kept for completeness/other firmware).
+ * TLS server. Payload layout, confirmed byte-for-byte against a real GatewayCloud controller:
+ *
+ *   [0]     count/flag byte (0x01)
+ *   [1..2]  TLS port, UInt16 **little-endian** ← the controller reads the connect-back port here
+ *   [3..6]  our IPv4 (informational; the controller uses the UDP source address to dial back)
+ *
+ * The controller then opens a TCP connection to the UDP source IP on that port.
  *
  * @param bindIp - the IPv4 the controller should connect back to (advertised for completeness)
  * @param tlsPort - the TCP port our TLS server listens on (what the controller connects back to)
@@ -76,7 +82,7 @@ export function buildPasswordCheck(password: string, txn: number): Buffer {
 export function buildTcpReq(bindIp: string, tlsPort: number, txn: number): Buffer {
     const octets = bindIp.split(".").map(n => parseInt(n, 10));
     const ipBytes = octets.length === 4 && octets.every(o => o >= 0 && o <= 255) ? octets : [0, 0, 0, 0];
-    const payload = [tlsPort & 0xff, (tlsPort >>> 8) & 0xff, ...ipBytes];
+    const payload = [TCP_REQ_PREFIX, tlsPort & 0xff, (tlsPort >>> 8) & 0xff, ...ipBytes];
     return buildFrame(PACKET_TCP_REQ, payload, txn);
 }
 
