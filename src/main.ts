@@ -47,6 +47,9 @@ const FAST_SENSOR_IDS = [SENSOR_SPEED_RPM, SENSOR_POWER_W];
 /** Read the slow sensors (temperature, voltage, …) only every Nth poll to spare the gateway. */
 const SLOW_SENSOR_EVERY = 6;
 
+/** Power (W) below which a pump is considered off/standby (an off pump still draws a few watts). */
+const STANDBY_POWER_W = 15;
+
 /** Control data needed to address a pump for commands. */
 interface PumpControl {
     deviceNumber: number;
@@ -508,12 +511,13 @@ class Pondpump extends utils.Adapter {
             await writePumpStates(this, livePump, { includeControl });
 
             // The dmx speed setpoint is not readable locally, but on/off is unambiguous from live
-            // telemetry: a running pump draws power. Derive control.on from power (which drops to 0
-            // the moment the motor cuts, whereas rpm coasts down) when the dmx state is unknown
-            // (local mode), so at least the on/off readback is correct and app changes show up.
+            // telemetry: an off pump stands still (rpm 0) and only draws a small standby power
+            // (~5 W), while a running one turns and draws much more. Derive control.on from rpm (or
+            // a clearly-above-standby power) when the dmx state is unknown (local mode), so the
+            // on/off readback is correct and reflects changes made in the OASE app too.
             const rpm = livePump.sensors[SENSOR_SPEED_RPM] ?? 0;
             const power = livePump.sensors[SENSOR_POWER_W] ?? 0;
-            const derivedOn = power > 0;
+            const derivedOn = rpm > 0 || power > STANDBY_POWER_W;
             if (!includeControl) {
                 await this.setState(`pumps.${pump.deviceNumber}.control.on`, { val: derivedOn, ack: true });
             }
