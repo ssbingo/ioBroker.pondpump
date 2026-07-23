@@ -19,7 +19,7 @@ const REAL_SAMPLE = {
             onlineState: { isOnline: true },
             customAttributesJson:
                 '[{"Id":102,"Value":{"Value":"51.5","Timestamp":"2025-02-23T13:21:13+00:00"}},' +
-                '{"Id":103,"Value":{"Value":"Koi Teich","Timestamp":"2025-11-26T09:26:47+00:00"}}]',
+                '{"Id":103,"Value":{"Value":"Test Pond","Timestamp":"2025-11-26T09:26:47+00:00"}}]',
             devices: [
                 {
                     id: "00000000-0000-0000-0000-000000000000|1000001",
@@ -66,8 +66,8 @@ describe("parseInventory (real cloud shape)", () => {
         expect(inv.gateway.serialNumber).to.equal("000000000000");
         expect(inv.gateway.gatewayType).to.equal("GatewayCloud");
         expect(inv.gateway.firmware).to.equal("51.5"); // attribute id 102
-        expect(inv.gateway.pondName).to.equal("Koi Teich"); // attribute id 103
-        expect(inv.gateway.name).to.equal("Koi Teich"); // falls back to pond name
+        expect(inv.gateway.pondName).to.equal("Test Pond"); // attribute id 103
+        expect(inv.gateway.name).to.equal("Test Pond"); // falls back to pond name
         expect(inv.gateway.isOnline).to.equal(true);
     });
 
