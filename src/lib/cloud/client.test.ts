@@ -19,7 +19,7 @@ function fakeFetch(routes: Record<string, () => Response>): { fetch: typeof fetc
         const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
         calls.push(url);
         for (const [suffix, handler] of Object.entries(routes)) {
-            if (url.endsWith(suffix)) {
+            if (url.includes(suffix)) {
                 return Promise.resolve(handler());
             }
         }
@@ -32,16 +32,22 @@ function json(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
 
-describe("extractToken", () => {
-    it("finds the token under common keys", () => {
-        expect(extractToken({ token: "abc" })).to.equal("abc");
-        expect(extractToken({ accessToken: "def" })).to.equal("def");
-        expect(extractToken({ access_token: "ghi" })).to.equal("ghi");
-    });
+const TOKEN = "/oauth2/v2.0/token";
+const INVENTORY = "/User/Inventory";
 
-    it("finds a nested token", () => {
-        expect(extractToken({ data: { token: "nested" } })).to.equal("nested");
-        expect(extractToken({ result: { accessToken: "n2" } })).to.equal("n2");
+const baseOpts = {
+    baseUrl: "https://api.test",
+    tokenUrl: "https://account.test/tenant/policy/oauth2/v2.0/token",
+    clientId: "client-123",
+    scope: "oase.read offline_access",
+    refreshToken: "RT-initial",
+    log: silentLog,
+};
+
+describe("extractToken", () => {
+    it("finds the access token under common keys", () => {
+        expect(extractToken({ access_token: "abc" })).to.equal("abc");
+        expect(extractToken({ token: "def" })).to.equal("def");
     });
 
     it("accepts a bare string token", () => {
@@ -54,52 +60,74 @@ describe("extractToken", () => {
     });
 });
 
-describe("CloudClient", () => {
-    const baseOpts = {
-        baseUrl: "https://example.test",
-        loginPath: "/User/Login",
-        user: "user@example.test",
-        password: "secret",
-        log: silentLog,
-    };
-
-    it("logs in and fetches the inventory", async () => {
-        const { fetch } = fakeFetch({
-            "/User/Login": () => json({ token: "T1" }),
-            "/User/Inventory": () => json({ gateway: { serialNumber: "1" }, devices: [] }),
+describe("CloudClient (B2C refresh_token grant)", () => {
+    it("refreshes an access token and fetches the inventory", async () => {
+        const { fetch, calls } = fakeFetch({
+            [TOKEN]: () => json({ access_token: "AT1", token_type: "Bearer", expires_in: 3600 }),
+            [INVENTORY]: () => json({ gateways: [{ serialNumber: "1", devices: [] }] }),
         });
         const client = new CloudClient({ ...baseOpts, fetchImpl: fetch });
-        const inv = (await client.fetchInventory()) as { gateway: { serialNumber: string } };
-        expect(inv.gateway.serialNumber).to.equal("1");
+        const inv = (await client.fetchInventory()) as { gateways: { serialNumber: string }[] };
+        expect(inv.gateways[0].serialNumber).to.equal("1");
         expect(client.isConnected()).to.equal(true);
+        expect(calls.some(u => u.includes(TOKEN))).to.equal(true);
     });
 
-    it("re-authenticates once on a 401 and retries", async () => {
-        let inventoryCalls = 0;
-        let loginCalls = 0;
+    it("sends a form-encoded refresh_token grant with the configured client id and scope", async () => {
+        let capturedBody = "";
+        const fetchImpl = ((input: string | URL | Request, init?: RequestInit) => {
+            const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+            if (url.includes(TOKEN)) {
+                capturedBody = typeof init?.body === "string" ? init.body : "";
+                return Promise.resolve(json({ access_token: "AT", expires_in: 3600 }));
+            }
+            return Promise.resolve(json({ gateways: [] }));
+        }) as typeof fetch;
+        const client = new CloudClient({ ...baseOpts, fetchImpl });
+        await client.connect();
+        const params = new URLSearchParams(capturedBody);
+        expect(params.get("grant_type")).to.equal("refresh_token");
+        expect(params.get("client_id")).to.equal("client-123");
+        expect(params.get("scope")).to.equal("oase.read offline_access");
+        expect(params.get("refresh_token")).to.equal("RT-initial");
+    });
+
+    it("persists a rotated refresh token via onRefreshToken", async () => {
+        const rotated: string[] = [];
         const { fetch } = fakeFetch({
-            "/User/Login": () => {
-                loginCalls++;
-                return json({ token: `T${loginCalls}` });
+            [TOKEN]: () => json({ access_token: "AT", expires_in: 3600, refresh_token: "RT-rotated" }),
+            [INVENTORY]: () => json({ gateways: [] }),
+        });
+        const client = new CloudClient({ ...baseOpts, fetchImpl: fetch, onRefreshToken: t => rotated.push(t) });
+        await client.connect();
+        expect(rotated).to.deep.equal(["RT-rotated"]);
+    });
+
+    it("re-authenticates once on a 401 and retries the inventory", async () => {
+        let inventoryCalls = 0;
+        let tokenCalls = 0;
+        const { fetch } = fakeFetch({
+            [TOKEN]: () => {
+                tokenCalls++;
+                return json({ access_token: `AT${tokenCalls}`, expires_in: 3600 });
             },
-            "/User/Inventory": () => {
+            [INVENTORY]: () => {
                 inventoryCalls++;
-                // First inventory call is unauthorized, second succeeds.
                 return inventoryCalls === 1
                     ? new Response("", { status: 401 })
-                    : json({ gateway: { serialNumber: "9" }, devices: [] });
+                    : json({ gateways: [{ serialNumber: "9", devices: [] }] });
             },
         });
         const client = new CloudClient({ ...baseOpts, fetchImpl: fetch });
-        const inv = (await client.fetchInventory()) as { gateway: { serialNumber: string } };
-        expect(inv.gateway.serialNumber).to.equal("9");
-        expect(loginCalls).to.equal(2);
+        const inv = (await client.fetchInventory()) as { gateways: { serialNumber: string }[] };
+        expect(inv.gateways[0].serialNumber).to.equal("9");
+        expect(tokenCalls).to.equal(2);
         expect(inventoryCalls).to.equal(2);
     });
 
-    it("throws CloudAuthError when the login path is not configured", async () => {
+    it("throws CloudAuthError when no refresh token is configured", async () => {
         const { fetch } = fakeFetch({});
-        const client = new CloudClient({ ...baseOpts, loginPath: "", fetchImpl: fetch });
+        const client = new CloudClient({ ...baseOpts, refreshToken: "", fetchImpl: fetch });
         let thrown: unknown;
         try {
             await client.fetchInventory();
@@ -109,8 +137,10 @@ describe("CloudClient", () => {
         expect(thrown).to.be.instanceOf(CloudAuthError);
     });
 
-    it("throws CloudAuthError when the login is rejected", async () => {
-        const { fetch } = fakeFetch({ "/User/Login": () => new Response("", { status: 401 }) });
+    it("throws CloudAuthError on invalid_grant (expired refresh token)", async () => {
+        const { fetch } = fakeFetch({
+            [TOKEN]: () => json({ error: "invalid_grant", error_description: "AADB2C90080" }, 400),
+        });
         const client = new CloudClient({ ...baseOpts, fetchImpl: fetch });
         let thrown: unknown;
         try {

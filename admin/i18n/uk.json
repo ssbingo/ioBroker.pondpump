@@ -8,8 +8,6 @@
     "Poll interval (seconds)": "Інтервал опитування (секунди)",
     "How often the adapter polls data from the controller": "Як часто адаптер опитує дані з контролера",
     "Cloud account": "Хмарний обліковий запис",
-    "Cloud user (e-mail)": "Користувач хмари (e-mail)",
-    "Cloud password": "Пароль хмари",
     "Local connection": "Локальне з'єднання",
     "Controller IP address": "IP-адреса контролера",
     "IP address of the OASE Garden Controller Cloud gateway": "IP-адреса шлюзу OASE Garden Controller Cloud",
@@ -18,6 +16,13 @@
     "Device password": "Пароль пристрою",
     "Cloud API base URL": "Базовий URL хмарного API",
     "Advanced — only change if the OASE cloud endpoint moves": "Додатково — змінюйте лише якщо змінився хмарний endpoint OASE",
-    "Cloud login path": "Шлях входу до хмари",
-    "Advanced — login route relative to the base URL (e.g. /User/Login)": "Додатково — маршрут входу відносно базового URL (напр. /User/Login)"
+    "Cloud refresh token": "Хмарний refresh-токен",
+    "Cloud (advanced)": "Хмара (додатково)",
+    "Cloud token URL": "URL токен-ендпоінта",
+    "Advanced — Azure AD B2C token endpoint": "Додатково — токен-ендпоінт Azure AD B2C",
+    "Cloud client ID": "Client ID хмари",
+    "Advanced — OAuth client id of the OASE app": "Додатково — OAuth client id застосунку OASE",
+    "Cloud scope": "Область (scope) хмари",
+    "Advanced — OAuth scope requested for the access token": "Додатково — OAuth scope для access-токена",
+    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Один раз отримайте refresh-токен зі входу в застосунок OASE (grant_type=refresh_token) і вставте його сюди. Пароль вашого облікового запису не потрібен і не зберігається."
 }

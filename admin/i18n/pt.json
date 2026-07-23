@@ -8,8 +8,6 @@
     "Poll interval (seconds)": "Intervalo de consulta (segundos)",
     "How often the adapter polls data from the controller": "Com que frequência o adaptador consulta dados do controlador",
     "Cloud account": "Conta na nuvem",
-    "Cloud user (e-mail)": "Usuário da nuvem (e-mail)",
-    "Cloud password": "Senha da nuvem",
     "Local connection": "Conexão local",
     "Controller IP address": "Endereço IP do controlador",
     "IP address of the OASE Garden Controller Cloud gateway": "Endereço IP do gateway OASE Garden Controller Cloud",
@@ -18,6 +16,13 @@
     "Device password": "Senha do dispositivo",
     "Cloud API base URL": "URL base da API na nuvem",
     "Advanced — only change if the OASE cloud endpoint moves": "Avançado — altere apenas se o endpoint da nuvem OASE mudar",
-    "Cloud login path": "Caminho de login na nuvem",
-    "Advanced — login route relative to the base URL (e.g. /User/Login)": "Avançado — rota de login relativa ao URL base (ex.: /User/Login)"
+    "Cloud refresh token": "Token de atualização da nuvem",
+    "Cloud (advanced)": "Nuvem (avançado)",
+    "Cloud token URL": "URL do token da nuvem",
+    "Advanced — Azure AD B2C token endpoint": "Avançado — endpoint de token do Azure AD B2C",
+    "Cloud client ID": "Client ID da nuvem",
+    "Advanced — OAuth client id of the OASE app": "Avançado — client id OAuth do app OASE",
+    "Cloud scope": "Escopo da nuvem",
+    "Advanced — OAuth scope requested for the access token": "Avançado — escopo OAuth solicitado para o token de acesso",
+    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Capture uma vez um refresh token de um login no app OASE (grant_type=refresh_token) e cole-o aqui. A senha da sua conta não é necessária e nunca é armazenada."
 }

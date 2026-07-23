@@ -8,8 +8,6 @@
     "Poll interval (seconds)": "Pollinterval (seconden)",
     "How often the adapter polls data from the controller": "Hoe vaak de adapter gegevens van de controller opvraagt",
     "Cloud account": "Cloudaccount",
-    "Cloud user (e-mail)": "Cloudgebruiker (e-mail)",
-    "Cloud password": "Cloudwachtwoord",
     "Local connection": "Lokale verbinding",
     "Controller IP address": "IP-adres van de controller",
     "IP address of the OASE Garden Controller Cloud gateway": "IP-adres van de OASE Garden Controller Cloud gateway",
@@ -18,6 +16,13 @@
     "Device password": "Apparaatwachtwoord",
     "Cloud API base URL": "Basis-URL van cloud-API",
     "Advanced — only change if the OASE cloud endpoint moves": "Geavanceerd — alleen wijzigen als het OASE-cloudeindpunt verandert",
-    "Cloud login path": "Cloud-inlogpad",
-    "Advanced — login route relative to the base URL (e.g. /User/Login)": "Geavanceerd — inlogroute ten opzichte van de basis-URL (bijv. /User/Login)"
+    "Cloud refresh token": "Cloud-refreshtoken",
+    "Cloud (advanced)": "Cloud (geavanceerd)",
+    "Cloud token URL": "Cloud-token-URL",
+    "Advanced — Azure AD B2C token endpoint": "Geavanceerd — Azure AD B2C-tokeneindpunt",
+    "Cloud client ID": "Cloud-client-ID",
+    "Advanced — OAuth client id of the OASE app": "Geavanceerd — OAuth-client-id van de OASE-app",
+    "Cloud scope": "Cloud-scope",
+    "Advanced — OAuth scope requested for the access token": "Geavanceerd — OAuth-scope voor het accesstoken",
+    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Leg eenmalig een refreshtoken vast uit een OASE-app-login (grant_type=refresh_token) en plak het hier. Je accountwachtwoord is niet nodig en wordt nooit opgeslagen."
 }

@@ -88,11 +88,11 @@
     },
     "encryptedNative": [
         "devicePassword",
-        "cloudPassword"
+        "cloudRefreshToken"
     ],
     "protectedNative": [
         "devicePassword",
-        "cloudPassword"
+        "cloudRefreshToken"
     ],
     "native": {
         "connectionMode": "cloud",
@@ -100,10 +100,11 @@
         "bind": "0.0.0.0",
         "port": 5999,
         "devicePassword": "",
-        "cloudUser": "",
-        "cloudPassword": "",
+        "cloudRefreshToken": "",
         "cloudBaseUrl": "https://app-oasecloud-prod.azurewebsites.net",
-        "cloudLoginPath": "",
+        "cloudTokenUrl": "https://account.oase.com/tfp/oasecustomersprod.onmicrosoft.com/B2C_1A_SignUp_SignIn/oauth2/v2.0/token",
+        "cloudClientId": "8dfe4495-b83f-4e4f-861c-83b6b3cbaa3b",
+        "cloudScope": "https://oasecustomersprod.onmicrosoft.com/api/oase.read https://oasecustomersprod.onmicrosoft.com/api/oase.readwrite offline_access openid profile",
         "pollInterval": 30
     },
     "objects": [],

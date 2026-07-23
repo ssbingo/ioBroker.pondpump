@@ -49,27 +49,34 @@
             "size": 2,
             "hidden": "data.connectionMode === 'local'"
         },
-        "cloudUser": {
-            "type": "text",
-            "label": "Cloud user (e-mail)",
+        "_cloudInfo": {
+            "type": "staticText",
+            "text": "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.",
             "hidden": "data.connectionMode === 'local'",
             "newLine": true,
             "xs": 12,
             "sm": 12,
-            "md": 6,
-            "lg": 4,
-            "xl": 4
+            "md": 12,
+            "lg": 12,
+            "xl": 12
         },
-        "cloudPassword": {
+        "cloudRefreshToken": {
             "type": "password",
             "repeat": false,
-            "label": "Cloud password",
+            "label": "Cloud refresh token",
             "hidden": "data.connectionMode === 'local'",
+            "newLine": true,
             "xs": 12,
             "sm": 12,
-            "md": 6,
-            "lg": 4,
-            "xl": 4
+            "md": 8,
+            "lg": 8,
+            "xl": 8
+        },
+        "_cloudAdvanced": {
+            "type": "header",
+            "text": "Cloud (advanced)",
+            "size": 3,
+            "hidden": "data.connectionMode === 'local'"
         },
         "cloudBaseUrl": {
             "type": "text",
@@ -83,10 +90,33 @@
             "lg": 6,
             "xl": 6
         },
-        "cloudLoginPath": {
+        "cloudTokenUrl": {
             "type": "text",
-            "label": "Cloud login path",
-            "help": "Advanced — login route relative to the base URL (e.g. /User/Login)",
+            "label": "Cloud token URL",
+            "help": "Advanced — Azure AD B2C token endpoint",
+            "hidden": "data.connectionMode === 'local'",
+            "xs": 12,
+            "sm": 12,
+            "md": 6,
+            "lg": 6,
+            "xl": 6
+        },
+        "cloudClientId": {
+            "type": "text",
+            "label": "Cloud client ID",
+            "help": "Advanced — OAuth client id of the OASE app",
+            "hidden": "data.connectionMode === 'local'",
+            "newLine": true,
+            "xs": 12,
+            "sm": 12,
+            "md": 6,
+            "lg": 6,
+            "xl": 6
+        },
+        "cloudScope": {
+            "type": "text",
+            "label": "Cloud scope",
+            "help": "Advanced — OAuth scope requested for the access token",
             "hidden": "data.connectionMode === 'local'",
             "xs": 12,
             "sm": 12,

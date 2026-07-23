@@ -42,9 +42,11 @@ smart pond pumps and was written from scratch.
 with live speed/on-off/status as read-only states. Writing (pump control) follows in phase 2, the local transport
 in phase 3.
 
-> **Note:** the exact cloud **login route** is not part of the available protocol capture yet. Until it is captured
-> from the OASE app and entered in the adapter settings (advanced field "Cloud login path"), the adapter starts but
-> reports `info.connection = false` with a clear warning.
+**Cloud authentication:** the OASE cloud uses **Azure AD B2C** (`account.oase.com`). The adapter authenticates with the
+headless-friendly **refresh-token grant**: capture a refresh token once from an OASE app login and paste it into the
+adapter settings (encrypted). The adapter exchanges it for short-lived access tokens and transparently rotates the
+refresh token. **Your account password is never entered into or stored by the adapter.** Without a refresh token the
+adapter starts but reports `info.connection = false` with a clear warning.
 
 ### Configuration
 
@@ -79,7 +81,8 @@ Releases are created with `npm run release` (release-script) and published autom
 
 ### **WORK IN PROGRESS**
 
-- (ssbingo) Phase 1 (cloud read-only): CloudClient with bearer session handling, defensive inventory parser, gateway/pump objects with live speed and status states, chained poll loop
+- (ssbingo) Cloud auth: real Azure AD B2C refresh-token grant (account.oase.com); refresh token entered once (encrypted), access tokens refreshed and rotated automatically; account password never used
+- (ssbingo) Phase 1 (cloud read-only): CloudClient with bearer session handling, defensive inventory parser matched to the real wire format, gateway/pump objects with live speed and status states, chained poll loop
 - (ssbingo) initial release
 
 ## License

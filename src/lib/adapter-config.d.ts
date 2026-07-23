@@ -14,14 +14,16 @@ declare global {
             port: number;
             /** 64-byte device password for local authentication (encrypted) */
             devicePassword: string;
-            /** OASE cloud account user (e-mail) */
-            cloudUser: string;
-            /** OASE cloud account password (encrypted) */
-            cloudPassword: string;
+            /** OASE cloud refresh token, captured once from an app login (encrypted) */
+            cloudRefreshToken: string;
             /** Cloud API base URL (advanced; default is the known OASE endpoint) */
             cloudBaseUrl: string;
-            /** Cloud login route relative to the base URL (advanced; empty = not configured) */
-            cloudLoginPath: string;
+            /** Azure AD B2C token endpoint (advanced; default is the known OASE endpoint) */
+            cloudTokenUrl: string;
+            /** OAuth client id of the OASE app (advanced; public value) */
+            cloudClientId: string;
+            /** OAuth scope requested for the access token (advanced) */
+            cloudScope: string;
             /** Poll interval in seconds */
             pollInterval: number;
         }

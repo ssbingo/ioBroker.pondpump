@@ -6,12 +6,22 @@
 // you need to create an adapter
 import * as utils from "@iobroker/adapter-core";
 
-import { CloudAuthError, CloudClient, DEFAULT_BASE_URL } from "./lib/cloud/client";
+import {
+    CloudAuthError,
+    CloudClient,
+    DEFAULT_BASE_URL,
+    DEFAULT_CLIENT_ID,
+    DEFAULT_SCOPE,
+    DEFAULT_TOKEN_URL,
+} from "./lib/cloud/client";
 import { parseInventory } from "./lib/cloud/inventory";
 import { applyGateway, applyPump } from "./lib/objects";
 
 /** Minimum poll interval enforced regardless of configuration (seconds). */
 const MIN_POLL_INTERVAL_S = 5;
+
+/** State that persists the rotating cloud refresh token across restarts. */
+const REFRESH_TOKEN_STATE = "cloud.refreshToken";
 
 class Pondpump extends utils.Adapter {
     private cloud?: CloudClient;
@@ -51,29 +61,34 @@ class Pondpump extends utils.Adapter {
             return;
         }
 
-        if (!this.config.cloudUser || !this.config.cloudPassword) {
-            this.log.warn("Cloud credentials are not configured — set the cloud user and password in the settings");
-            return;
-        }
-
-        const loginPath = (this.config.cloudLoginPath || "").trim();
-        if (!loginPath) {
+        // Prefer a rotated refresh token persisted from a previous run over the configured one.
+        await this.ensureRefreshTokenState();
+        const persisted = await this.getStateAsync(REFRESH_TOKEN_STATE);
+        const refreshToken =
+            (typeof persisted?.val === "string" && persisted.val) || this.config.cloudRefreshToken || "";
+        if (!refreshToken) {
             this.log.warn(
-                "Cloud login path is not configured. The OASE login endpoint must be captured once and entered " +
-                    "in the adapter settings (advanced) before the cloud connection can be established.",
+                "No cloud refresh token configured. Capture a refresh token from an OASE app login and enter it " +
+                    "in the adapter settings before the cloud connection can be established.",
             );
+            return;
         }
 
         this.cloud = new CloudClient({
             baseUrl: this.config.cloudBaseUrl || DEFAULT_BASE_URL,
-            loginPath,
-            user: this.config.cloudUser,
-            password: this.config.cloudPassword,
+            tokenUrl: this.config.cloudTokenUrl || DEFAULT_TOKEN_URL,
+            clientId: this.config.cloudClientId || DEFAULT_CLIENT_ID,
+            scope: this.config.cloudScope || DEFAULT_SCOPE,
+            refreshToken,
             log: {
                 debug: m => this.log.debug(m),
                 info: m => this.log.info(m),
                 warn: m => this.log.warn(m),
                 error: m => this.log.error(m),
+            },
+            onRefreshToken: token => {
+                // Persist the rotated token so restarts keep working (states DB, local).
+                void this.setState(REFRESH_TOKEN_STATE, token, true);
             },
         });
 
@@ -81,6 +96,27 @@ class Pondpump extends utils.Adapter {
 
         // Start the chained-setTimeout poll loop (never setInterval with external requests).
         void this.poll();
+    }
+
+    /** Create the (non-writable) state that persists the rotating cloud refresh token. */
+    private async ensureRefreshTokenState(): Promise<void> {
+        await this.setObjectNotExistsAsync("cloud", {
+            type: "channel",
+            common: { name: "Cloud" },
+            native: {},
+        });
+        await this.setObjectNotExistsAsync(REFRESH_TOKEN_STATE, {
+            type: "state",
+            common: {
+                name: "Cloud refresh token (rotating, secret)",
+                type: "string",
+                role: "text",
+                read: true,
+                write: false,
+                def: "",
+            },
+            native: {},
+        });
     }
 
     /** One poll cycle: fetch inventory, update objects/states, reschedule. */

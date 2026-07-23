@@ -8,8 +8,6 @@
     "Poll interval (seconds)": "Interwał odpytywania (sekundy)",
     "How often the adapter polls data from the controller": "Jak często adapter odpytuje dane z kontrolera",
     "Cloud account": "Konto w chmurze",
-    "Cloud user (e-mail)": "Użytkownik chmury (e-mail)",
-    "Cloud password": "Hasło chmury",
     "Local connection": "Połączenie lokalne",
     "Controller IP address": "Adres IP kontrolera",
     "IP address of the OASE Garden Controller Cloud gateway": "Adres IP bramy OASE Garden Controller Cloud",
@@ -18,6 +16,13 @@
     "Device password": "Hasło urządzenia",
     "Cloud API base URL": "Bazowy adres URL API w chmurze",
     "Advanced — only change if the OASE cloud endpoint moves": "Zaawansowane — zmień tylko, jeśli zmieni się punkt końcowy chmury OASE",
-    "Cloud login path": "Ścieżka logowania do chmury",
-    "Advanced — login route relative to the base URL (e.g. /User/Login)": "Zaawansowane — ścieżka logowania względem bazowego adresu URL (np. /User/Login)"
+    "Cloud refresh token": "Token odświeżający chmury",
+    "Cloud (advanced)": "Chmura (zaawansowane)",
+    "Cloud token URL": "URL tokenu chmury",
+    "Advanced — Azure AD B2C token endpoint": "Zaawansowane — punkt końcowy tokenu Azure AD B2C",
+    "Cloud client ID": "Client ID chmury",
+    "Advanced — OAuth client id of the OASE app": "Zaawansowane — client id OAuth aplikacji OASE",
+    "Cloud scope": "Zakres (scope) chmury",
+    "Advanced — OAuth scope requested for the access token": "Zaawansowane — zakres OAuth żądany dla tokenu dostępu",
+    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Przechwyć jednorazowo token odświeżający z logowania w aplikacji OASE (grant_type=refresh_token) i wklej go tutaj. Hasło Twojego konta nie jest potrzebne i nigdy nie jest przechowywane."
 }

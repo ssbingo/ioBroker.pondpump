@@ -1,17 +1,19 @@
 /*
  * CloudClient — talks to the OASE Garden Controller Cloud REST API.
  *
- * Known facts (from live probing + capture):
- *   - Base URL:  https://app-oasecloud-prod.azurewebsites.net
- *   - Auth:      Bearer JWT (WWW-Authenticate: Bearer), ASP.NET Core backend
- *   - Inventory: GET /User/Inventory  (401 without a valid token)
+ * Auth (confirmed from captures): Azure AD B2C on the custom domain account.oase.com,
+ * tenant oasecustomersprod.onmicrosoft.com, policy B2C_1A_SignUp_SignIn. The mobile app
+ * signs in interactively once (authorization code + PKCE) and afterwards uses the
+ * `refresh_token` grant to obtain short-lived (1 h) bearer access tokens.
  *
- * The exact login endpoint is not part of the available capture. It is therefore
- * configurable (baseUrl + loginPath) so it can be pointed at the correct route once a
- * real login request has been captured, without rebuilding the adapter. The login
- * request/response handling below implements the most likely shape (JSON email/password
- * -> JSON body containing a bearer token) and is deliberately tolerant about the token
- * field name.
+ * This client only implements the headless-friendly refresh_token grant: the user supplies
+ * a refresh token (captured once from an app login) and the client exchanges it for access
+ * tokens. Azure AD B2C rotates the refresh token on each use (scope `offline_access`), so a
+ * new refresh token in the response is surfaced via `onRefreshToken` for persistence.
+ *
+ * The account password is never used or stored by this adapter.
+ *
+ * API: GET https://app-oasecloud-prod.azurewebsites.net/User/Inventory (Bearer).
  */
 
 /** Minimal logging interface (satisfied by adapter.log). */
@@ -30,25 +32,37 @@ export interface CloudLogger {
 export interface CloudClientOptions {
     /** API base URL, e.g. https://app-oasecloud-prod.azurewebsites.net */
     baseUrl: string;
-    /** Login route relative to baseUrl, e.g. "/User/Login". Empty => login not configured. */
-    loginPath: string;
-    /** OASE account e-mail. */
-    user: string;
-    /** OASE account password. */
-    password: string;
+    /** Azure AD B2C token endpoint (oauth2/v2.0/token). */
+    tokenUrl: string;
+    /** OAuth client id (the OASE mobile app's public client id). */
+    clientId: string;
+    /** OAuth scope string requested for the access token. */
+    scope: string;
+    /** Refresh token captured from an app login (rotated on use). */
+    refreshToken: string;
     /** Per-request timeout in milliseconds. */
     timeoutMs?: number;
     /** Injectable fetch implementation (defaults to global fetch). */
     fetchImpl?: typeof fetch;
     /** Logger (usually adapter.log). */
     log: CloudLogger;
+    /** Called with a rotated refresh token so the caller can persist it. */
+    onRefreshToken?: (refreshToken: string) => void;
 }
 
 export const DEFAULT_BASE_URL = "https://app-oasecloud-prod.azurewebsites.net";
 export const INVENTORY_PATH = "/User/Inventory";
+export const DEFAULT_TOKEN_URL =
+    "https://account.oase.com/tfp/oasecustomersprod.onmicrosoft.com/B2C_1A_SignUp_SignIn/oauth2/v2.0/token";
+export const DEFAULT_CLIENT_ID = "8dfe4495-b83f-4e4f-861c-83b6b3cbaa3b";
+export const DEFAULT_SCOPE =
+    "https://oasecustomersprod.onmicrosoft.com/api/oase.read " +
+    "https://oasecustomersprod.onmicrosoft.com/api/oase.readwrite offline_access openid profile";
 export const DEFAULT_TIMEOUT_MS = 15000;
+/** Refresh the access token this many ms before it actually expires. */
+const TOKEN_EXPIRY_SKEW_MS = 60_000;
 
-/** Thrown when authentication is not possible (bad/missing credentials or endpoint). */
+/** Thrown when authentication is not possible (missing/expired refresh token or bad config). */
 export class CloudAuthError extends Error {
     /**
      * @param message - human-readable error description
@@ -74,13 +88,13 @@ export class CloudRequestError extends Error {
     }
 }
 
-/** Candidate keys that may hold the bearer token in a login response. */
-const TOKEN_KEYS = ["token", "accessToken", "access_token", "jwt", "bearerToken", "id_token"];
+/** Candidate keys that may hold the bearer token in a token response. */
+const TOKEN_KEYS = ["access_token", "token", "accessToken", "id_token"];
 
 /**
- * Try to extract a bearer token from a parsed login response body.
+ * Try to extract a bearer access token from a parsed token response body.
  *
- * @param body - parsed JSON (or raw string) body of the login response
+ * @param body - parsed JSON (or raw string) body of the token response
  */
 export function extractToken(body: unknown): string | undefined {
     if (typeof body === "string" && body.length > 0) {
@@ -96,122 +110,151 @@ export function extractToken(body: unknown): string | undefined {
             return value;
         }
     }
-    // Some APIs nest the token, e.g. { data: { token } } or { result: { accessToken } }.
-    for (const nestKey of ["data", "result", "payload"]) {
-        const nested = record[nestKey];
-        if (typeof nested === "object" && nested !== null) {
-            const found = extractToken(nested);
-            if (found) {
-                return found;
-            }
-        }
-    }
     return undefined;
 }
 
-/** Session-holding client for the OASE cloud API (login + inventory polling). */
+/** Session-holding client for the OASE cloud API (B2C refresh-token auth + inventory polling). */
 export class CloudClient {
     private readonly baseUrl: string;
-    private readonly loginPath: string;
-    private readonly user: string;
-    private readonly password: string;
+    private readonly tokenUrl: string;
+    private readonly clientId: string;
+    private readonly scope: string;
     private readonly timeoutMs: number;
     private readonly fetchImpl: typeof fetch;
     private readonly log: CloudLogger;
+    private readonly onRefreshToken?: (refreshToken: string) => void;
 
-    private token: string | undefined;
+    private refreshToken: string;
+    private accessToken: string | undefined;
+    private accessTokenExpiry = 0;
 
     /**
-     * @param options - connection parameters, credentials and logger
+     * @param options - endpoints, credentials (refresh token) and logger
      */
     public constructor(options: CloudClientOptions) {
         this.baseUrl = options.baseUrl.replace(/\/+$/, "");
-        this.loginPath = options.loginPath.trim();
-        this.user = options.user;
-        this.password = options.password;
+        this.tokenUrl = options.tokenUrl;
+        this.clientId = options.clientId;
+        this.scope = options.scope;
+        this.refreshToken = options.refreshToken.trim();
         this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
         this.log = options.log;
+        this.onRefreshToken = options.onRefreshToken;
     }
 
-    /** Whether a session token is currently held. */
+    /** Whether a currently-valid access token is held. */
     public isConnected(): boolean {
-        return this.token !== undefined;
+        return this.accessToken !== undefined && Date.now() < this.accessTokenExpiry;
     }
 
-    /** Drop the current session token (e.g. on shutdown or after a 401). */
+    /** Drop the current access token (keeps the refresh token). */
     public reset(): void {
-        this.token = undefined;
+        this.accessToken = undefined;
+        this.accessTokenExpiry = 0;
     }
 
-    /** Authenticate and store the bearer token. */
+    /** Acquire an access token up front (validates the refresh token). */
     public async connect(): Promise<void> {
-        await this.login();
+        await this.ensureAccessToken(true);
     }
 
     /**
-     * Fetch and return the raw inventory JSON. Re-authenticates once on a 401.
+     * Fetch and return the raw inventory JSON. Refreshes the access token as needed and
+     * re-authenticates once on a 401.
      *
      * @returns the parsed JSON body of `GET /User/Inventory`
      */
     public async fetchInventory(): Promise<unknown> {
-        if (!this.token) {
-            await this.login();
-        }
+        await this.ensureAccessToken();
         try {
             return await this.getJson(INVENTORY_PATH);
         } catch (error) {
             if (error instanceof CloudAuthError) {
-                // Token likely expired — re-login once and retry.
-                this.log.debug("Inventory request unauthorized, re-authenticating once");
-                this.token = undefined;
-                await this.login();
+                this.log.debug("Inventory request unauthorized, refreshing the access token once");
+                await this.ensureAccessToken(true);
                 return await this.getJson(INVENTORY_PATH);
             }
             throw error;
         }
     }
 
-    private async login(): Promise<void> {
-        if (!this.loginPath) {
+    /**
+     * Ensure a valid access token is available, refreshing it if missing/expired or forced.
+     *
+     * @param force - refresh even if the current token still looks valid
+     */
+    private async ensureAccessToken(force = false): Promise<void> {
+        if (!force && this.accessToken && Date.now() < this.accessTokenExpiry - TOKEN_EXPIRY_SKEW_MS) {
+            return;
+        }
+        await this.refreshAccessToken();
+    }
+
+    /** Exchange the refresh token for a new access token (B2C refresh_token grant). */
+    private async refreshAccessToken(): Promise<void> {
+        if (!this.refreshToken) {
             throw new CloudAuthError(
-                "Cloud login endpoint is not configured. Capture a login request from the OASE app " +
-                    "and set the login path in the adapter configuration.",
+                "No cloud refresh token configured. Capture a refresh token from an OASE app login and enter it " +
+                    "in the adapter settings.",
             );
         }
-        if (!this.user || !this.password) {
-            throw new CloudAuthError("Cloud credentials are not configured");
-        }
 
-        const response = await this.request(this.loginPath, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ email: this.user, password: this.password }),
+        const body = new URLSearchParams({
+            grant_type: "refresh_token",
+            client_id: this.clientId,
+            scope: this.scope,
+            refresh_token: this.refreshToken,
+            client_info: "1",
         });
 
-        if (response.status === 401 || response.status === 403) {
-            throw new CloudAuthError(`Cloud login rejected (HTTP ${response.status}) — check credentials`);
-        }
+        const response = await this.request(this.tokenUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+            body: body.toString(),
+        });
+
+        const parsed = await this.readBody(response);
         if (!response.ok) {
-            throw new CloudRequestError(`Cloud login failed (HTTP ${response.status})`, response.status);
+            const errorCode = isRecord(parsed) && typeof parsed.error === "string" ? parsed.error : "";
+            const description =
+                isRecord(parsed) && typeof parsed.error_description === "string" ? parsed.error_description : "";
+            if (response.status === 400 || response.status === 401 || errorCode === "invalid_grant") {
+                const suffix = errorCode ? `, ${errorCode}` : "";
+                const details = description ? ` Details: ${description}` : "";
+                throw new CloudAuthError(
+                    `Cloud token refresh rejected (HTTP ${response.status}${suffix}). The refresh token is likely expired — capture a new one from an app login.${details}`,
+                );
+            }
+            throw new CloudRequestError(`Cloud token refresh failed (HTTP ${response.status})`, response.status);
         }
 
-        const body = await this.readBody(response);
-        const token = extractToken(body);
-        if (!token) {
-            throw new CloudAuthError("Cloud login succeeded but no token was found in the response");
+        const accessToken = extractToken(parsed);
+        if (!accessToken) {
+            throw new CloudAuthError("Token refresh succeeded but no access token was found in the response");
         }
-        this.token = token;
-        this.log.debug("Cloud login successful");
+        this.accessToken = accessToken;
+
+        const expiresInS = isRecord(parsed) ? Number(parsed.expires_in) : NaN;
+        this.accessTokenExpiry = Date.now() + (Number.isFinite(expiresInS) ? expiresInS : 3600) * 1000;
+
+        // Persist the rotated refresh token (B2C issues a new one on each use).
+        const newRefreshToken =
+            isRecord(parsed) && typeof parsed.refresh_token === "string" ? parsed.refresh_token : "";
+        if (newRefreshToken && newRefreshToken !== this.refreshToken) {
+            this.refreshToken = newRefreshToken;
+            this.onRefreshToken?.(newRefreshToken);
+        }
+
+        this.log.debug(
+            `Obtained cloud access token (valid ${Math.round((this.accessTokenExpiry - Date.now()) / 1000)}s)`,
+        );
     }
 
     private async getJson(path: string): Promise<unknown> {
-        const response = await this.request(path, {
+        const response = await this.request(`${this.baseUrl}${path}`, {
             method: "GET",
-            headers: {
-                Accept: "application/json",
-                Authorization: `Bearer ${this.token}`,
-            },
+            headers: { Accept: "application/json", Authorization: `Bearer ${this.accessToken}` },
         });
         if (response.status === 401 || response.status === 403) {
             throw new CloudAuthError(`Unauthorized for ${path} (HTTP ${response.status})`);
@@ -225,21 +268,20 @@ export class CloudClient {
     /**
      * Perform an HTTP request with a hard timeout via AbortController.
      *
-     * @param path - route relative to the base URL
+     * @param url - absolute request URL
      * @param init - fetch request options
      */
-    private async request(path: string, init: RequestInit): Promise<Response> {
-        const url = `${this.baseUrl}${path}`;
+    private async request(url: string, init: RequestInit): Promise<Response> {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), this.timeoutMs);
         try {
             return await this.fetchImpl(url, { ...init, signal: controller.signal });
         } catch (error) {
             if (error instanceof Error && error.name === "AbortError") {
-                throw new CloudRequestError(`Request to ${path} timed out after ${this.timeoutMs} ms`);
+                throw new CloudRequestError(`Request to ${url} timed out after ${this.timeoutMs} ms`);
             }
             throw new CloudRequestError(
-                `Request to ${path} failed: ${error instanceof Error ? error.message : String(error)}`,
+                `Request to ${url} failed: ${error instanceof Error ? error.message : String(error)}`,
             );
         } finally {
             clearTimeout(timer);
@@ -254,8 +296,11 @@ export class CloudClient {
         try {
             return JSON.parse(text);
         } catch {
-            // Not JSON — return the raw text (e.g. a bare token string).
             return text;
         }
     }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
 }
