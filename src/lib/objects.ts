@@ -107,7 +107,7 @@ function pumpId(deviceNumber: number): string {
  */
 export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
     const base = pumpId(pump.deviceNumber);
-    return [
+    const defs: ObjectDef[] = [
         { id: PUMPS_ROOT_ID, obj: folder("Pumps") },
         { id: base, obj: device(pump.name ? `${pump.name} (${pump.deviceNumber})` : `Pump ${pump.deviceNumber}`) },
 
@@ -194,6 +194,40 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
             }),
         },
     ];
+
+    // Diagnostic: expose still-unmapped RDM sensor values so their meaning can be
+    // classified (e.g. by sweeping the speed and watching which ones change).
+    const rawSensorIds = unmappedSensorIds(pump);
+    if (rawSensorIds.length > 0) {
+        defs.push({ id: `${base}.telemetry.raw`, obj: channel("Raw RDM sensors (unmapped)") });
+        for (const sensorId of rawSensorIds) {
+            defs.push({
+                id: `${base}.telemetry.raw.sensor${sensorId}`,
+                obj: stateObj({
+                    name: `RDM sensor ${sensorId} (raw, meaning TBD)`,
+                    type: "number",
+                    role: "value",
+                    read: true,
+                    write: false,
+                }),
+            });
+        }
+    }
+
+    return defs;
+}
+
+/**
+ * RDM sensor ids present on the pump that are not yet mapped to a named telemetry state.
+ *
+ * @param pump - pump info from the inventory
+ */
+function unmappedSensorIds(pump: PumpInfo): number[] {
+    const mapped = new Set<number>([SENSOR_SPEED_RPM, SENSOR_POWER_W]);
+    return Object.keys(pump.sensors)
+        .map(Number)
+        .filter(id => !mapped.has(id))
+        .sort((a, b) => a - b);
 }
 
 /**
@@ -232,6 +266,9 @@ export function pumpStateValues(pump: PumpInfo): StateValueDef[] {
     }
     if (pump.sensors[SENSOR_SPEED_RPM] !== undefined) {
         values.push({ id: `${base}.telemetry.speed`, val: pump.sensors[SENSOR_SPEED_RPM] });
+    }
+    for (const sensorId of unmappedSensorIds(pump)) {
+        values.push({ id: `${base}.telemetry.raw.sensor${sensorId}`, val: pump.sensors[sensorId] });
     }
     return values;
 }

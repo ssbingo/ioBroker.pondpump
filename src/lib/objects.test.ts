@@ -26,7 +26,7 @@ const PUMP: PumpInfo = {
     isConnected: true,
     controlAddress: 0x21,
     dmx: { fcStatus: "SfcOff", fcMode: 0, dimmerValue: 178, deviceOn: true },
-    sensors: { 1: 2523, 10: 110 },
+    sensors: { 1: 2523, 10: 110, 2: 845 },
     rdm: [],
 };
 
@@ -115,6 +115,14 @@ describe("pumpObjectDefs", () => {
         const values = new Map(pumpStateValues(PUMP).map(v => [v.id, v.val]));
         expect(values.get(`${base}.telemetry.power`)).to.equal(110);
         expect(values.get(`${base}.telemetry.speed`)).to.equal(2523);
+    });
+
+    it("exposes unmapped sensors as raw diagnostic states (but not the mapped ones)", () => {
+        expect(map.get(`${base}.telemetry.raw.sensor2`)?.type).to.equal("state");
+        expect(map.has(`${base}.telemetry.raw.sensor1`)).to.equal(false); // mapped -> speed
+        expect(map.has(`${base}.telemetry.raw.sensor10`)).to.equal(false); // mapped -> power
+        const values = new Map(pumpStateValues(PUMP).map(v => [v.id, v.val]));
+        expect(values.get(`${base}.telemetry.raw.sensor2`)).to.equal(845);
     });
 
     it("makes control states writable (phase 2 command path)", () => {

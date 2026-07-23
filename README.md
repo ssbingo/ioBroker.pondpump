@@ -81,6 +81,7 @@ Releases are created with `npm run release` (release-script) and published autom
 
 ### **WORK IN PROGRESS**
 
+- (ssbingo) Diagnostics: still-unmapped RDM sensors are exposed as raw read-only states under `telemetry.raw.sensorN` so their meaning can be classified (RDM DEVICE_INFO reports 11 sensors; the cloud only pushes a few values)
 - (ssbingo) Phase 4 (telemetry): pump power (W) and motor speed (rpm) are decoded from the RDM sensor values (calibrated against the OASE app) and exposed as `telemetry.power` / `telemetry.speed`
 - (ssbingo) Pump objects are now named after the pump's controller name (read from the DeviceTable telemetry, e.g. "Main flow" plus the device number) instead of a bare device number
 - (ssbingo) New stylized adapter icon (own vector illustration, not the product photo)
