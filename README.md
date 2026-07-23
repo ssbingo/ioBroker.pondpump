@@ -49,8 +49,8 @@ smart pond pumps and was written from scratch.
 - **Phase 1 — cloud read-only** ✓ polls the OASE cloud inventory; gateway plus both pumps with live status
 - **Phase 2 — cloud control** ✓ pump on/off and speed are writable via the cloud tunnel
 - **Phase 4 — live telemetry** ✓ power, motor speed, temperature and mains voltage read live each poll
-- **Phase 3 — local transport** (in progress) the TLS server, UDP wake and 64-byte password handshake are in
-  place (connection mode `local`); local inventory and telemetry over the LAN follow next
+- **Phase 3 — local (LAN) transport** ✓ connection mode `local` runs the whole adapter over the local network
+  without the cloud: inventory, live telemetry and on/off + speed control, all over the LAN
 
 **Cloud authentication:** the OASE cloud uses **Azure AD B2C** (`account.oase.com`). The adapter authenticates with the
 headless-friendly **refresh-token grant**: capture a refresh token once from an OASE app login and paste it into the
@@ -79,10 +79,8 @@ All settings are available in the Admin UI (JSON config):
 
 ### **WORK IN PROGRESS**
 
-- (ssbingo) Phase 3 (local transport) — connection mode `local` now fully drives the adapter over the LAN: it reads the gateway + pumps from the DeviceTable, creates the same objects as the cloud mode, and polls live telemetry (power/speed/temperature/voltage) via the shared 0x5500 reads; on/off and speed commands go over the local channel too. The poll/command path is now transport-agnostic (local preferred, cloud fallback)
-- (ssbingo) Phase 3 (local transport) — the local LAN channel now connects end-to-end against a real controller: UDP wake → the controller connects back over TLS (legacy RSA cipher, wide-validity self-signed cert) → PASSWORD_CHECK authenticates, and the controller answers discovery/poll/alive. Local inventory + telemetry over this channel follow next
-- (ssbingo) Phase 3 (local transport): the wake packet now advertises a reachable local address — when `bind` is `0.0.0.0` the adapter auto-detects the host IP that routes to the controller instead of advertising `0.0.0.0`; the wake packet is also logged as hex for diagnostics
-- (ssbingo) Phase 3 (local transport, foundation): TLS server, UDP wake (TCP_REQ) and the 64-byte password handshake over the controller's legacy TLS are in place under connection mode `local`; the ONet application packets are shared with the cloud path. Local inventory and telemetry over the LAN follow next
+- (ssbingo) Phase 3 — local (LAN) transport is complete: connection mode `local` runs the whole adapter over the local network without the cloud. The adapter wakes the controller over UDP, the controller connects back over TLS (legacy cipher, self-signed certificate), authenticates with the device password, then reads the gateway and pumps, polls live telemetry (power, speed, temperature, voltage) and controls on/off and speed — all over the LAN. The poll and command path is transport-agnostic (local preferred, cloud fallback), and on/off is derived from live telemetry. Note: the speed setpoint value is not read back over the local channel yet
+- (ssbingo) Documentation: multilingual README docs in 11 languages (under `doc/<lang>/`), beginner handbooks in English and German with a step-by-step mitmproxy guide (available as PDF), a Documentation section and CHANGELOG_OLD.md
 
 ### 0.0.2 (2026-07-23)
 

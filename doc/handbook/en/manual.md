@@ -271,17 +271,29 @@ on('pondpump.0.pumps.1234567.telemetry.power', (obj) => {
 
 ---
 
-## 8. Local mode (in-house LAN) — experimental
+## 8. Local mode (in-house LAN)
 
-The long-term goal is to control the pumps **without the internet**, directly over your LAN. The
-foundation is in place (connection mode `local`):
+The adapter can run **entirely over your local network**, without the internet. Set **Connection
+mode** to **`local`** and it will:
 
-- ioBroker runs a small **TLS server**; the adapter sends a **UDP wake** packet to the controller,
-  which then **connects back** and authenticates with the **device password**.
+- start a small **TLS server** and send a **UDP wake** packet to the controller,
+- the controller **connects back** over TLS and authenticates with the **device password**,
+- then the adapter reads the gateway + pumps and polls **live telemetry** (power, speed, temperature,
+  voltage), and lets you **switch on/off and set the speed** — all over the LAN.
 
-To try it you need the **controller's IP**, the **64-character device password**, and an open
-network path (UDP 5959 out to the controller, TCP 5999 back to ioBroker). Live pump data over the
-local channel is still being finished — for everyday use, stay on **`cloud`** mode for now.
+**What you need:**
+
+- **Controller IP** — the EGC controller's address in your network.
+- **Device password** — the 64-character value (see chapter 4.4 for how to read it).
+- an open network path: **UDP 5959** out to the controller and **TCP 5999** back to ioBroker. If the
+  controller and ioBroker are on different subnets/VLANs, allow those two directions.
+
+Leave **Bind address** at `0.0.0.0` — the adapter auto-detects the host address the controller should
+connect back to.
+
+> **Note:** the current **speed setpoint** (the % value) is not read back over the local channel — the
+> `control.speed` state reflects the last value you set from ioBroker. **On/off is read live** (derived
+> from the pump's power draw), so it also reflects changes you make in the OASE app.
 
 ---
 

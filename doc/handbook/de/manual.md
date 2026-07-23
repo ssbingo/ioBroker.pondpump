@@ -279,18 +279,30 @@ on('pondpump.0.pumps.1234567.telemetry.power', (obj) => {
 
 ---
 
-## 8. Lokaler Modus (hausinternes LAN) — experimentell
+## 8. Lokaler Modus (hausinternes LAN)
 
-Das langfristige Ziel ist, die Pumpen **ohne Internet** direkt über dein LAN zu steuern. Die
-Grundlage ist vorhanden (Verbindungsmodus `local`):
+Der Adapter kann **komplett über dein lokales Netzwerk** laufen, ohne Internet. Stelle den
+**Verbindungsmodus** auf **`local`**, dann:
 
-- ioBroker betreibt einen kleinen **TLS-Server**; der Adapter sendet ein **UDP-Weck**-Paket an den
-  Controller, der sich daraufhin **zurückverbindet** und mit dem **Gerätepasswort** authentifiziert.
+- startet ioBroker einen kleinen **TLS-Server** und sendet ein **UDP-Weck**-Paket an den Controller,
+- der Controller **verbindet sich zurück** über TLS und authentifiziert mit dem **Gerätepasswort**,
+- danach liest der Adapter Gateway + Pumpen, pollt **Live-Telemetrie** (Leistung, Drehzahl,
+  Temperatur, Spannung) und lässt dich **ein-/ausschalten und die Drehzahl setzen** — alles über LAN.
 
-Zum Ausprobieren brauchst du die **Controller-IP**, das **64-stellige Gerätepasswort** und einen
-offenen Netzwerkpfad (UDP 5959 hinaus zum Controller, TCP 5999 zurück zu ioBroker). Live-Pumpendaten
-über den lokalen Kanal werden noch fertiggestellt — für den Alltagsbetrieb bleibe vorerst im
-**`cloud`**-Modus.
+**Was du brauchst:**
+
+- **Controller-IP** — die Adresse des EGC-Controllers in deinem Netzwerk.
+- **Gerätepasswort** — der 64-stellige Wert (wie du ihn ausliest, steht in Kapitel 4.4).
+- einen offenen Netzwerkpfad: **UDP 5959** hinaus zum Controller und **TCP 5999** zurück zu ioBroker.
+  Liegen Controller und ioBroker in unterschiedlichen Subnetzen/VLANs, gib diese zwei Richtungen frei.
+
+Lass die **Bind-Adresse** auf `0.0.0.0` — der Adapter ermittelt automatisch die Host-Adresse, zu der
+der Controller sich zurückverbinden soll.
+
+> **Hinweis:** Der aktuelle **Drehzahl-Sollwert** (der %-Wert) wird über den lokalen Kanal nicht
+> zurückgelesen — der State `control.speed` zeigt den zuletzt in ioBroker gesetzten Wert. **An/Aus
+> wird live gelesen** (aus der Leistungsaufnahme der Pumpe) und spiegelt damit auch Änderungen aus
+> der OASE-App.
 
 ---
 

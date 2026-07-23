@@ -73,7 +73,7 @@
     "lint": "eslint -c eslint.config.mjs .",
     "translate": "translate-adapter",
     "handbook:pdf": "node scripts/build-handbook-pdf.mjs",
-    "release": "release-script --numChangelogEntries 10"
+    "release": "release-script --numChangelogEntries 10 --numNews 1"
   },
   "bugs": {
     "url": "https://github.com/ssbingo/ioBroker.pondpump/issues"
