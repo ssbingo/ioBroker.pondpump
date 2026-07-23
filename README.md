@@ -81,6 +81,7 @@ Releases are created with `npm run release` (release-script) and published autom
 
 ### **WORK IN PROGRESS**
 
+- (ssbingo) Named more telemetry: temperature (sensors 3+5, °C) and mains voltage (sensor 6, V), identified from a speed sweep (they stay constant while rpm/power scale). Unused/always-zero sensors are dropped; the fast sensors (rpm/power) are read every poll and the slow ones only occasionally to cut the cloud request load
 - (ssbingo) Sensor discovery: on first contact each pump is scanned for all RDM sensors (0..10) via the live 0x5500 read; every sensor that answers is exposed and read live, not just the few the cloud inventory lists
 - (ssbingo) Live telemetry: pump power/speed (and the raw sensors) are now read live through the SendONetPacket tunnel (0x5500 sensor read) instead of the minutes-stale cloud inventory, so they track speed changes within one poll
 - (ssbingo) Diagnostics: still-unmapped RDM sensors are exposed as raw read-only states under `telemetry.raw.sensorN` so their meaning can be classified (RDM DEVICE_INFO reports 11 sensors; the cloud only pushes a few values)

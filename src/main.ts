@@ -15,7 +15,7 @@ import {
     DEFAULT_SCOPE,
     DEFAULT_TOKEN_URL,
 } from "./lib/cloud/client";
-import { type PumpInfo, parseInventory } from "./lib/cloud/inventory";
+import { type PumpInfo, parseInventory, SENSOR_POWER_W, SENSOR_SPEED_RPM } from "./lib/cloud/inventory";
 import { ensureGatewayObjects, ensurePumpObjects, writeGatewayStates, writePumpStates } from "./lib/objects";
 import { buildSensorRead, buildSetDimmer, buildSetOn, DIMMER_MAX, parseSensorReadReply } from "./lib/cloud/onet";
 
@@ -30,6 +30,12 @@ const COMMAND_CONFIRM_DELAY_MS = 2000;
 
 /** Number of RDM sensors (0..N-1) to scan once per pump (RDM DEVICE_INFO reports 11). */
 const SENSOR_SCAN_COUNT = 11;
+
+/** Sensors read on every poll (fast-changing, worth tracking live). */
+const FAST_SENSOR_IDS = [SENSOR_SPEED_RPM, SENSOR_POWER_W];
+
+/** Read the slow sensors (temperature, voltage, …) only every Nth poll to spare the gateway. */
+const SLOW_SENSOR_EVERY = 6;
 
 /** Control data needed to address a pump for commands. */
 interface PumpControl {
@@ -291,17 +297,25 @@ class Pondpump extends utils.Adapter {
             for (const pump of inventory.pumps) {
                 this.cachePumpControl(pump);
 
-                // Discover the pump's full live sensor set once (RDM DEVICE_INFO reports 11 sensors,
-                // but the cloud inventory only exposes a few). Scan 0..10 via 0x5500 and keep the
-                // ones that answer; subsequent polls only read the discovered set.
+                // Discover the pump's live sensor set once (RDM DEVICE_INFO reports 11 sensors, but
+                // the cloud inventory only exposes a few). Scan 0..10 via 0x5500 on first contact,
+                // then only re-read the present ones; the discovery scan doubles as the first read.
                 let sensorIds = this.liveSensorIds.get(pump.deviceNumber);
+                let liveSensors: Record<number, number>;
                 if (sensorIds === undefined) {
-                    sensorIds = await this.discoverLiveSensors(pump.index);
+                    const discovery = await this.discoverLiveSensors(pump.index);
+                    sensorIds = discovery.ids;
+                    liveSensors = discovery.values;
                     this.liveSensorIds.set(pump.deviceNumber, sensorIds);
+                } else {
+                    // Read fast sensors (rpm/power) every poll; slow ones (temperature, voltage, …)
+                    // only every SLOW_SENSOR_EVERY-th poll to keep the request load off the gateway.
+                    const readSlow = id % SLOW_SENSOR_EVERY === 0;
+                    const idsToRead = readSlow ? sensorIds : sensorIds.filter(s => FAST_SENSOR_IDS.includes(s));
+                    liveSensors = await this.readLiveSensors(pump.index, idsToRead);
                 }
 
                 // The inventory's rdmData is minutes-stale; use fresh live values for telemetry.
-                const liveSensors = await this.readLiveSensors(pump.index, sensorIds);
                 const livePump: PumpInfo = {
                     ...pump,
                     sensors: Object.keys(liveSensors).length > 0 ? liveSensors : pump.sensors,
@@ -359,25 +373,31 @@ class Pondpump extends utils.Adapter {
     }
 
     /**
-     * Discover which RDM sensors (0..10) a device answers to via a live 0x5500 read.
+     * Discover which RDM sensors a device actually uses. Scans 0..10 via a live 0x5500 read and
+     * keeps the ones that return a non-zero value (the 0-valued ones are unused on this device).
      *
      * @param deviceIndex - the pump's device index
-     * @returns the sorted list of sensor numbers that returned a value
+     * @returns the present sensor ids (sorted) and their scan values
      */
-    private async discoverLiveSensors(deviceIndex: number): Promise<number[]> {
-        const found: number[] = [];
+    private async discoverLiveSensors(deviceIndex: number): Promise<{ ids: number[]; values: Record<number, number> }> {
+        const values: Record<number, number> = {};
         const scan: string[] = [];
         for (let sensorId = 0; sensorId < SENSOR_SCAN_COUNT; sensorId++) {
             const value = await this.readLiveSensor(deviceIndex, sensorId);
             scan.push(`s${sensorId}=${value ?? "-"}`);
-            if (value !== undefined) {
-                found.push(sensorId);
+            if (value !== undefined && value !== 0) {
+                values[sensorId] = value;
             }
         }
         this.log.info(
             `[cloud/live] device index ${deviceIndex} sensor scan (0..${SENSOR_SCAN_COUNT - 1}): ${scan.join(" ")}`,
         );
-        return found;
+        return {
+            ids: Object.keys(values)
+                .map(Number)
+                .sort((a, b) => a - b),
+            values,
+        };
     }
 
     /**

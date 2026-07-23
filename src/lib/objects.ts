@@ -10,7 +10,16 @@
  * Control states (on/speed/speedRaw) are writable (Phase 2); commands are handled in main.ts.
  */
 
-import { dimmerToPercent, type GatewayInfo, type PumpInfo, SENSOR_POWER_W, SENSOR_SPEED_RPM } from "./cloud/inventory";
+import {
+    dimmerToPercent,
+    type GatewayInfo,
+    type PumpInfo,
+    SENSOR_POWER_W,
+    SENSOR_SPEED_RPM,
+    SENSOR_TEMPERATURE2_C,
+    SENSOR_TEMPERATURE_C,
+    SENSOR_VOLTAGE_V,
+} from "./cloud/inventory";
 
 /** Subset of the adapter API needed to create objects and write states. */
 export interface ObjectWriter {
@@ -193,6 +202,39 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
                 write: false,
             }),
         },
+        {
+            id: `${base}.telemetry.temperature`,
+            obj: stateObj({
+                name: "Temperature",
+                type: "number",
+                role: "value.temperature",
+                unit: "°C",
+                read: true,
+                write: false,
+            }),
+        },
+        {
+            id: `${base}.telemetry.temperature2`,
+            obj: stateObj({
+                name: "Temperature 2",
+                type: "number",
+                role: "value.temperature",
+                unit: "°C",
+                read: true,
+                write: false,
+            }),
+        },
+        {
+            id: `${base}.telemetry.voltage`,
+            obj: stateObj({
+                name: "Mains voltage",
+                type: "number",
+                role: "value.voltage",
+                unit: "V",
+                read: true,
+                write: false,
+            }),
+        },
     ];
 
     // Diagnostic: expose still-unmapped RDM sensor values so their meaning can be
@@ -223,7 +265,13 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
  * @param pump - pump info from the inventory
  */
 function unmappedSensorIds(pump: PumpInfo): number[] {
-    const mapped = new Set<number>([SENSOR_SPEED_RPM, SENSOR_POWER_W]);
+    const mapped = new Set<number>([
+        SENSOR_SPEED_RPM,
+        SENSOR_POWER_W,
+        SENSOR_TEMPERATURE_C,
+        SENSOR_TEMPERATURE2_C,
+        SENSOR_VOLTAGE_V,
+    ]);
     return Object.keys(pump.sensors)
         .map(Number)
         .filter(id => !mapped.has(id))
@@ -266,6 +314,15 @@ export function pumpStateValues(pump: PumpInfo): StateValueDef[] {
     }
     if (pump.sensors[SENSOR_SPEED_RPM] !== undefined) {
         values.push({ id: `${base}.telemetry.speed`, val: pump.sensors[SENSOR_SPEED_RPM] });
+    }
+    if (pump.sensors[SENSOR_TEMPERATURE_C] !== undefined) {
+        values.push({ id: `${base}.telemetry.temperature`, val: pump.sensors[SENSOR_TEMPERATURE_C] });
+    }
+    if (pump.sensors[SENSOR_TEMPERATURE2_C] !== undefined) {
+        values.push({ id: `${base}.telemetry.temperature2`, val: pump.sensors[SENSOR_TEMPERATURE2_C] });
+    }
+    if (pump.sensors[SENSOR_VOLTAGE_V] !== undefined) {
+        values.push({ id: `${base}.telemetry.voltage`, val: pump.sensors[SENSOR_VOLTAGE_V] });
     }
     for (const sensorId of unmappedSensorIds(pump)) {
         values.push({ id: `${base}.telemetry.raw.sensor${sensorId}`, val: pump.sensors[sensorId] });

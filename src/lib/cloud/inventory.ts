@@ -62,8 +62,15 @@ export interface PumpInfo {
 
 /** RDM parameter id carrying sensor values (RDM SENSOR_VALUE). */
 const RDM_SENSOR_VALUE_PARAM = 513;
-/** Sensor ids mapped to physical quantities (calibrated against the OASE app). */
+/**
+ * RDM sensor ids mapped to physical quantities. Sensors 1 (rpm) and 10 (power) were calibrated
+ * against the OASE app; 3/5 (temperature) and 6 (voltage) were identified from a speed sweep
+ * (they stay constant while rpm/power scale) and their physical magnitude (~29 °C, ~220 V).
+ */
 export const SENSOR_SPEED_RPM = 1;
+export const SENSOR_TEMPERATURE_C = 3;
+export const SENSOR_TEMPERATURE2_C = 5;
+export const SENSOR_VOLTAGE_V = 6;
 export const SENSOR_POWER_W = 10;
 
 /** The EGC gateway (controller) from the inventory. */

@@ -26,7 +26,7 @@ const PUMP: PumpInfo = {
     isConnected: true,
     controlAddress: 0x21,
     dmx: { fcStatus: "SfcOff", fcMode: 0, dimmerValue: 178, deviceOn: true },
-    sensors: { 1: 2523, 10: 110, 2: 845 },
+    sensors: { 1: 2523, 10: 110, 2: 845, 3: 30, 5: 29, 6: 223 },
     rdm: [],
 };
 
@@ -46,6 +46,8 @@ const ALLOWED_ROLES = new Set([
     "value",
     "value.power",
     "value.speed",
+    "value.temperature",
+    "value.voltage",
 ]);
 
 describe("gatewayObjectDefs", () => {
@@ -111,16 +113,27 @@ describe("pumpObjectDefs", () => {
         expect(speed.unit).to.equal("rpm");
     });
 
-    it("maps sensor 10 -> power (W) and sensor 1 -> speed (rpm)", () => {
+    it("maps sensors to named telemetry (power, speed, temperature, voltage)", () => {
+        const power = map.get(`${base}.telemetry.temperature`)?.common as ioBroker.StateCommon;
+        expect(power.role).to.equal("value.temperature");
+        expect(power.unit).to.equal("°C");
+        const voltage = map.get(`${base}.telemetry.voltage`)?.common as ioBroker.StateCommon;
+        expect(voltage.role).to.equal("value.voltage");
+        expect(voltage.unit).to.equal("V");
+
         const values = new Map(pumpStateValues(PUMP).map(v => [v.id, v.val]));
-        expect(values.get(`${base}.telemetry.power`)).to.equal(110);
-        expect(values.get(`${base}.telemetry.speed`)).to.equal(2523);
+        expect(values.get(`${base}.telemetry.power`)).to.equal(110); // sensor 10
+        expect(values.get(`${base}.telemetry.speed`)).to.equal(2523); // sensor 1
+        expect(values.get(`${base}.telemetry.temperature`)).to.equal(30); // sensor 3
+        expect(values.get(`${base}.telemetry.temperature2`)).to.equal(29); // sensor 5
+        expect(values.get(`${base}.telemetry.voltage`)).to.equal(223); // sensor 6
     });
 
-    it("exposes unmapped sensors as raw diagnostic states (but not the mapped ones)", () => {
+    it("exposes only unmapped sensors as raw (not the mapped 1/10/3/5/6)", () => {
         expect(map.get(`${base}.telemetry.raw.sensor2`)?.type).to.equal("state");
-        expect(map.has(`${base}.telemetry.raw.sensor1`)).to.equal(false); // mapped -> speed
-        expect(map.has(`${base}.telemetry.raw.sensor10`)).to.equal(false); // mapped -> power
+        for (const mapped of [1, 3, 5, 6, 10]) {
+            expect(map.has(`${base}.telemetry.raw.sensor${mapped}`), `sensor${mapped}`).to.equal(false);
+        }
         const values = new Map(pumpStateValues(PUMP).map(v => [v.id, v.val]));
         expect(values.get(`${base}.telemetry.raw.sensor2`)).to.equal(845);
     });
