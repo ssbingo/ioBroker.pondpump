@@ -271,7 +271,7 @@ class Pondpump extends utils.Adapter {
                     await ensurePumpObjects(this, pump);
                     this.ensuredPumps.add(pump.deviceNumber);
                     this.log.info(
-                        `[poll] #${id} discovered pump ${pump.deviceNumber} ` +
+                        `[poll] #${id} discovered pump ${pump.deviceNumber} "${pump.name ?? "?"}" ` +
                             `(index ${pump.index}, control address ${pump.controlAddress !== undefined ? `0x${pump.controlAddress.toString(16)}` : "unknown"})`,
                     );
                 }

@@ -109,7 +109,7 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
     const base = pumpId(pump.deviceNumber);
     return [
         { id: PUMPS_ROOT_ID, obj: folder("Pumps") },
-        { id: base, obj: device(`Pump ${pump.deviceNumber}`) },
+        { id: base, obj: device(pump.name ? `${pump.name} (${pump.deviceNumber})` : `Pump ${pump.deviceNumber}`) },
 
         { id: `${base}.control`, obj: channel("Control") },
         {

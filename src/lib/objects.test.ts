@@ -20,6 +20,7 @@ const GW: GatewayInfo = {
 const PUMP: PumpInfo = {
     deviceNumber: 1000001,
     index: 0,
+    name: "Main Pump",
     articleNumber: 73656,
     deviceType: "GardenPump",
     isConnected: true,
@@ -79,6 +80,10 @@ describe("pumpObjectDefs", () => {
         expect(map.get(base)?.type).to.equal("device");
         expect(map.get(`${base}.control`)?.type).to.equal("channel");
         expect(map.get(`${base}.status`)?.type).to.equal("channel");
+    });
+
+    it("names the pump device after its controller name", () => {
+        expect(map.get(base)?.common.name).to.equal("Main Pump (1000001)");
     });
 
     it("uses switch.power / level.dimmer / indicator.connected roles", () => {

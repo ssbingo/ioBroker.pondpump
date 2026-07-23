@@ -42,6 +42,8 @@ export interface PumpInfo {
     deviceNumber: number;
     /** Zero-based position in the inventory device list (used for on/off commands). */
     index: number;
+    /** User-assigned pump name from the controller (from the DeviceTable telemetry), if known. */
+    name?: string;
     /** OASE article number, e.g. 73656. */
     articleNumber?: number;
     /** Device type string, e.g. "GardenPump". */
@@ -91,6 +93,88 @@ const ATTR_POND_NAME = 103;
 /** RDM parameter id whose payload carries the pump's control address, and the byte offset of it. */
 const CONTROL_ADDRESS_PARAM = 96;
 const CONTROL_ADDRESS_OFFSET = 15;
+
+/**
+ * Extract the printable device name from a DeviceTable reply (null-padded ASCII after a header).
+ *
+ * @param replyB64 - base64 of the DeviceTable reply packet
+ */
+function extractDeviceName(replyB64: string): string | undefined {
+    try {
+        const bytes = Buffer.from(replyB64, "base64");
+        // The name is the longest run of printable ASCII after the packet header.
+        let best = "";
+        let current = "";
+        for (let i = 8; i < bytes.length; i++) {
+            const c = bytes[i];
+            if (c >= 0x20 && c <= 0x7e) {
+                current += String.fromCharCode(c);
+            } else {
+                if (current.length > best.length) {
+                    best = current;
+                }
+                current = "";
+            }
+        }
+        if (current.length > best.length) {
+            best = current;
+        }
+        best = best.trim();
+        return best.length >= 2 ? best : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
+/**
+ * Map each device slot index to its name from the gateway's DeviceTable telemetry.
+ *
+ * @param incrementStates - the gateway's `incrementStates` array
+ */
+function parseDeviceNames(incrementStates: unknown): Map<number, string> {
+    const map = new Map<number, string>();
+    if (!Array.isArray(incrementStates)) {
+        return map;
+    }
+    const deviceTable = incrementStates.find(
+        e => isRecord(e) && toStringOrUndefined(pick(e, "key", "Key")) === "DeviceTable",
+    );
+    if (!isRecord(deviceTable)) {
+        return map;
+    }
+    const value = pick(deviceTable, "value", "Value");
+    const data = isRecord(value) ? pick(value, "data", "Data") : undefined;
+    if (!Array.isArray(data)) {
+        return map;
+    }
+    for (const entry of data) {
+        if (!isRecord(entry)) {
+            continue;
+        }
+        const replyB64 = toStringOrUndefined(pick(entry, "reply", "Reply"));
+        if (!replyB64) {
+            continue;
+        }
+        // Slot index = first byte of the request (an empty request means slot 0).
+        let index = 0;
+        const requestB64 = toStringOrUndefined(pick(entry, "request", "Request"));
+        if (requestB64) {
+            try {
+                const req = Buffer.from(requestB64, "base64");
+                if (req.length > 0) {
+                    index = req[0];
+                }
+            } catch {
+                // keep default index 0
+            }
+        }
+        const name = extractDeviceName(replyB64);
+        if (name) {
+            map.set(index, name);
+        }
+    }
+    return map;
+}
 
 /**
  * Extract a pump's control address (RDM address) from its RDM parameter 96, if present.
@@ -359,6 +443,11 @@ export function parseInventory(raw: unknown): Inventory {
     const gatewayRaw = Array.isArray(gateways) && gateways.length > 0 ? gateways[0] : pick(raw, "gateway", "Gateway");
     const gateway = parseGateway(gatewayRaw);
 
+    // Names come from the gateway's DeviceTable telemetry, keyed by device slot index.
+    const deviceNames = parseDeviceNames(
+        isRecord(gatewayRaw) ? pick(gatewayRaw, "incrementStates", "IncrementStates") : undefined,
+    );
+
     // Devices live under the gateway in the real payload, or at top level in the flat shape.
     const devicesRaw =
         (isRecord(gatewayRaw) ? pick(gatewayRaw, "devices", "Devices") : undefined) ?? pick(raw, "devices", "Devices");
@@ -374,7 +463,9 @@ export function parseInventory(raw: unknown): Inventory {
             if (deviceType !== undefined && deviceType !== PUMP_DEVICE_TYPE) {
                 continue; // only pumps are handled in this adapter
             }
-            pumps.push(parsePump(device, i));
+            const pump = parsePump(device, i);
+            pump.name = deviceNames.get(i);
+            pumps.push(pump);
         }
     }
 

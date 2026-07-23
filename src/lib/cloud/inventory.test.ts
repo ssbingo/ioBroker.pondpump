@@ -2,6 +2,24 @@ import { expect } from "chai";
 import { dimmerToPercent, parseInventory } from "./inventory";
 
 /**
+ * Build a DeviceTable reply packet (header + null-padded ASCII name), base64-encoded.
+ *
+ * @param name - the device name to embed
+ */
+function deviceTableReply(name: string): string {
+    return Buffer.concat([Buffer.alloc(16), Buffer.from(name, "ascii"), Buffer.alloc(1)]).toString("base64");
+}
+
+/**
+ * Build a DeviceTable request whose first byte is the device slot index.
+ *
+ * @param index - the device slot index
+ */
+function slotRequest(index: number): string {
+    return Buffer.from([index, 0, 0, 0, 0, 0]).toString("base64");
+}
+
+/**
  * Sanitized fixture in the REAL cloud wire shape (`{ user, gateways: [ { devices } ] }`).
  * Identifiers are fake and no password attribute (id 101) is included; the dmxPumpState
  * numbers are from the real capture (178 -> 70 %, 140 -> 55 %). A non-pump device is
@@ -20,6 +38,17 @@ const REAL_SAMPLE = {
             customAttributesJson:
                 '[{"Id":102,"Value":{"Value":"51.5","Timestamp":"2025-02-23T13:21:13+00:00"}},' +
                 '{"Id":103,"Value":{"Value":"Test Pond","Timestamp":"2025-11-26T09:26:47+00:00"}}]',
+            incrementStates: [
+                {
+                    key: "DeviceTable",
+                    value: {
+                        data: [
+                            { request: slotRequest(0), reply: deviceTableReply("Main Pump") },
+                            { request: slotRequest(1), reply: deviceTableReply("Filter Pump") },
+                        ],
+                    },
+                },
+            ],
             devices: [
                 {
                     id: "00000000-0000-0000-0000-000000000000|1000001",
@@ -84,6 +113,12 @@ describe("parseInventory (real cloud shape)", () => {
         expect(inv.pumps[1].index).to.equal(1);
         expect(inv.pumps[0].controlAddress).to.equal(0x21); // from RDM param 96 byte[15]
         expect(inv.pumps[1].controlAddress).to.equal(undefined); // pump 2 has no param 96 in the fixture
+    });
+
+    it("reads pump names from the DeviceTable telemetry by device index", () => {
+        const inv = parseInventory(REAL_SAMPLE);
+        expect(inv.pumps[0].name).to.equal("Main Pump");
+        expect(inv.pumps[1].name).to.equal("Filter Pump");
     });
 
     it("unwraps dmxPumpState.value and connectionState.isConnected", () => {
