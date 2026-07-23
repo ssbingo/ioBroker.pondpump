@@ -28,6 +28,9 @@ const REFRESH_TOKEN_STATE = "cloud.refreshToken";
 /** Delay before the confirmation poll that reconciles a sent command (ms). */
 const COMMAND_CONFIRM_DELAY_MS = 2000;
 
+/** Number of RDM sensors (0..N-1) to scan once per pump (RDM DEVICE_INFO reports 11). */
+const SENSOR_SCAN_COUNT = 11;
+
 /** Control data needed to address a pump for commands. */
 interface PumpControl {
     deviceNumber: number;
@@ -73,6 +76,8 @@ class Pondpump extends utils.Adapter {
     private readonly pumpControl = new Map<number, PumpControl>();
     /** Rolling transaction number for ONet packets (0..255). */
     private txn = 0;
+    /** Live sensor ids discovered per pump device number (RDM sensors that answer a 0x5500 read). */
+    private readonly liveSensorIds = new Map<number, number[]>();
 
     public constructor(options: Partial<utils.AdapterOptions> = {}) {
         super({
@@ -285,17 +290,33 @@ class Pondpump extends utils.Adapter {
             await writeGatewayStates(this, inventory.gateway, online);
             for (const pump of inventory.pumps) {
                 this.cachePumpControl(pump);
+
+                // Discover the pump's full live sensor set once (RDM DEVICE_INFO reports 11 sensors,
+                // but the cloud inventory only exposes a few). Scan 0..10 via 0x5500 and keep the
+                // ones that answer; subsequent polls only read the discovered set.
+                let sensorIds = this.liveSensorIds.get(pump.deviceNumber);
+                if (sensorIds === undefined) {
+                    sensorIds = await this.discoverLiveSensors(pump.index);
+                    this.liveSensorIds.set(pump.deviceNumber, sensorIds);
+                }
+
+                // The inventory's rdmData is minutes-stale; use fresh live values for telemetry.
+                const liveSensors = await this.readLiveSensors(pump.index, sensorIds);
+                const livePump: PumpInfo = {
+                    ...pump,
+                    sensors: Object.keys(liveSensors).length > 0 ? liveSensors : pump.sensors,
+                };
+
                 if (!this.ensuredPumps.has(pump.deviceNumber)) {
-                    await ensurePumpObjects(this, pump);
+                    await ensurePumpObjects(this, livePump);
                     this.ensuredPumps.add(pump.deviceNumber);
                     this.log.info(
                         `[poll] #${id} discovered pump ${pump.deviceNumber} "${pump.name ?? "?"}" ` +
-                            `(index ${pump.index}, control address ${pump.controlAddress !== undefined ? `0x${pump.controlAddress.toString(16)}` : "unknown"})`,
+                            `(index ${pump.index}, control address ${pump.controlAddress !== undefined ? `0x${pump.controlAddress.toString(16)}` : "unknown"}, ` +
+                            `live sensors [${sensorIds.join(", ")}])`,
                     );
                 }
-                // The inventory's rdmData is minutes-stale; read the live sensor values through the
-                // SendONetPacket tunnel (0x5500) and use those for the telemetry states.
-                const livePump = await this.withLiveSensors(pump);
+
                 await writePumpStates(this, livePump);
                 this.log.debug(
                     `[poll] #${id} pump ${pump.deviceNumber}: on=${livePump.dmx.deviceOn} ` +
@@ -338,30 +359,48 @@ class Pondpump extends utils.Adapter {
     }
 
     /**
-     * Return a copy of the pump with its sensor values replaced by fresh live reads over the
-     * SendONetPacket tunnel (0x5500). Falls back to the (stale) inventory values on any failure.
+     * Discover which RDM sensors (0..10) a device answers to via a live 0x5500 read.
      *
-     * @param pump - the pump as parsed from the inventory
+     * @param deviceIndex - the pump's device index
+     * @returns the sorted list of sensor numbers that returned a value
      */
-    private async withLiveSensors(pump: PumpInfo): Promise<PumpInfo> {
-        if (!this.cloud || !this.gatewayId) {
-            return pump;
-        }
-        const sensors = { ...pump.sensors };
-        const read: string[] = [];
-        for (const sensorId of Object.keys(pump.sensors)
-            .map(Number)
-            .sort((a, b) => a - b)) {
-            const value = await this.readLiveSensor(pump.index, sensorId);
+    private async discoverLiveSensors(deviceIndex: number): Promise<number[]> {
+        const found: number[] = [];
+        const scan: string[] = [];
+        for (let sensorId = 0; sensorId < SENSOR_SCAN_COUNT; sensorId++) {
+            const value = await this.readLiveSensor(deviceIndex, sensorId);
+            scan.push(`s${sensorId}=${value ?? "-"}`);
             if (value !== undefined) {
-                sensors[sensorId] = value;
+                found.push(sensorId);
+            }
+        }
+        this.log.info(
+            `[cloud/live] device index ${deviceIndex} sensor scan (0..${SENSOR_SCAN_COUNT - 1}): ${scan.join(" ")}`,
+        );
+        return found;
+    }
+
+    /**
+     * Read the given live sensor values for a device via 0x5500.
+     *
+     * @param deviceIndex - the pump's device index
+     * @param sensorIds - the sensor numbers to read
+     * @returns a map of sensor number to live value (only successful reads)
+     */
+    private async readLiveSensors(deviceIndex: number, sensorIds: number[]): Promise<Record<number, number>> {
+        const result: Record<number, number> = {};
+        const read: string[] = [];
+        for (const sensorId of sensorIds) {
+            const value = await this.readLiveSensor(deviceIndex, sensorId);
+            if (value !== undefined) {
+                result[sensorId] = value;
                 read.push(`s${sensorId}=${value}`);
             }
         }
         if (read.length > 0) {
-            this.log.debug(`[cloud/live] pump ${pump.deviceNumber} (index ${pump.index}): ${read.join(" ")}`);
+            this.log.debug(`[cloud/live] device index ${deviceIndex}: ${read.join(" ")}`);
         }
-        return { ...pump, sensors };
+        return result;
     }
 
     /**
