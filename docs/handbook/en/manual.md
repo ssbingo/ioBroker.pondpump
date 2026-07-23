@@ -83,19 +83,50 @@ Don't worry if you've never done this — follow the steps below exactly.
   <figcaption>mitmproxy sits between your phone and the OASE cloud, so you can read the login and copy the token.</figcaption>
 </figure>
 
-### 4.1 Install mitmproxy
+### 4.1 Install and start mitmproxy
 
-1. Go to **<https://mitmproxy.org>** and download it for your computer (Windows, macOS or Linux).
-   It's free.
-2. We'll use **mitmweb**, the version with a **browser interface** (easiest for beginners). Open a
-   terminal / command prompt and run:
+mitmproxy is a small, free program. We'll use its browser version, **mitmweb**. Follow the steps for
+**your** operating system.
 
-   ```bash
+#### Windows (using PowerShell)
+
+1. Open your web browser and go to **<https://mitmproxy.org/downloads/>**.
+2. Download the **Windows** package (the newest version — usually a **`.msi`** installer).
+3. Open the downloaded file and click through the installer: **Next → Next → Install → Finish**.
+4. Now open **PowerShell**:
+   - Press the **Windows key**, type **`PowerShell`**, and click **Windows PowerShell** in the list.
+   - A dark window with a blinking text cursor appears — this is the command line.
+5. Type this command and press **Enter**:
+
+   ```powershell
    mitmweb
    ```
 
-   This opens a web page at **<http://127.0.0.1:8081>** (the control panel) and starts listening for
-   phone traffic on **port 8080**.
+6. If Windows asks whether to **allow network access**, click **Allow**. Your browser opens a new tab
+   at **<http://127.0.0.1:8081>** — that's the mitmproxy control panel. mitmproxy is now waiting for
+   phone traffic on **port 8080**. ✅
+7. **Keep this PowerShell window open** the whole time — closing it stops mitmproxy. Later, to stop
+   it, click the window and press **Ctrl + C**.
+
+> **"mitmweb is not recognized"?** Close PowerShell and open it again (so it notices the newly
+> installed program). If you downloaded the **`.zip`** version instead of the installer, unzip it,
+> then in PowerShell type `cd ` followed by the folder path and run **`.\mitmweb.exe`**.
+
+#### macOS
+
+1. Open **Terminal** (press **Cmd + Space**, type **`Terminal`**, press Enter).
+2. The easiest way is with [Homebrew](https://brew.sh): run `brew install mitmproxy`. (No Homebrew?
+   Download the macOS build from **<https://mitmproxy.org/downloads/>** and unzip it.)
+3. Run **`mitmweb`**. A browser tab opens at **<http://127.0.0.1:8081>**.
+
+#### Linux
+
+1. Install it with **`pipx install mitmproxy`** (or your distribution's package, or the binaries from
+   the downloads page).
+2. Run **`mitmweb`** in a terminal and open **<http://127.0.0.1:8081>**.
+
+In every case: the browser page on **:8081** is the control panel you'll watch, and **port 8080** is
+where your phone will send its traffic (next step).
 
 ### 4.2 Send your phone's traffic through mitmproxy
 

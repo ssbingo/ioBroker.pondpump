@@ -84,19 +84,52 @@ Keine Sorge, falls du so etwas noch nie gemacht hast — folge einfach den Schri
   <figcaption>mitmproxy sitzt zwischen deinem Smartphone und der OASE-Cloud, sodass du den Login mitlesen und den Token kopieren kannst.</figcaption>
 </figure>
 
-### 4.1 mitmproxy installieren
+### 4.1 mitmproxy installieren und starten
 
-1. Gehe auf **<https://mitmproxy.org>** und lade es für deinen Rechner herunter (Windows, macOS oder
-   Linux). Es ist kostenlos.
-2. Wir verwenden **mitmweb**, die Variante mit **Browser-Oberfläche** (am einfachsten für Einsteiger).
-   Öffne ein Terminal / eine Eingabeaufforderung und führe aus:
+mitmproxy ist ein kleines, kostenloses Programm. Wir nutzen seine Browser-Variante **mitmweb**. Folge
+den Schritten für **dein** Betriebssystem.
 
-   ```bash
+#### Windows (mit PowerShell)
+
+1. Öffne deinen Webbrowser und gehe auf **<https://mitmproxy.org/downloads/>**.
+2. Lade das **Windows**-Paket herunter (die neueste Version — meist ein **`.msi`**-Installer).
+3. Öffne die heruntergeladene Datei und klicke dich durch den Installer: **Weiter → Weiter →
+   Installieren → Fertig**.
+4. Öffne nun **PowerShell**:
+   - Drücke die **Windows-Taste**, tippe **`PowerShell`** und klicke in der Liste auf **Windows
+     PowerShell**.
+   - Es erscheint ein dunkles Fenster mit blinkendem Cursor — das ist die Kommandozeile.
+5. Tippe diesen Befehl ein und drücke **Enter**:
+
+   ```powershell
    mitmweb
    ```
 
-   Das öffnet eine Webseite unter **<http://127.0.0.1:8081>** (das Bedienfeld) und lauscht auf
-   **Port 8080** auf den Smartphone-Datenverkehr.
+6. Fragt Windows nach dem **Netzwerkzugriff**, klicke **Zulassen**. Dein Browser öffnet einen neuen
+   Tab unter **<http://127.0.0.1:8081>** — das ist das mitmproxy-Bedienfeld. mitmproxy wartet nun auf
+   **Port 8080** auf den Smartphone-Datenverkehr. ✅
+7. **Lass dieses PowerShell-Fenster die ganze Zeit offen** — schließt du es, stoppt mitmproxy. Zum
+   Beenden später ins Fenster klicken und **Strg + C** drücken.
+
+> **„mitmweb wird nicht erkannt"?** Schließe PowerShell und öffne es erneut (damit es das neu
+> installierte Programm bemerkt). Hast du stattdessen die **`.zip`**-Variante geladen, entpacke sie,
+> tippe dann in PowerShell `cd ` gefolgt vom Ordnerpfad und starte **`.\mitmweb.exe`**.
+
+#### macOS
+
+1. Öffne das **Terminal** (**Cmd + Leertaste**, **`Terminal`** tippen, Enter).
+2. Am einfachsten mit [Homebrew](https://brew.sh): `brew install mitmproxy`. (Kein Homebrew? Lade die
+   macOS-Version von **<https://mitmproxy.org/downloads/>** und entpacke sie.)
+3. Starte **`mitmweb`**. Ein Browser-Tab öffnet sich unter **<http://127.0.0.1:8081>**.
+
+#### Linux
+
+1. Installiere es mit **`pipx install mitmproxy`** (oder über das Paket deiner Distribution bzw. die
+   Binaries von der Download-Seite).
+2. Starte **`mitmweb`** in einem Terminal und öffne **<http://127.0.0.1:8081>**.
+
+In jedem Fall gilt: Die Browser-Seite auf **:8081** ist das Bedienfeld, das du beobachtest, und über
+**Port 8080** schickt gleich dein Smartphone seinen Datenverkehr (nächster Schritt).
 
 ### 4.2 Den Smartphone-Verkehr über mitmproxy leiten
 
