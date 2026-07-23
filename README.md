@@ -79,20 +79,13 @@ Releases are created with `npm run release` (release-script) and published autom
     ### **WORK IN PROGRESS**
 -->
 
-### **WORK IN PROGRESS**
+### 0.0.2 (2026-07-23)
 
-- (ssbingo) Named more telemetry: temperature (sensors 3+5, °C) and mains voltage (sensor 6, V), identified from a speed sweep (they stay constant while rpm/power scale). Unused/always-zero sensors are dropped; the fast sensors (rpm/power) are read every poll and the slow ones only occasionally to cut the cloud request load
-- (ssbingo) Sensor discovery: on first contact each pump is scanned for all RDM sensors (0..10) via the live 0x5500 read; every sensor that answers is exposed and read live, not just the few the cloud inventory lists
-- (ssbingo) Live telemetry: pump power/speed (and the raw sensors) are now read live through the SendONetPacket tunnel (0x5500 sensor read) instead of the minutes-stale cloud inventory, so they track speed changes within one poll
-- (ssbingo) Diagnostics: still-unmapped RDM sensors are exposed as raw read-only states under `telemetry.raw.sensorN` so their meaning can be classified (RDM DEVICE_INFO reports 11 sensors; the cloud only pushes a few values)
-- (ssbingo) Phase 4 (telemetry): pump power (W) and motor speed (rpm) are decoded from the RDM sensor values (calibrated against the OASE app) and exposed as `telemetry.power` / `telemetry.speed`
-- (ssbingo) Pump objects are now named after the pump's controller name (read from the DeviceTable telemetry, e.g. "Main flow" plus the device number) instead of a bare device number
-- (ssbingo) New stylized adapter icon (own vector illustration, not the product photo)
-- (ssbingo) Phase 2 (cloud control): pump speed and on/off are now writable and sent to the controller via the cloud `SendONetPacket` tunnel. The ONet packet builder is verified byte-for-byte against real app commands (set-dimmer 0x6400 = [control address, 0–255]; on/off 0x5200); writes are scaled (0–100 % ↔ 0–255), confirmed with ack:true and reconciled by a follow-up poll
-- (ssbingo) Extensive, component-tagged logging (`[config]`, `[startup]`, `[conn]`, `[poll]`, `[cloud/auth]`, `[cloud/http]`, `[shutdown]`) so any failure can be pinpointed from the logs; poll cycles are numbered with timing, connection changes and per-pump values are logged, and secrets are never logged (only presence/length)
-- (ssbingo) Cloud auth: real Azure AD B2C refresh-token grant (account.oase.com); refresh token entered once (encrypted), access tokens refreshed and rotated automatically; account password never used
-- (ssbingo) Phase 1 (cloud read-only): CloudClient with bearer session handling, defensive inventory parser matched to the real wire format, gateway/pump objects with live speed and status states, chained poll loop
-- (ssbingo) initial release
+- (ssbingo) Phase 1 – cloud read-only: connects to the OASE Garden Controller Cloud (Azure AD B2C refresh-token auth), discovers the gateway and pumps, and polls live speed and status
+- (ssbingo) Phase 2 – cloud control: pump on/off and speed (0–100 %) are writable and sent through the cloud SendONetPacket tunnel, verified byte-for-byte against the app
+- (ssbingo) Phase 4 – live telemetry: power (W), motor speed (rpm), temperature (°C) and mains voltage (V) are read live each poll; still-unmapped sensors are exposed as raw values for classification
+- (ssbingo) Pumps are named after their controller name; new stylized adapter icon (own illustration, not the product photo)
+- (ssbingo) Extensive, component-tagged logging so any failure can be pinpointed from the logs, with secrets never logged
 
 ## License
 MIT License
