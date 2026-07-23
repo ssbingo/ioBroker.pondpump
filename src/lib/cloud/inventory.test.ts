@@ -57,7 +57,9 @@ const REAL_SAMPLE = {
                     deviceType: "GardenPump",
                     connectionState: { isConnected: true, timestamp: "t" },
                     rdmData: [
+                        // param 513 = RDM SENSOR_VALUE; sensor 1 = speed (2510 rpm), sensor 10 = power (109 W)
                         { key: { parameterId: 513, sensorId: 1 }, value: { value: "AQnOAAAAAAAA", timestamp: "t" } },
+                        { key: { parameterId: 513, sensorId: 10 }, value: { value: "CgBtAAAAAAAA", timestamp: "t" } },
                         { key: { parameterId: 32824 }, value: { value: "GQ==", timestamp: "t" } },
                         // RDM param 96: byte[15] = 0x21 is the pump's control address
                         { key: { parameterId: 96 }, value: { value: "AQAB+gQAASMRIAACAQEAIQAACw==", timestamp: "t" } },
@@ -121,6 +123,12 @@ describe("parseInventory (real cloud shape)", () => {
         expect(inv.pumps[1].name).to.equal("Filter Pump");
     });
 
+    it("decodes RDM sensor values (parameter 513) by sensorId", () => {
+        const inv = parseInventory(REAL_SAMPLE);
+        expect(inv.pumps[0].sensors[1]).to.equal(2510); // speed (rpm)
+        expect(inv.pumps[0].sensors[10]).to.equal(109); // power (W)
+    });
+
     it("unwraps dmxPumpState.value and connectionState.isConnected", () => {
         const inv = parseInventory(REAL_SAMPLE);
         const first = inv.pumps[0];
@@ -135,10 +143,10 @@ describe("parseInventory (real cloud shape)", () => {
     it("parses rdmData with the key/value nesting", () => {
         const inv = parseInventory(REAL_SAMPLE);
         const rdm = inv.pumps[0].rdm;
-        expect(rdm).to.have.length(3);
+        expect(rdm).to.have.length(4);
         expect(rdm[0]).to.deep.include({ parameterId: 513, sensorId: 1, valueB64: "AQnOAAAAAAAA" });
-        expect(rdm[1]).to.deep.include({ parameterId: 32824, valueB64: "GQ==" });
-        expect(rdm[1].sensorId).to.equal(undefined);
+        expect(rdm[2]).to.deep.include({ parameterId: 32824, valueB64: "GQ==" });
+        expect(rdm[2].sensorId).to.equal(undefined);
     });
 
     it("does not expose the password attribute (id 101) anywhere", () => {

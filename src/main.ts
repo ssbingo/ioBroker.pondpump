@@ -279,7 +279,8 @@ class Pondpump extends utils.Adapter {
                 this.log.debug(
                     `[poll] #${id} pump ${pump.deviceNumber}: on=${pump.dmx.deviceOn} ` +
                         `speed=${pump.dmx.dimmerValue} (raw) fc=${pump.dmx.fcStatus}/${pump.dmx.fcMode} ` +
-                        `connected=${pump.isConnected}`,
+                        `connected=${pump.isConnected} ` +
+                        `power=${pump.sensors[10] ?? "?"}W rpm=${pump.sensors[1] ?? "?"}`,
                 );
             }
 

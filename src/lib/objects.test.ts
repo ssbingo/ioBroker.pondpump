@@ -26,6 +26,7 @@ const PUMP: PumpInfo = {
     isConnected: true,
     controlAddress: 0x21,
     dmx: { fcStatus: "SfcOff", fcMode: 0, dimmerValue: 178, deviceOn: true },
+    sensors: { 1: 2523, 10: 110 },
     rdm: [],
 };
 
@@ -43,6 +44,8 @@ const ALLOWED_ROLES = new Set([
     "level.dimmer",
     "level",
     "value",
+    "value.power",
+    "value.speed",
 ]);
 
 describe("gatewayObjectDefs", () => {
@@ -83,7 +86,8 @@ describe("pumpObjectDefs", () => {
     });
 
     it("names the pump device after its controller name", () => {
-        expect(map.get(base)?.common.name).to.equal("Main Pump (1000001)");
+        const common = map.get(base)?.common as ioBroker.DeviceCommon;
+        expect(common.name).to.equal("Main Pump (1000001)");
     });
 
     it("uses switch.power / level.dimmer / indicator.connected roles", () => {
@@ -96,6 +100,21 @@ describe("pumpObjectDefs", () => {
         expect((map.get(`${base}.status.connected`)?.common as ioBroker.StateCommon).role).to.equal(
             "indicator.connected",
         );
+    });
+
+    it("exposes telemetry power (W) and speed (rpm) with correct roles/units", () => {
+        const power = map.get(`${base}.telemetry.power`)?.common as ioBroker.StateCommon;
+        expect(power.role).to.equal("value.power");
+        expect(power.unit).to.equal("W");
+        const speed = map.get(`${base}.telemetry.speed`)?.common as ioBroker.StateCommon;
+        expect(speed.role).to.equal("value.speed");
+        expect(speed.unit).to.equal("rpm");
+    });
+
+    it("maps sensor 10 -> power (W) and sensor 1 -> speed (rpm)", () => {
+        const values = new Map(pumpStateValues(PUMP).map(v => [v.id, v.val]));
+        expect(values.get(`${base}.telemetry.power`)).to.equal(110);
+        expect(values.get(`${base}.telemetry.speed`)).to.equal(2523);
     });
 
     it("makes control states writable (phase 2 command path)", () => {

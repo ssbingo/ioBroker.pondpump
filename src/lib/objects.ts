@@ -10,7 +10,7 @@
  * Control states (on/speed/speedRaw) are writable (Phase 2); commands are handled in main.ts.
  */
 
-import { dimmerToPercent, type GatewayInfo, type PumpInfo } from "./cloud/inventory";
+import { dimmerToPercent, type GatewayInfo, type PumpInfo, SENSOR_POWER_W, SENSOR_SPEED_RPM } from "./cloud/inventory";
 
 /** Subset of the adapter API needed to create objects and write states. */
 export interface ObjectWriter {
@@ -169,6 +169,30 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
                 def: false,
             }),
         },
+
+        { id: `${base}.telemetry`, obj: channel("Telemetry") },
+        {
+            id: `${base}.telemetry.power`,
+            obj: stateObj({
+                name: "Power consumption",
+                type: "number",
+                role: "value.power",
+                unit: "W",
+                read: true,
+                write: false,
+            }),
+        },
+        {
+            id: `${base}.telemetry.speed`,
+            obj: stateObj({
+                name: "Motor speed",
+                type: "number",
+                role: "value.speed",
+                unit: "rpm",
+                read: true,
+                write: false,
+            }),
+        },
     ];
 }
 
@@ -195,7 +219,7 @@ export function gatewayStateValues(gw: GatewayInfo, online: boolean): StateValue
  */
 export function pumpStateValues(pump: PumpInfo): StateValueDef[] {
     const base = pumpId(pump.deviceNumber);
-    return [
+    const values: StateValueDef[] = [
         { id: `${base}.control.on`, val: pump.dmx.deviceOn },
         { id: `${base}.control.speed`, val: dimmerToPercent(pump.dmx.dimmerValue) },
         { id: `${base}.control.speedRaw`, val: pump.dmx.dimmerValue },
@@ -203,6 +227,13 @@ export function pumpStateValues(pump: PumpInfo): StateValueDef[] {
         { id: `${base}.status.fcMode`, val: pump.dmx.fcMode },
         { id: `${base}.status.connected`, val: pump.isConnected },
     ];
+    if (pump.sensors[SENSOR_POWER_W] !== undefined) {
+        values.push({ id: `${base}.telemetry.power`, val: pump.sensors[SENSOR_POWER_W] });
+    }
+    if (pump.sensors[SENSOR_SPEED_RPM] !== undefined) {
+        values.push({ id: `${base}.telemetry.speed`, val: pump.sensors[SENSOR_SPEED_RPM] });
+    }
+    return values;
 }
 
 async function ensureObjects(writer: ObjectWriter, defs: ObjectDef[]): Promise<void> {

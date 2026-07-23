@@ -81,6 +81,7 @@ Releases are created with `npm run release` (release-script) and published autom
 
 ### **WORK IN PROGRESS**
 
+- (ssbingo) Phase 4 (telemetry): pump power (W) and motor speed (rpm) are decoded from the RDM sensor values (calibrated against the OASE app) and exposed as `telemetry.power` / `telemetry.speed`
 - (ssbingo) Pump objects are now named after the pump's controller name (read from the DeviceTable telemetry, e.g. "Main flow" plus the device number) instead of a bare device number
 - (ssbingo) New stylized adapter icon (own vector illustration, not the product photo)
 - (ssbingo) Phase 2 (cloud control): pump speed and on/off are now writable and sent to the controller via the cloud `SendONetPacket` tunnel. The ONet packet builder is verified byte-for-byte against real app commands (set-dimmer 0x6400 = [control address, 0–255]; on/off 0x5200); writes are scaled (0–100 % ↔ 0–255), confirmed with ack:true and reconciled by a follow-up poll

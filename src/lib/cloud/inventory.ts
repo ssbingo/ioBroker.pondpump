@@ -54,9 +54,17 @@ export interface PumpInfo {
     controlAddress?: number;
     /** Current speed/on-off state. */
     dmx: DmxPumpState;
+    /** Decoded RDM sensor present values by sensorId (parameter 513). */
+    sensors: Record<number, number>;
     /** Raw RDM telemetry, kept for later decoding. */
     rdm: RawRdmEntry[];
 }
+
+/** RDM parameter id carrying sensor values (RDM SENSOR_VALUE). */
+const RDM_SENSOR_VALUE_PARAM = 513;
+/** Sensor ids mapped to physical quantities (calibrated against the OASE app). */
+export const SENSOR_SPEED_RPM = 1;
+export const SENSOR_POWER_W = 10;
 
 /** The EGC gateway (controller) from the inventory. */
 export interface GatewayInfo {
@@ -174,6 +182,30 @@ function parseDeviceNames(incrementStates: unknown): Map<number, string> {
         }
     }
     return map;
+}
+
+/**
+ * Decode RDM SENSOR_VALUE entries (parameter 513) into present values keyed by sensorId.
+ * Each value is `[sensorNumber(1), presentValue(int16 BE), lowest, highest, recorded]`.
+ *
+ * @param rdm - the pump's RDM telemetry entries
+ */
+function parseSensorValues(rdm: RawRdmEntry[]): Record<number, number> {
+    const sensors: Record<number, number> = {};
+    for (const entry of rdm) {
+        if (entry.parameterId !== RDM_SENSOR_VALUE_PARAM || entry.sensorId === undefined || !entry.valueB64) {
+            continue;
+        }
+        try {
+            const bytes = Buffer.from(entry.valueB64, "base64");
+            if (bytes.length >= 3) {
+                sensors[entry.sensorId] = bytes.readInt16BE(1);
+            }
+        } catch {
+            // ignore malformed entries
+        }
+    }
+    return sensors;
 }
 
 /**
@@ -419,6 +451,7 @@ function parsePump(raw: Record<string, unknown>, index: number): PumpInfo {
         isConnected,
         controlAddress: extractControlAddress(rdm),
         dmx: parseDmxPumpState(pick(raw, "dmxPumpState", "DmxPumpState")),
+        sensors: parseSensorValues(rdm),
         rdm,
     };
 }
