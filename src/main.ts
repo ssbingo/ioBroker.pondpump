@@ -370,7 +370,9 @@ class Pondpump extends utils.Adapter {
                         ...trailing,
                     ];
                     try {
-                        const replyB64 = await this.sendOnet(buildFrame(0x5500, payload, this.nextTxn()).toString("base64"));
+                        const replyB64 = await this.sendOnet(
+                            buildFrame(0x5500, payload, this.nextTxn()).toString("base64"),
+                        );
                         const hex = replyB64 ? Buffer.from(replyB64, "base64").toString("hex") : "(no reply)";
                         this.log.info(
                             `[local/rdm] dev ${deviceIndex} param ${param} trail=${trailing.length} → ${hex}`,
