@@ -14,12 +14,11 @@
 import * as dgram from "node:dgram";
 import * as tls from "node:tls";
 
-import { buildPoll, parseFrameHeader } from "../cloud/onet";
+import { parseFrameHeader } from "../cloud/onet";
 import type { OnetTransport, TransportLogger } from "../transport";
 import type { TlsCredentials } from "./cert";
 import {
     buildAlive,
-    buildDiscovery,
     buildPasswordCheck,
     buildTcpReq,
     DEFAULT_UDP_PORT,
@@ -341,6 +340,7 @@ export class LocalClient implements OnetTransport {
             this.socket.destroy();
         }
         this.socket = socket;
+        socket.setNoDelay(true); // send our small frames immediately (no Nagle coalescing)
         this.reader.reset();
         const peer = `${socket.remoteAddress ?? "?"}:${socket.remotePort ?? "?"}`;
         this.log.info(
@@ -353,42 +353,26 @@ export class LocalClient implements OnetTransport {
         socket.on("close", () => this.onSocketClosed(peer));
 
         void this.authenticate();
-        // Diagnostic (phase-3 bring-up): the controller is silent on PASSWORD_CHECK, so also probe
-        // with other packet types and log every reply to find the correct post-TLS entry point.
-        this.probeHandshake();
     }
 
     /**
-     * Send a handful of candidate packets after TLS so we can see which one the controller answers.
-     * Purely diagnostic; the raw reply bytes are logged by {@link onData}.
+     * Send PASSWORD_CHECK and mark the channel authenticated on the 0x01 reply. The GatewayCloud
+     * controller only flushes the (small) reply once it receives another frame, so we nudge it with
+     * periodic ALIVE frames until the reply arrives.
      */
-    private probeHandshake(): void {
-        const probes: Array<{ label: string; frame: Buffer }> = [
-            { label: "DISCOVERY 0x1000", frame: buildDiscovery(this.nextTxn()) },
-            { label: "POLL 0x5100", frame: Buffer.from(buildPoll(this.nextTxn()), "base64") },
-            { label: "ALIVE 0x1100", frame: buildAlive(this.nextTxn()) },
-        ];
-        probes.forEach((p, i) => {
-            const timer = setTimeout(
-                () => {
-                    if (!this.socket || this.socket.destroyed) {
-                        return;
-                    }
-                    this.log.info(`[local/probe] → ${p.label} (${p.frame.length}B): ${p.frame.toString("hex")}`);
-                    this.socket.write(p.frame);
-                },
-                (i + 1) * 2500,
-            );
-            if (typeof timer.unref === "function") {
-                timer.unref();
-            }
-        });
-    }
-
-    /** Send PASSWORD_CHECK and mark the channel authenticated on the 0x01 reply. */
     private async authenticate(): Promise<void> {
         const txn = this.nextTxn();
         this.log.debug("[local/auth] sending PASSWORD_CHECK (64-byte password block)");
+        const nudge = setInterval(() => {
+            if (this.authed || !this.socket || this.socket.destroyed) {
+                return;
+            }
+            this.log.debug("[local/auth] nudging controller with ALIVE to flush the password reply");
+            this.socket.write(buildAlive(this.nextTxn()));
+        }, 600);
+        if (typeof nudge.unref === "function") {
+            nudge.unref();
+        }
         try {
             const reply = await this.sendFrameAwait(buildPasswordCheck(this.opts.password, txn), txn, 0x9f00);
             const ok = reply.payload.length >= 1 && reply.payload[0] === 0x01;
@@ -408,6 +392,8 @@ export class LocalClient implements OnetTransport {
         } catch (err) {
             this.log.error(`[local/auth] password check failed: ${err instanceof Error ? err.message : String(err)}`);
             this.socket?.destroy();
+        } finally {
+            clearInterval(nudge);
         }
     }
 
@@ -417,7 +403,7 @@ export class LocalClient implements OnetTransport {
      * @param chunk - freshly received TLS bytes
      */
     private onData(chunk: Buffer): void {
-        this.log.info(`[local/rx] ${chunk.length} bytes over TLS: ${chunk.toString("hex")}`);
+        this.log.debug(`[local/rx] ${chunk.length} bytes over TLS: ${chunk.toString("hex")}`);
         for (const frame of this.reader.push(chunk)) {
             this.dispatch(frame);
         }
