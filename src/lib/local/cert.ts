@@ -26,8 +26,11 @@ export interface TlsCredentials {
  * @param commonName - certificate common name (defaults to the OASE CN)
  */
 export async function generateSelfSignedCert(commonName: string = OASE_CERT_CN): Promise<TlsCredentials> {
-    const notBeforeDate = new Date(Date.now() - 24 * 60 * 60 * 1000); // yesterday, to avoid clock skew
-    const notAfterDate = new Date(notBeforeDate.getTime() + 10 * 365 * 24 * 60 * 60 * 1000); // ~10 years
+    // The controller rejects certificates whose validity window does not contain its own clock
+    // (TLS alert 45, certificate_expired — also raised for "not yet valid" by many embedded stacks).
+    // A very wide, fixed window makes the certificate valid whatever the controller's clock says.
+    const notBeforeDate = new Date("2000-01-01T00:00:00Z");
+    const notAfterDate = new Date("2099-12-31T23:59:59Z");
     const pems = await generate([{ name: "commonName", value: commonName }], {
         keySize: 2048,
         algorithm: "sha256",
