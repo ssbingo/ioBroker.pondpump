@@ -156,15 +156,17 @@ export function parseDeviceTableEntry(payload: Buffer): DeviceTableEntry | undef
     if (payload.length < 24) {
         return undefined;
     }
+    const articleNumber = payload.readUInt32LE(8);
     const deviceNumber = payload.readUInt32LE(12);
-    if (deviceNumber === 0) {
-        return undefined; // empty slot
+    // Unused slots are filled with 0x00/0xFF: article 0 and device number 0 or 0xFFFFFFFF.
+    if (articleNumber === 0 || deviceNumber === 0 || deviceNumber === 0xffffffff) {
+        return undefined;
     }
     const nameEnd = payload.indexOf(0x00, 24);
     const name = payload.toString("latin1", 24, nameEnd < 0 ? payload.length : nameEnd).trim();
     return {
         index: payload.readUInt32LE(0),
-        articleNumber: payload.readUInt32LE(8),
+        articleNumber,
         deviceNumber,
         controlAddress: payload.readUInt16LE(20),
         name,

@@ -181,8 +181,9 @@ describe("DeviceTable (0x4000)", () => {
         });
     });
 
-    it("treats a zero device number as an empty slot", () => {
+    it("treats zero / all-0xFF slots as empty", () => {
         expect(parseDeviceTableEntry(makeEntry(2, 0, 0, 0, ""))).to.equal(undefined);
+        expect(parseDeviceTableEntry(Buffer.alloc(76, 0xff))).to.equal(undefined); // unused slot filled with 0xFF
         expect(parseDeviceTableEntry(Buffer.alloc(10))).to.equal(undefined);
     });
 });
