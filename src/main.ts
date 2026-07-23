@@ -18,6 +18,9 @@ import {
 import { type PumpInfo, parseInventory, SENSOR_POWER_W, SENSOR_SPEED_RPM } from "./lib/cloud/inventory";
 import { ensureGatewayObjects, ensurePumpObjects, writeGatewayStates, writePumpStates } from "./lib/objects";
 import { buildSensorRead, buildSetDimmer, buildSetOn, DIMMER_MAX, parseSensorReadReply } from "./lib/cloud/onet";
+import { generateSelfSignedCert } from "./lib/local/cert";
+import { LocalClient } from "./lib/local/client";
+import { buildDiscovery, DEFAULT_TLS_PORT } from "./lib/local/protocol";
 
 /** Minimum poll interval enforced regardless of configuration (seconds). */
 const MIN_POLL_INTERVAL_S = 5;
@@ -64,6 +67,7 @@ function extractResponseData(response: unknown): string | undefined {
 
 class Pondpump extends utils.Adapter {
     private cloud?: CloudClient;
+    private local?: LocalClient;
     private pollTimer?: ioBroker.Timeout;
     private pollIntervalMs = 30_000;
     /** Set true in onUnload so a poll in flight does not reschedule. */
@@ -122,11 +126,10 @@ class Pondpump extends utils.Adapter {
                 `refreshTokenConfigured=${this.config.cloudRefreshToken ? "yes" : "no"}`,
         );
 
-        // Phase 3 delivers the local transport; for now only the cloud path is active.
+        // Phase 3: the local transport. In 'both' mode the cloud path still drives objects/telemetry;
+        // the local channel is brought up on its own once the unified poll runs over either transport.
         if (mode === "local") {
-            this.log.warn(
-                "[config] connection mode 'local' is not implemented yet (planned for phase 3) — nothing to do",
-            );
+            await this.runLocal();
             return;
         }
 
@@ -199,15 +202,15 @@ class Pondpump extends utils.Adapter {
     /**
      * Update info.connection and log only on state transitions.
      *
-     * @param connected - whether the cloud connection is currently up
+     * @param connected - whether the connection (cloud or local) is currently up
      */
     private async setConnected(connected: boolean): Promise<void> {
         await this.setState("info.connection", connected, true);
         if (this.lastConnected !== connected) {
             if (connected) {
-                this.log.info("[conn] cloud connection established (info.connection = true)");
+                this.log.info("[conn] connection established (info.connection = true)");
             } else if (this.lastConnected !== undefined) {
-                this.log.warn("[conn] cloud connection lost (info.connection = false)");
+                this.log.warn("[conn] connection lost (info.connection = false)");
             }
             this.lastConnected = connected;
         }
@@ -232,6 +235,110 @@ class Pondpump extends utils.Adapter {
             },
             native: {},
         });
+    }
+
+    /**
+     * Phase 3 local transport bring-up: start the TLS server, wake the controller, authenticate,
+     * then probe the channel with a discovery request. This establishes the local channel; the
+     * unified local poll/telemetry builds on top of it next.
+     */
+    private async runLocal(): Promise<void> {
+        const ip = (this.config.ip || "").trim();
+        const bind = (this.config.bind || "0.0.0.0").trim();
+        const port = this.config.port || DEFAULT_TLS_PORT;
+        const password = this.config.devicePassword || "";
+
+        if (!ip) {
+            this.log.error(
+                "[config] local mode needs the controller IP ('ip') — enter the OASE controller's address " +
+                    "in the adapter settings",
+            );
+            return;
+        }
+        if (!password) {
+            this.log.error(
+                "[config] local mode needs the device password ('devicePassword') — enter the 64-character " +
+                    "device password in the adapter settings",
+            );
+            return;
+        }
+        if (bind === "0.0.0.0") {
+            this.log.warn(
+                "[config] TLS bind is 0.0.0.0 — if the controller does not connect back, set 'bind' to this " +
+                    "host's concrete LAN IP so the wake packet can advertise a reachable address",
+            );
+        }
+
+        this.log.info(
+            `[local] starting local transport — controller ${ip}, TLS server ${bind}:${port} ` +
+                `(device password len=${password.length})`,
+        );
+
+        let credentials;
+        try {
+            credentials = await generateSelfSignedCert();
+            this.log.debug("[local/tls] generated self-signed server certificate (CN com.oase.easycontrol)");
+        } catch (error) {
+            this.log.error(
+                `[local/tls] certificate generation failed: ${error instanceof Error ? error.message : String(error)}`,
+            );
+            return;
+        }
+
+        this.local = new LocalClient({
+            ip,
+            bindAddress: bind,
+            port,
+            password,
+            credentials,
+            log: {
+                debug: m => this.log.debug(m),
+                info: m => this.log.info(m),
+                warn: m => this.log.warn(m),
+                error: m => this.log.error(m),
+            },
+            onConnectionChange: up => {
+                void this.setConnected(up);
+            },
+        });
+
+        try {
+            await this.local.connect();
+        } catch (error) {
+            await this.setConnected(false);
+            this.log.error(
+                `[local] could not establish the local connection: ${error instanceof Error ? error.message : String(error)}`,
+            );
+            return;
+        }
+
+        await this.probeLocal();
+        this.log.info(
+            "[local] local channel established. Local inventory + telemetry over this transport is the next step; " +
+                "for live pump data use connection mode 'cloud' until then.",
+        );
+    }
+
+    /** Probe the authenticated local channel with a discovery request and log the reply shape. */
+    private async probeLocal(): Promise<void> {
+        if (!this.local) {
+            return;
+        }
+        try {
+            const replyB64 = await this.local.sendOnet(buildDiscovery(this.nextTxn()).toString("base64"));
+            if (!replyB64) {
+                this.log.warn("[local/probe] discovery: no reply from controller");
+                return;
+            }
+            const raw = Buffer.from(replyB64, "base64");
+            const type = raw.length >= 12 ? raw.readUInt16LE(10) : 0;
+            this.log.info(`[local/probe] discovery reply ok — ${raw.length} bytes, packet type 0x${type.toString(16)}`);
+            this.log.debug(`[local/probe] discovery reply raw: ${raw.toString("hex")}`);
+        } catch (error) {
+            this.log.warn(
+                `[local/probe] discovery request failed: ${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
     }
 
     /** One poll cycle: fetch inventory, update objects/states, reschedule. */
@@ -537,7 +644,7 @@ class Pondpump extends utils.Adapter {
      */
     private onUnload(callback: () => void): void {
         try {
-            this.log.debug("[shutdown] onUnload: stopping poll loop and releasing the cloud client");
+            this.log.debug("[shutdown] onUnload: stopping poll loop and releasing transports");
             this.stopping = true;
             if (this.pollTimer) {
                 this.clearTimeout(this.pollTimer);
@@ -545,6 +652,8 @@ class Pondpump extends utils.Adapter {
             }
             this.cloud?.reset();
             this.cloud = undefined;
+            this.local?.reset();
+            this.local = undefined;
             this.log.debug("[shutdown] cleanup complete");
             callback();
         } catch (error) {

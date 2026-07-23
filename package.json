@@ -4,7 +4,7 @@
   "description": "Control and monitor OASE AquaMax Eco Titanium pond pumps via the OASE Garden Controller Cloud (EGC) — locally and via cloud",
   "author": {
     "name": "ssbingo",
-    "email": "silvio.sternitzke@googlemail.com"
+    "email": "s.sternitzke@online.de"
   },
   "contributors": [],
   "homepage": "https://github.com/ssbingo/ioBroker.pondpump",
@@ -28,7 +28,8 @@
     "node": ">= 22"
   },
   "dependencies": {
-    "@iobroker/adapter-core": "^3.4.3"
+    "@iobroker/adapter-core": "^3.4.3",
+    "selfsigned": "^5.5.0"
   },
   "devDependencies": {
     "@alcalzone/release-script": "^5.2.1",

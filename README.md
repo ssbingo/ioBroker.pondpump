@@ -38,9 +38,11 @@ smart pond pumps and was written from scratch.
 
 ### Project status
 
-**Phase 1 — cloud read-only.** The adapter polls the OASE cloud inventory and shows the gateway plus both pumps
-with live speed/on-off/status as read-only states. Writing (pump control) follows in phase 2, the local transport
-in phase 3.
+- **Phase 1 — cloud read-only** ✓ polls the OASE cloud inventory; gateway plus both pumps with live status
+- **Phase 2 — cloud control** ✓ pump on/off and speed are writable via the cloud tunnel
+- **Phase 4 — live telemetry** ✓ power, motor speed, temperature and mains voltage read live each poll
+- **Phase 3 — local transport** (in progress) the TLS server, UDP wake and 64-byte password handshake are in
+  place (connection mode `local`); local inventory and telemetry over the LAN follow next
 
 **Cloud authentication:** the OASE cloud uses **Azure AD B2C** (`account.oase.com`). The adapter authenticates with the
 headless-friendly **refresh-token grant**: capture a refresh token once from an OASE app login and paste it into the
@@ -79,6 +81,10 @@ Releases are created with `npm run release` (release-script) and published autom
     ### **WORK IN PROGRESS**
 -->
 
+### **WORK IN PROGRESS**
+
+- (ssbingo) Phase 3 (local transport, foundation): TLS server, UDP wake (TCP_REQ) and the 64-byte password handshake over the controller's legacy TLS are in place under connection mode `local`; the ONet application packets are shared with the cloud path. Local inventory and telemetry over the LAN follow next
+
 ### 0.0.2 (2026-07-23)
 
 - (ssbingo) Phase 1 – cloud read-only: connects to the OASE Garden Controller Cloud (Azure AD B2C refresh-token auth), discovers the gateway and pumps, and polls live speed and status
@@ -90,7 +96,7 @@ Releases are created with `npm run release` (release-script) and published autom
 ## License
 MIT License
 
-Copyright (c) 2026 ssbingo <silvio.sternitzke@googlemail.com>
+Copyright (c) 2026 ssbingo <s.sternitzke@online.de>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

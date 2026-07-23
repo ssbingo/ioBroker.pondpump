@@ -31,15 +31,19 @@ export const PACKET_STATUS = 0x5500;
 /** Maximum raw dimmer value. */
 export const DIMMER_MAX = 255;
 
+/** Fixed ONet header size in bytes. */
+export const HEADER_SIZE = 16;
+
 /**
- * Build a framed ONet packet and return it base64-encoded (ready for the `Data` field).
+ * Build a framed ONet packet as a raw buffer (delimiter + 16-byte header + payload).
+ * This is the wire form used directly on the local TLS stream; the cloud path base64-encodes it.
  *
  * @param packetType - 16-bit packet type
  * @param payload - packet payload bytes
  * @param txn - transaction number (0..255, rolling)
  */
-export function buildPacket(packetType: number, payload: readonly number[], txn: number): string {
-    const buf = Buffer.alloc(16 + payload.length);
+export function buildFrame(packetType: number, payload: readonly number[], txn: number): Buffer {
+    const buf = Buffer.alloc(HEADER_SIZE + payload.length);
     buf[0] = DELIMITER[0];
     buf[1] = DELIMITER[1];
     buf[2] = DELIMITER[2];
@@ -50,9 +54,53 @@ export function buildPacket(packetType: number, payload: readonly number[], txn:
     buf.writeUInt16LE(packetType & 0xffff, 10);
     // bytes 12..15 stay 0 (reserved)
     for (let i = 0; i < payload.length; i++) {
-        buf[16 + i] = payload[i] & 0xff;
+        buf[HEADER_SIZE + i] = payload[i] & 0xff;
     }
-    return buf.toString("base64");
+    return buf;
+}
+
+/**
+ * Build a framed ONet packet and return it base64-encoded (ready for the `Data` field).
+ *
+ * @param packetType - 16-bit packet type
+ * @param payload - packet payload bytes
+ * @param txn - transaction number (0..255, rolling)
+ */
+export function buildPacket(packetType: number, payload: readonly number[], txn: number): string {
+    return buildFrame(packetType, payload, txn).toString("base64");
+}
+
+/** A parsed ONet frame header. */
+export interface OnetHeader {
+    /** Protocol version (byte 8, normally 2). */
+    version: number;
+    /** Transaction number (byte 9), echoed by the device in replies. */
+    txn: number;
+    /** Packet type (bytes 10..11, UInt16 LE). Replies are the request type | 0xFF. */
+    packetType: number;
+    /** Declared payload length (bytes 4..7, UInt32 LE). */
+    payloadLength: number;
+}
+
+/**
+ * Parse the 16-byte ONet header from the start of a buffer. Returns undefined if the buffer is
+ * too short or does not begin with the delimiter.
+ *
+ * @param buf - a buffer whose first bytes are an ONet frame
+ */
+export function parseFrameHeader(buf: Buffer): OnetHeader | undefined {
+    if (buf.length < HEADER_SIZE) {
+        return undefined;
+    }
+    if (buf[0] !== DELIMITER[0] || buf[1] !== DELIMITER[1] || buf[2] !== DELIMITER[2] || buf[3] !== DELIMITER[3]) {
+        return undefined;
+    }
+    return {
+        payloadLength: buf.readUInt32LE(4),
+        version: buf[8],
+        txn: buf[9],
+        packetType: buf.readUInt16LE(10),
+    };
 }
 
 /**
