@@ -20,6 +20,8 @@ export const PACKET_ALIVE = 0x1100;
 export const PACKET_DISCOVERY = 0x1000;
 /** Password check sent right after the controller connects; reply is a single 0x01 byte on success. */
 export const PACKET_PASSWORD_CHECK = 0x9f00;
+/** DeviceTable request: fetch one device entry by index; reply (0x40FF) carries a 76-byte entry. */
+export const PACKET_DEVICE_TABLE = 0x4000;
 
 /** Default UDP port the controller listens on for the wake packet. */
 export const DEFAULT_UDP_PORT = 5959;
@@ -102,6 +104,106 @@ export function buildAlive(txn: number): Buffer {
  */
 export function buildDiscovery(txn: number): Buffer {
     return buildFrame(PACKET_DISCOVERY, [], txn);
+}
+
+/**
+ * Build a DeviceTable request (0x4000) for a single device slot. Payload = device index (UInt32 LE)
+ * followed by two zero bytes. The reply (0x40FF) carries a fixed 76-byte device entry.
+ *
+ * @param index - the device slot index (0-based)
+ * @param txn - transaction number
+ */
+export function buildDeviceTableRequest(index: number, txn: number): Buffer {
+    const i = index >>> 0;
+    return buildFrame(
+        PACKET_DEVICE_TABLE,
+        [i & 0xff, (i >>> 8) & 0xff, (i >>> 16) & 0xff, (i >>> 24) & 0xff, 0, 0],
+        txn,
+    );
+}
+
+/** A device entry decoded from a DeviceTable (0x40FF) reply. */
+export interface DeviceTableEntry {
+    /** Device slot index (0-based). */
+    index: number;
+    /** OASE article number (e.g. 73656 for the AquaMax Eco Titanium pump). */
+    articleNumber: number;
+    /** Device number (the id used across the adapter, matches the cloud inventory). */
+    deviceNumber: number;
+    /** Control address used to address the device for dimmer commands (e.g. 0x21). */
+    controlAddress: number;
+    /** User-assigned device name from the controller (e.g. the pump name in the app). */
+    name: string;
+}
+
+/**
+ * Decode a DeviceTable (0x40FF) reply payload into a device entry. Layout (76 bytes, verified against
+ * captured DeviceTable data):
+ *
+ *   [0..4]   device index      (UInt32 LE)
+ *   [4..8]   internal DMX id   (UInt32 LE) — not needed
+ *   [8..12]  article number    (UInt32 LE)
+ *   [12..16] device number     (UInt32 LE)
+ *   [16..20] type marker "AO"  (constant)
+ *   [20..22] control address   (UInt16 LE)
+ *   [22..24] flags             (UInt16 LE)
+ *   [24..]   name              (NUL-terminated ASCII)
+ *
+ * @param payload - the 0x40FF reply payload
+ * @returns the decoded entry, or undefined if the payload is too short or has no device number
+ */
+export function parseDeviceTableEntry(payload: Buffer): DeviceTableEntry | undefined {
+    if (payload.length < 24) {
+        return undefined;
+    }
+    const deviceNumber = payload.readUInt32LE(12);
+    if (deviceNumber === 0) {
+        return undefined; // empty slot
+    }
+    const nameEnd = payload.indexOf(0x00, 24);
+    const name = payload.toString("latin1", 24, nameEnd < 0 ? payload.length : nameEnd).trim();
+    return {
+        index: payload.readUInt32LE(0),
+        articleNumber: payload.readUInt32LE(8),
+        deviceNumber,
+        controlAddress: payload.readUInt16LE(20),
+        name,
+    };
+}
+
+/** Gateway/controller identity decoded from a discovery (0x10FF) reply. */
+export interface GatewayDiscovery {
+    /** Hardware type byte. */
+    hwType: number;
+    /** User-assigned name (e.g. the pond name). */
+    name: string;
+    /** Controller serial number. */
+    serialNumber: string;
+    /** Long name / device-type marker (e.g. "EGC Controller Cloud"). */
+    lname: string;
+}
+
+/**
+ * Decode a discovery (0x10FF) reply payload into the controller identity. Field offsets follow the
+ * documented discovery layout: hwType[0], name[2..34], serial[34..46], lname[66..130].
+ *
+ * @param payload - the 0x10FF reply payload
+ * @returns the decoded gateway identity, or undefined if the payload is too short
+ */
+export function parseGatewayDiscovery(payload: Buffer): GatewayDiscovery | undefined {
+    if (payload.length < 130) {
+        return undefined;
+    }
+    const readString = (start: number, end: number): string => {
+        const stop = payload.indexOf(0x00, start);
+        return payload.toString("latin1", start, stop >= 0 && stop < end ? stop : end).trim();
+    };
+    return {
+        hwType: payload[0],
+        name: readString(2, 34),
+        serialNumber: readString(34, 46),
+        lname: readString(66, 130),
+    };
 }
 
 /** A complete ONet frame parsed off the TLS stream. */

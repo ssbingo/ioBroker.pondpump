@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { buildFrame, DELIMITER, HEADER_SIZE, parseFrameHeader } from "../cloud/onet";
 import {
     buildAlive,
+    buildDeviceTableRequest,
     buildDiscovery,
     buildPasswordCheck,
     buildTcpReq,
@@ -9,11 +10,36 @@ import {
     encodePassword,
     FrameReader,
     PACKET_ALIVE,
+    PACKET_DEVICE_TABLE,
     PACKET_DISCOVERY,
     PACKET_PASSWORD_CHECK,
     PACKET_TCP_REQ,
+    parseDeviceTableEntry,
+    parseGatewayDiscovery,
     PASSWORD_BYTES,
 } from "./protocol";
+
+/**
+ * Build a synthetic 76-byte DeviceTable entry in the confirmed wire layout.
+ *
+ * @param index - device slot index
+ * @param article - article number
+ * @param deviceNumber - device number
+ * @param controlAddress - control address
+ * @param name - device name
+ */
+function makeEntry(index: number, article: number, deviceNumber: number, controlAddress: number, name: string): Buffer {
+    const b = Buffer.alloc(76);
+    b.writeUInt32LE(index, 0);
+    b.writeUInt32LE(0xc320, 4); // internal dmx id
+    b.writeUInt32LE(article, 8);
+    b.writeUInt32LE(deviceNumber, 12);
+    b.write("AO", 16, "latin1");
+    b.writeUInt16LE(controlAddress, 20);
+    b.writeUInt16LE(1, 22);
+    b.write(name, 24, "latin1");
+    return b;
+}
 
 describe("encodePassword / get64Bytes", () => {
     it("produces exactly 64 bytes", () => {
@@ -132,5 +158,56 @@ describe("FrameReader (TCP stream reassembly)", () => {
         const truncated = b.subarray(0, HEADER_SIZE + 1); // declares 2 payload bytes, only 1 present
         expect(reader.push(truncated).length).to.equal(0);
         expect(reader.push(b.subarray(HEADER_SIZE + 1)).length).to.equal(1);
+    });
+});
+
+describe("DeviceTable (0x4000)", () => {
+    it("builds a device-table request (index UInt32 LE + 0x0000)", () => {
+        const frame = buildDeviceTableRequest(1, 7);
+        const header = parseFrameHeader(frame);
+        expect(header?.packetType).to.equal(PACKET_DEVICE_TABLE);
+        expect(header?.txn).to.equal(7);
+        expect([...frame.subarray(HEADER_SIZE)]).to.deep.equal([1, 0, 0, 0, 0, 0]);
+    });
+
+    it("parses a device entry (index, article, deviceNumber, control address, name)", () => {
+        const entry = parseDeviceTableEntry(makeEntry(1, 73656, 1000002, 0x23, "Test Pump"));
+        expect(entry).to.deep.equal({
+            index: 1,
+            articleNumber: 73656,
+            deviceNumber: 1000002,
+            controlAddress: 0x23,
+            name: "Test Pump",
+        });
+    });
+
+    it("treats a zero device number as an empty slot", () => {
+        expect(parseDeviceTableEntry(makeEntry(2, 0, 0, 0, ""))).to.equal(undefined);
+        expect(parseDeviceTableEntry(Buffer.alloc(10))).to.equal(undefined);
+    });
+});
+
+describe("gateway discovery (0x10FF)", () => {
+    function makeDisco(name: string, serial: string, lname: string): Buffer {
+        const b = Buffer.alloc(324);
+        b[0] = 0x04;
+        b.write(name, 2, "latin1");
+        b.write(serial, 34, "latin1");
+        b.write(lname, 66, "latin1");
+        return b;
+    }
+
+    it("decodes hwType, name, serial and lname at the documented offsets", () => {
+        const gw = parseGatewayDiscovery(makeDisco("Test Pond", "000000000000", "EGC Controller Cloud"));
+        expect(gw).to.deep.equal({
+            hwType: 4,
+            name: "Test Pond",
+            serialNumber: "000000000000",
+            lname: "EGC Controller Cloud",
+        });
+    });
+
+    it("returns undefined for a too-short payload", () => {
+        expect(parseGatewayDiscovery(Buffer.alloc(50))).to.equal(undefined);
     });
 });
