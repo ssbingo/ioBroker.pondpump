@@ -17,7 +17,7 @@ import {
 } from "./lib/cloud/client";
 import { type PumpInfo, parseInventory } from "./lib/cloud/inventory";
 import { ensureGatewayObjects, ensurePumpObjects, writeGatewayStates, writePumpStates } from "./lib/objects";
-import { buildSensorRead, buildSetDimmer, buildSetOn, DIMMER_MAX } from "./lib/cloud/onet";
+import { buildSensorRead, buildSetDimmer, buildSetOn, DIMMER_MAX, parseSensorReadReply } from "./lib/cloud/onet";
 
 /** Minimum poll interval enforced regardless of configuration (seconds). */
 const MIN_POLL_INTERVAL_S = 5;
@@ -33,6 +33,24 @@ interface PumpControl {
     deviceNumber: number;
     index: number;
     controlAddress?: number;
+}
+
+/**
+ * Extract the base64 `data`/`Data` field from a SendONetPacket response body.
+ *
+ * @param response - the parsed SendONetPacket JSON response
+ */
+function extractResponseData(response: unknown): string | undefined {
+    if (response && typeof response === "object") {
+        const record = response as Record<string, unknown>;
+        if (typeof record.data === "string") {
+            return record.data;
+        }
+        if (typeof record.Data === "string") {
+            return record.Data;
+        }
+    }
+    return undefined;
 }
 
 class Pondpump extends utils.Adapter {
@@ -168,19 +186,6 @@ class Pondpump extends utils.Adapter {
     }
 
     /**
-     * Log the raw reply of a SendONetPacket command (diagnostic: may carry fresh live data).
-     *
-     * @param deviceNumber - the pump the command was for
-     * @param reply - the parsed SendONetPacket response body
-     */
-    private logCommandReply(deviceNumber: number, reply: unknown): void {
-        const text = typeof reply === "string" ? reply : JSON.stringify(reply);
-        this.log.debug(
-            `[cloud/cmd] pump ${deviceNumber} SendONetPacket reply: ${text.length > 400 ? `${text.slice(0, 400)}…` : text}`,
-        );
-    }
-
-    /**
      * Update info.connection and log only on state transitions.
      *
      * @param connected - whether the cloud connection is currently up
@@ -288,18 +293,17 @@ class Pondpump extends utils.Adapter {
                             `(index ${pump.index}, control address ${pump.controlAddress !== undefined ? `0x${pump.controlAddress.toString(16)}` : "unknown"})`,
                     );
                 }
-                await writePumpStates(this, pump);
+                // The inventory's rdmData is minutes-stale; read the live sensor values through the
+                // SendONetPacket tunnel (0x5500) and use those for the telemetry states.
+                const livePump = await this.withLiveSensors(pump);
+                await writePumpStates(this, livePump);
                 this.log.debug(
-                    `[poll] #${id} pump ${pump.deviceNumber}: on=${pump.dmx.deviceOn} ` +
-                        `speed=${pump.dmx.dimmerValue} (raw) fc=${pump.dmx.fcStatus}/${pump.dmx.fcMode} ` +
-                        `connected=${pump.isConnected} ` +
-                        `power=${pump.sensors[10] ?? "?"}W rpm=${pump.sensors[1] ?? "?"}`,
+                    `[poll] #${id} pump ${pump.deviceNumber}: on=${livePump.dmx.deviceOn} ` +
+                        `speed=${livePump.dmx.dimmerValue} (raw) fc=${livePump.dmx.fcStatus}/${livePump.dmx.fcMode} ` +
+                        `connected=${livePump.isConnected} ` +
+                        `power=${livePump.sensors[10] ?? "?"}W rpm=${livePump.sensors[1] ?? "?"} (live)`,
                 );
             }
-
-            // Diagnostic: the cloud inventory's rdmData is stale; the app gets live values via
-            // another channel. Send the app's status poll and log the reply to see what comes back.
-            await this.probeLivePoll(id);
 
             await this.setConnected(true);
             const took = Date.now() - startedAt;
@@ -334,44 +338,63 @@ class Pondpump extends utils.Adapter {
     }
 
     /**
-     * Diagnostic probe: send the app's status poll (0x5100) and log the raw reply, to discover
-     * whether fresh live telemetry comes back in the SendONetPacket response (the cloud inventory
-     * is stale). Never fails the poll cycle.
+     * Return a copy of the pump with its sensor values replaced by fresh live reads over the
+     * SendONetPacket tunnel (0x5500). Falls back to the (stale) inventory values on any failure.
      *
-     * @param id - the current poll id (for log correlation)
+     * @param pump - the pump as parsed from the inventory
      */
-    private async probeLivePoll(id: number): Promise<void> {
+    private async withLiveSensors(pump: PumpInfo): Promise<PumpInfo> {
         if (!this.cloud || !this.gatewayId) {
-            return;
+            return pump;
         }
-        // Hypothesis test: 0x5500 request = [deviceIndex] 01 02 02 01 [sensorNumber];
-        // reply carries the live 16-bit value. Compare sensor 1 (rpm) vs 10 (power), device 0 vs 1.
-        await this.probePacket(id, "dev0 s1(rpm)", buildSensorRead(0, 1, this.nextTxn()));
-        await this.probePacket(id, "dev0 s10(pow)", buildSensorRead(0, 10, this.nextTxn()));
-        await this.probePacket(id, "dev1 s1(rpm)", buildSensorRead(1, 1, this.nextTxn()));
+        const sensors = { ...pump.sensors };
+        const read: string[] = [];
+        for (const sensorId of Object.keys(pump.sensors)
+            .map(Number)
+            .sort((a, b) => a - b)) {
+            const value = await this.readLiveSensor(pump.index, sensorId);
+            if (value !== undefined) {
+                sensors[sensorId] = value;
+                read.push(`s${sensorId}=${value}`);
+            }
+        }
+        if (read.length > 0) {
+            this.log.debug(`[cloud/live] pump ${pump.deviceNumber} (index ${pump.index}): ${read.join(" ")}`);
+        }
+        return { ...pump, sensors };
     }
 
     /**
-     * Send one probe packet and log its raw reply (diagnostic). Never throws.
+     * Read a single live RDM sensor value for a device via the SendONetPacket tunnel (0x5500).
      *
-     * @param id - the current poll id (for log correlation)
-     * @param label - short packet label for the log
-     * @param packet - the base64 ONet packet to send
+     * @param deviceIndex - the pump's device index
+     * @param sensorNumber - the RDM sensor number
+     * @returns the live value, or undefined on failure
      */
-    private async probePacket(id: number, label: string, packet: string): Promise<void> {
+    private async readLiveSensor(deviceIndex: number, sensorNumber: number): Promise<number | undefined> {
         if (!this.cloud || !this.gatewayId) {
-            return;
+            return undefined;
         }
         try {
-            const reply = await this.cloud.sendPacket(this.gatewayId, packet);
-            const text = typeof reply === "string" ? reply : JSON.stringify(reply);
-            this.log.debug(
-                `[cloud/poke] #${id} ${label} reply: ${text.length > 400 ? `${text.slice(0, 400)}…` : text}`,
+            const response = await this.cloud.sendPacket(
+                this.gatewayId,
+                buildSensorRead(deviceIndex, sensorNumber, this.nextTxn()),
             );
+            const dataB64 = extractResponseData(response);
+            if (!dataB64) {
+                return undefined;
+            }
+            const parsed = parseSensorReadReply(dataB64);
+            if (!parsed || parsed.deviceIndex !== deviceIndex || parsed.sensorNumber !== sensorNumber) {
+                return undefined;
+            }
+            return parsed.value;
         } catch (error) {
             this.log.debug(
-                `[cloud/poke] #${id} ${label} failed: ${error instanceof Error ? error.message : String(error)}`,
+                `[cloud/live] read device ${deviceIndex} sensor ${sensorNumber} failed: ` +
+                    `${error instanceof Error ? error.message : String(error)}`,
             );
+            return undefined;
         }
     }
 
@@ -417,8 +440,7 @@ class Pondpump extends utils.Adapter {
             if (field === "on") {
                 const on = state.val === true || state.val === "true" || state.val === 1;
                 this.log.info(`[cloud/cmd] pump ${deviceNumber}: set on=${on} (device index ${ctrl.index})`);
-                const reply = await this.cloud.sendPacket(this.gatewayId, buildSetOn(ctrl.index, on, this.nextTxn()));
-                this.logCommandReply(deviceNumber, reply);
+                await this.cloud.sendPacket(this.gatewayId, buildSetOn(ctrl.index, on, this.nextTxn()));
                 await this.setState(`pumps.${deviceNumber}.control.on`, { val: on, ack: true });
             } else {
                 if (ctrl.controlAddress === undefined) {
@@ -437,11 +459,7 @@ class Pondpump extends utils.Adapter {
                     `[cloud/cmd] pump ${deviceNumber}: set speed raw=${raw} (${percent}%, ` +
                         `control address 0x${ctrl.controlAddress.toString(16)})`,
                 );
-                const reply = await this.cloud.sendPacket(
-                    this.gatewayId,
-                    buildSetDimmer(ctrl.controlAddress, raw, this.nextTxn()),
-                );
-                this.logCommandReply(deviceNumber, reply);
+                await this.cloud.sendPacket(this.gatewayId, buildSetDimmer(ctrl.controlAddress, raw, this.nextTxn()));
                 // Reflect both representations immediately; the confirmation poll reconciles with the device.
                 await this.setState(`pumps.${deviceNumber}.control.speed`, { val: percent, ack: true });
                 await this.setState(`pumps.${deviceNumber}.control.speedRaw`, { val: raw, ack: true });

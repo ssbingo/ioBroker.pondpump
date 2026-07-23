@@ -113,3 +113,35 @@ export function buildSensorRead(deviceIndex: number, sensorNumber: number, txn: 
     ];
     return buildPacket(PACKET_STATUS, payload, txn);
 }
+
+/** A decoded live sensor read reply (0x55FF). */
+export interface SensorReadReply {
+    /** The device index the value belongs to. */
+    deviceIndex: number;
+    /** The RDM sensor number. */
+    sensorNumber: number;
+    /** The live sensor value (16-bit signed). */
+    value: number;
+}
+
+/**
+ * Decode a live sensor read reply (0x55FF). The reply payload is
+ * `[deviceIndex u32 LE] 01 02 02 01 09 [sensorNumber] [value int16 BE] …`.
+ *
+ * @param dataB64 - base64 of the reply ONet packet (the `data` field of the SendONetPacket response)
+ */
+export function parseSensorReadReply(dataB64: string): SensorReadReply | undefined {
+    try {
+        const payload = Buffer.from(dataB64, "base64").subarray(16);
+        if (payload.length < 12) {
+            return undefined;
+        }
+        return {
+            deviceIndex: payload.readUInt32LE(0),
+            sensorNumber: payload[9],
+            value: payload.readInt16BE(10),
+        };
+    } catch {
+        return undefined;
+    }
+}

@@ -3,6 +3,7 @@ import {
     buildPacket,
     buildPoll,
     buildSensorRead,
+    parseSensorReadReply,
     buildSetDimmer,
     buildSetOn,
     PACKET_SET_DIMMER,
@@ -36,6 +37,24 @@ describe("ONet packet builder (verified against captured app commands)", () => {
     it("reproduces the captured 0x5500 sensor read (device 0, sensor 1)", () => {
         // captured app request: payload 00 00 00 00 01 02 02 01 01, txn 99
         expect(buildSensorRead(0, 1, 99)).to.equal("XCNPQQkAAAACYwBVAAAAAAAAAAABAgIBAQ==");
+    });
+
+    it("parses live sensor read replies (0x55FF) — captured device values", () => {
+        expect(parseSensorReadReply("XCNPQRIAAAACAP9VAAAAAAAAAAABAgIBCQEJ6QAAAAAAAA==")).to.deep.equal({
+            deviceIndex: 0,
+            sensorNumber: 1,
+            value: 2537, // rpm
+        });
+        expect(parseSensorReadReply("XCNPQRIAAAACAP9VAAAAAAAAAAABAgIBCQoAbQAAAAAAAA==")).to.deep.equal({
+            deviceIndex: 0,
+            sensorNumber: 10,
+            value: 109, // power W
+        });
+        expect(parseSensorReadReply("XCNPQRIAAAACAP9VAAAAAAEAAAABAgIBCQEI8QAAAAAAAA==")).to.deep.equal({
+            deviceIndex: 1,
+            sensorNumber: 1,
+            value: 2289, // live rpm of the second pump
+        });
     });
 
     it("clamps dimmer values to 0..255", () => {
