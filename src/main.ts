@@ -23,7 +23,14 @@ import {
     SENSOR_SPEED_RPM,
 } from "./lib/cloud/inventory";
 import { ensureGatewayObjects, ensurePumpObjects, writeGatewayStates, writePumpStates } from "./lib/objects";
-import { buildSensorRead, buildSetDimmer, buildSetOn, DIMMER_MAX, parseSensorReadReply } from "./lib/cloud/onet";
+import {
+    buildFrame,
+    buildSensorRead,
+    buildSetDimmer,
+    buildSetOn,
+    DIMMER_MAX,
+    parseSensorReadReply,
+} from "./lib/cloud/onet";
 import { generateSelfSignedCert } from "./lib/local/cert";
 import { LocalClient } from "./lib/local/client";
 import { fetchLocalInventory, toDomainInventory } from "./lib/local/inventory";
@@ -337,7 +344,34 @@ class Pondpump extends utils.Adapter {
         // Listen for control commands and start the poll loop over the local channel.
         this.subscribeStates("pumps.*.control.*");
         this.log.info("[local] local channel established — starting poll loop over the LAN");
+        await this.probeSetpoint();
         void this.poll();
+    }
+
+    /**
+     * Diagnostic (phase-3 setpoint bring-up): probe GET_LIVE_SCENE (0xC500) with the likely payload
+     * variants and log the replies, to find how the controller reports the current on/off + speed
+     * setpoint. Removed once the format is known.
+     */
+    private async probeSetpoint(): Promise<void> {
+        const variants: { label: string; payload: number[] }[] = [
+            { label: "empty", payload: [] },
+            { label: "idx0", payload: [0, 0, 0, 0] },
+            { label: "idx1", payload: [1, 0, 0, 0] },
+            { label: "addr0x21", payload: [0x21] },
+            { label: "addr0x23", payload: [0x23] },
+        ];
+        for (const v of variants) {
+            try {
+                const replyB64 = await this.sendOnet(buildFrame(0xc500, v.payload, this.nextTxn()).toString("base64"));
+                const hex = replyB64 ? Buffer.from(replyB64, "base64").toString("hex") : "(no reply)";
+                this.log.info(`[local/scene] GET_LIVE_SCENE 0xC500 ${v.label} → ${hex}`);
+            } catch (error) {
+                this.log.info(
+                    `[local/scene] GET_LIVE_SCENE 0xC500 ${v.label} → error: ${error instanceof Error ? error.message : String(error)}`,
+                );
+            }
+        }
     }
 
     /** One poll cycle: fetch inventory (cloud or local), update objects/states, reschedule. */
