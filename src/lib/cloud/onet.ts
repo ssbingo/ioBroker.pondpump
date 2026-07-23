@@ -23,6 +23,8 @@ export const PROTOCOL_VERSION = 2;
 export const PACKET_SET_DIMMER = 0x6400;
 /** Packet type for switching a pump on/off. */
 export const PACKET_SET_ON = 0x5200;
+/** Packet type the app sends as a status poll (its reply likely carries fresh live data). */
+export const PACKET_POLL = 0x5100;
 
 /** Maximum raw dimmer value. */
 export const DIMMER_MAX = 255;
@@ -74,4 +76,13 @@ export function buildSetOn(deviceIndex: number, on: boolean, txn: number): strin
     const idx = deviceIndex >>> 0;
     const payload = [idx & 0xff, (idx >>> 8) & 0xff, (idx >>> 16) & 0xff, (idx >>> 24) & 0xff, on ? 1 : 0];
     return buildPacket(PACKET_SET_ON, payload, txn);
+}
+
+/**
+ * Build a status poll packet (as the app sends it); its reply likely carries fresh live data.
+ *
+ * @param txn - transaction number
+ */
+export function buildPoll(txn: number): string {
+    return buildPacket(PACKET_POLL, [0, 0, 0, 0], txn);
 }

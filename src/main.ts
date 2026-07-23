@@ -17,7 +17,7 @@ import {
 } from "./lib/cloud/client";
 import { type PumpInfo, parseInventory } from "./lib/cloud/inventory";
 import { ensureGatewayObjects, ensurePumpObjects, writeGatewayStates, writePumpStates } from "./lib/objects";
-import { buildSetDimmer, buildSetOn, DIMMER_MAX } from "./lib/cloud/onet";
+import { buildPoll, buildSetDimmer, buildSetOn, DIMMER_MAX } from "./lib/cloud/onet";
 
 /** Minimum poll interval enforced regardless of configuration (seconds). */
 const MIN_POLL_INTERVAL_S = 5;
@@ -168,6 +168,19 @@ class Pondpump extends utils.Adapter {
     }
 
     /**
+     * Log the raw reply of a SendONetPacket command (diagnostic: may carry fresh live data).
+     *
+     * @param deviceNumber - the pump the command was for
+     * @param reply - the parsed SendONetPacket response body
+     */
+    private logCommandReply(deviceNumber: number, reply: unknown): void {
+        const text = typeof reply === "string" ? reply : JSON.stringify(reply);
+        this.log.debug(
+            `[cloud/cmd] pump ${deviceNumber} SendONetPacket reply: ${text.length > 400 ? `${text.slice(0, 400)}…` : text}`,
+        );
+    }
+
+    /**
      * Update info.connection and log only on state transitions.
      *
      * @param connected - whether the cloud connection is currently up
@@ -284,6 +297,10 @@ class Pondpump extends utils.Adapter {
                 );
             }
 
+            // Diagnostic: the cloud inventory's rdmData is stale; the app gets live values via
+            // another channel. Send the app's status poll and log the reply to see what comes back.
+            await this.probeLivePoll(id);
+
             await this.setConnected(true);
             const took = Date.now() - startedAt;
             const summary =
@@ -314,6 +331,28 @@ class Pondpump extends utils.Adapter {
             this.pollTimer = undefined;
             void this.poll();
         }, this.pollIntervalMs);
+    }
+
+    /**
+     * Diagnostic probe: send the app's status poll (0x5100) and log the raw reply, to discover
+     * whether fresh live telemetry comes back in the SendONetPacket response (the cloud inventory
+     * is stale). Never fails the poll cycle.
+     *
+     * @param id - the current poll id (for log correlation)
+     */
+    private async probeLivePoll(id: number): Promise<void> {
+        if (!this.cloud || !this.gatewayId) {
+            return;
+        }
+        try {
+            const reply = await this.cloud.sendPacket(this.gatewayId, buildPoll(this.nextTxn()));
+            const text = typeof reply === "string" ? reply : JSON.stringify(reply);
+            this.log.debug(`[cloud/poke] #${id} 0x5100 reply: ${text.length > 400 ? `${text.slice(0, 400)}…` : text}`);
+        } catch (error) {
+            this.log.debug(
+                `[cloud/poke] #${id} 0x5100 failed: ${error instanceof Error ? error.message : String(error)}`,
+            );
+        }
     }
 
     /** Replace the pending poll with an earlier one, to reconcile after a command. */
@@ -358,7 +397,8 @@ class Pondpump extends utils.Adapter {
             if (field === "on") {
                 const on = state.val === true || state.val === "true" || state.val === 1;
                 this.log.info(`[cloud/cmd] pump ${deviceNumber}: set on=${on} (device index ${ctrl.index})`);
-                await this.cloud.sendPacket(this.gatewayId, buildSetOn(ctrl.index, on, this.nextTxn()));
+                const reply = await this.cloud.sendPacket(this.gatewayId, buildSetOn(ctrl.index, on, this.nextTxn()));
+                this.logCommandReply(deviceNumber, reply);
                 await this.setState(`pumps.${deviceNumber}.control.on`, { val: on, ack: true });
             } else {
                 if (ctrl.controlAddress === undefined) {
@@ -377,7 +417,11 @@ class Pondpump extends utils.Adapter {
                     `[cloud/cmd] pump ${deviceNumber}: set speed raw=${raw} (${percent}%, ` +
                         `control address 0x${ctrl.controlAddress.toString(16)})`,
                 );
-                await this.cloud.sendPacket(this.gatewayId, buildSetDimmer(ctrl.controlAddress, raw, this.nextTxn()));
+                const reply = await this.cloud.sendPacket(
+                    this.gatewayId,
+                    buildSetDimmer(ctrl.controlAddress, raw, this.nextTxn()),
+                );
+                this.logCommandReply(deviceNumber, reply);
                 // Reflect both representations immediately; the confirmation poll reconciles with the device.
                 await this.setState(`pumps.${deviceNumber}.control.speed`, { val: percent, ack: true });
                 await this.setState(`pumps.${deviceNumber}.control.speedRaw`, { val: raw, ack: true });

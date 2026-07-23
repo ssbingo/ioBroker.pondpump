@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { buildPacket, buildSetDimmer, buildSetOn, PACKET_SET_DIMMER, PACKET_SET_ON } from "./onet";
+import { buildPacket, buildPoll, buildSetDimmer, buildSetOn, PACKET_SET_DIMMER, PACKET_SET_ON } from "./onet";
 
 /**
  * These assert byte-for-byte reproduction of real commands captured from the OASE app
@@ -18,6 +18,11 @@ describe("ONet packet builder (verified against captured app commands)", () => {
         expect(buildSetOn(0, false, 70)).to.equal("XCNPQQUAAAACRgBSAAAAAAAAAAAA");
         // #4: device index 0, on, txn 74
         expect(buildSetOn(0, true, 74)).to.equal("XCNPQQUAAAACSgBSAAAAAAAAAAAB");
+    });
+
+    it("reproduces the status poll (0x5100)", () => {
+        // captured app poll: payload 00 00 00 00, txn 93
+        expect(buildPoll(93)).to.equal("XCNPQQQAAAACXQBRAAAAAAAAAAA=");
     });
 
     it("clamps dimmer values to 0..255", () => {

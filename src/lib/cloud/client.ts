@@ -271,22 +271,21 @@ export class CloudClient {
      * @param gatewayId - the gateway's cloud UUID
      * @param dataB64 - the base64-encoded ONet packet
      */
-    public async sendPacket(gatewayId: string, dataB64: string): Promise<void> {
+    public async sendPacket(gatewayId: string, dataB64: string): Promise<unknown> {
         await this.ensureAccessToken();
         try {
-            await this.postSendPacket(gatewayId, dataB64);
+            return await this.postSendPacket(gatewayId, dataB64);
         } catch (error) {
             if (error instanceof CloudAuthError) {
                 this.log.debug("[cloud/auth] SendONetPacket unauthorized, refreshing the access token once");
                 await this.ensureAccessToken(true);
-                await this.postSendPacket(gatewayId, dataB64);
-                return;
+                return await this.postSendPacket(gatewayId, dataB64);
             }
             throw error;
         }
     }
 
-    private async postSendPacket(gatewayId: string, dataB64: string): Promise<void> {
+    private async postSendPacket(gatewayId: string, dataB64: string): Promise<unknown> {
         const path = `/Gateway/${gatewayId}/SendONetPacket`;
         const response = await this.request(`${this.baseUrl}${path}`, {
             method: "POST",
@@ -304,6 +303,7 @@ export class CloudClient {
         if (!response.ok) {
             throw new CloudRequestError(`SendONetPacket failed (HTTP ${response.status})`, response.status);
         }
+        return this.readBody(response);
     }
 
     private async getJson(path: string): Promise<unknown> {
