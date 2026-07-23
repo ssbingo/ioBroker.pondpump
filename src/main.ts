@@ -15,12 +15,18 @@ import {
     DEFAULT_SCOPE,
     DEFAULT_TOKEN_URL,
 } from "./lib/cloud/client";
-import { type PumpInfo, parseInventory, SENSOR_POWER_W, SENSOR_SPEED_RPM } from "./lib/cloud/inventory";
+import {
+    type GatewayInfo,
+    type PumpInfo,
+    parseInventory,
+    SENSOR_POWER_W,
+    SENSOR_SPEED_RPM,
+} from "./lib/cloud/inventory";
 import { ensureGatewayObjects, ensurePumpObjects, writeGatewayStates, writePumpStates } from "./lib/objects";
 import { buildSensorRead, buildSetDimmer, buildSetOn, DIMMER_MAX, parseSensorReadReply } from "./lib/cloud/onet";
 import { generateSelfSignedCert } from "./lib/local/cert";
 import { LocalClient } from "./lib/local/client";
-import { fetchLocalInventory } from "./lib/local/inventory";
+import { fetchLocalInventory, toDomainInventory } from "./lib/local/inventory";
 import { DEFAULT_TLS_PORT } from "./lib/local/protocol";
 
 /** Minimum poll interval enforced regardless of configuration (seconds). */
@@ -48,6 +54,16 @@ interface PumpControl {
     controlAddress?: number;
 }
 
+/** One inventory snapshot to apply in a poll, from either transport. */
+interface PollInventory {
+    gateway: GatewayInfo;
+    pumps: PumpInfo[];
+    /** Whether the gateway is reachable. */
+    online: boolean;
+    /** Whether the dmx-derived control readback (on/speed) is known and should be written. */
+    includeControl: boolean;
+}
+
 /**
  * Extract the base64 `data`/`Data` field from a SendONetPacket response body.
  *
@@ -69,6 +85,10 @@ function extractResponseData(response: unknown): string | undefined {
 class Pondpump extends utils.Adapter {
     private cloud?: CloudClient;
     private local?: LocalClient;
+    /** Active connection mode. */
+    private mode: "cloud" | "local" | "both" = "cloud";
+    /** Local inventory (gateway + pumps), read once over the channel and cached. */
+    private localInventory?: { gateway: GatewayInfo; pumps: PumpInfo[] };
     private pollTimer?: ioBroker.Timeout;
     private pollIntervalMs = 30_000;
     /** Set true in onUnload so a poll in flight does not reschedule. */
@@ -115,6 +135,7 @@ class Pondpump extends utils.Adapter {
             );
             return;
         }
+        this.mode = mode;
 
         this.pollIntervalMs = Math.max(MIN_POLL_INTERVAL_S, this.config.pollInterval || 30) * 1000;
         const baseUrl = this.config.cloudBaseUrl || DEFAULT_BASE_URL;
@@ -313,52 +334,50 @@ class Pondpump extends utils.Adapter {
             return;
         }
 
-        await this.readLocalInventory();
-        this.log.info(
-            "[local] local channel established. Live telemetry/control over this transport is the next step; " +
-                "for live pump data use connection mode 'cloud' until then.",
-        );
+        // Listen for control commands and start the poll loop over the local channel.
+        this.subscribeStates("pumps.*.control.*");
+        this.log.info("[local] local channel established — starting poll loop over the LAN");
+        void this.poll();
     }
 
-    /** Read the gateway + pumps over the local channel (discovery + DeviceTable) and log them. */
-    private async readLocalInventory(): Promise<void> {
-        if (!this.local) {
-            return;
-        }
-        try {
-            const inv = await fetchLocalInventory(this.local, () => this.nextTxn());
-            if (inv.gateway) {
-                this.log.info(
-                    `[local/inv] gateway "${inv.gateway.lname}" name="${inv.gateway.name}" ` +
-                        `serial=${inv.gateway.serialNumber}`,
-                );
-            } else {
-                this.log.warn("[local/inv] discovery returned no gateway identity");
-            }
-            this.log.info(`[local/inv] ${inv.devices.length} device(s) found in the DeviceTable`);
-            for (const d of inv.devices) {
-                this.log.info(
-                    `[local/inv] device index ${d.index}: "${d.name}" number ${d.deviceNumber} ` +
-                        `article ${d.articleNumber} control address 0x${d.controlAddress.toString(16)}`,
-                );
-            }
-        } catch (error) {
-            this.log.warn(
-                `[local/inv] reading the local inventory failed: ${error instanceof Error ? error.message : String(error)}`,
-            );
-        }
-    }
-
-    /** One poll cycle: fetch inventory, update objects/states, reschedule. */
+    /** One poll cycle: fetch inventory (cloud or local), update objects/states, reschedule. */
     private async poll(): Promise<void> {
-        if (this.stopping || !this.cloud) {
+        if (this.stopping) {
             return;
         }
         const id = ++this.pollCount;
         const startedAt = Date.now();
         this.log.debug(`[poll] #${id} start`);
 
-        // Phase 1 — fetch the raw inventory from the cloud.
+        const inv =
+            this.mode === "local"
+                ? await this.fetchLocalInventoryForPoll(id)
+                : await this.fetchCloudInventoryForPoll(id);
+        if (!inv) {
+            this.scheduleNextPoll();
+            return;
+        }
+
+        try {
+            await this.applyInventory(id, inv, startedAt);
+        } catch (error) {
+            await this.setConnected(false);
+            const message = error instanceof Error ? error.message : String(error);
+            this.log.error(`[poll] #${id} failed while writing objects/states: ${message}`);
+        } finally {
+            this.scheduleNextPoll();
+        }
+    }
+
+    /**
+     * Fetch + parse the cloud inventory for one poll; logs and returns undefined on error.
+     *
+     * @param id - poll cycle number (for log correlation)
+     */
+    private async fetchCloudInventoryForPoll(id: number): Promise<PollInventory | undefined> {
+        if (!this.cloud) {
+            return undefined;
+        }
         let raw: unknown;
         try {
             raw = await this.cloud.fetchInventory();
@@ -366,7 +385,6 @@ class Pondpump extends utils.Adapter {
             await this.setConnected(false);
             const message = error instanceof Error ? error.message : String(error);
             if (error instanceof CloudAuthError) {
-                // Credential/config problem — quick retries will not fix it, but keep polling.
                 this.log.error(
                     `[poll] #${id} AUTH FAILED — ${message} ` +
                         "(fix: enter a fresh 'Cloud refresh token' captured from an OASE app login)",
@@ -378,14 +396,18 @@ class Pondpump extends utils.Adapter {
             } else {
                 this.log.error(`[poll] #${id} unexpected fetch error: ${message}`);
             }
-            this.scheduleNextPoll();
-            return;
+            return undefined;
         }
 
-        // Phase 2 — parse the raw inventory into the domain model.
-        let inventory;
         try {
-            inventory = parseInventory(raw);
+            const inventory = parseInventory(raw);
+            this.gatewayId = inventory.gateway.id;
+            return {
+                gateway: inventory.gateway,
+                pumps: inventory.pumps,
+                online: inventory.gateway.isOnline ?? true,
+                includeControl: true,
+            };
         } catch (error) {
             await this.setConnected(false);
             const message = error instanceof Error ? error.message : String(error);
@@ -395,83 +417,111 @@ class Pondpump extends utils.Adapter {
                 `[poll] #${id} inventory parse failed: ${message}. Raw response ${shape}. ` +
                     "The OASE cloud format may have changed — please report this with debug logs.",
             );
-            this.scheduleNextPoll();
-            return;
+            return undefined;
         }
+    }
 
-        // Phase 3 — create/update objects and write states.
-        try {
-            const online = inventory.gateway.isOnline ?? true;
-            this.gatewayId = inventory.gateway.id;
-            if (!this.gatewayEnsured) {
-                await ensureGatewayObjects(this, inventory.gateway);
-                this.gatewayEnsured = true;
-                this.log.debug(`[poll] #${id} gateway objects ensured`);
+    /**
+     * Provide the (cached) local inventory for one poll; reads it once over the channel.
+     *
+     * @param id - poll cycle number (for log correlation)
+     */
+    private async fetchLocalInventoryForPoll(id: number): Promise<PollInventory | undefined> {
+        if (!this.local?.isReady) {
+            this.log.debug(`[poll] #${id} local channel not ready`);
+            await this.setConnected(false);
+            return undefined;
+        }
+        if (!this.localInventory) {
+            try {
+                this.localInventory = toDomainInventory(await fetchLocalInventory(this.local, () => this.nextTxn()));
+                const gw = this.localInventory.gateway;
+                this.log.info(
+                    `[poll] #${id} local inventory: gateway "${gw.name}" (${gw.serialNumber}), ` +
+                        `${this.localInventory.pumps.length} pump(s)`,
+                );
+            } catch (error) {
+                await this.setConnected(false);
+                this.log.warn(
+                    `[poll] #${id} local inventory read failed: ${error instanceof Error ? error.message : String(error)}`,
+                );
+                return undefined;
             }
-            await writeGatewayStates(this, inventory.gateway, online);
-            for (const pump of inventory.pumps) {
-                this.cachePumpControl(pump);
+        }
+        return {
+            gateway: this.localInventory.gateway,
+            pumps: this.localInventory.pumps,
+            online: true,
+            includeControl: false,
+        };
+    }
 
-                // Discover the pump's live sensor set once (RDM DEVICE_INFO reports 11 sensors, but
-                // the cloud inventory only exposes a few). Scan 0..10 via 0x5500 on first contact,
-                // then only re-read the present ones; the discovery scan doubles as the first read.
-                let sensorIds = this.liveSensorIds.get(pump.deviceNumber);
-                let liveSensors: Record<number, number>;
-                if (sensorIds === undefined) {
-                    const discovery = await this.discoverLiveSensors(pump.index);
-                    sensorIds = discovery.ids;
-                    liveSensors = discovery.values;
-                    this.liveSensorIds.set(pump.deviceNumber, sensorIds);
-                } else {
-                    // Read fast sensors (rpm/power) every poll; slow ones (temperature, voltage, …)
-                    // only every SLOW_SENSOR_EVERY-th poll to keep the request load off the gateway.
-                    const readSlow = id % SLOW_SENSOR_EVERY === 0;
-                    const idsToRead = readSlow ? sensorIds : sensorIds.filter(s => FAST_SENSOR_IDS.includes(s));
-                    liveSensors = await this.readLiveSensors(pump.index, idsToRead);
-                }
+    /**
+     * Shared poll body: ensure objects, read live sensors and write states for one inventory snapshot.
+     *
+     * @param id - poll cycle number
+     * @param inv - the inventory snapshot to apply
+     * @param startedAt - poll start time (ms) for the timing summary
+     */
+    private async applyInventory(id: number, inv: PollInventory, startedAt: number): Promise<void> {
+        const { gateway, pumps, online, includeControl } = inv;
+        if (!this.gatewayEnsured) {
+            await ensureGatewayObjects(this, gateway);
+            this.gatewayEnsured = true;
+            this.log.debug(`[poll] #${id} gateway objects ensured`);
+        }
+        await writeGatewayStates(this, gateway, online);
 
-                // The inventory's rdmData is minutes-stale; use fresh live values for telemetry.
-                const livePump: PumpInfo = {
-                    ...pump,
-                    sensors: Object.keys(liveSensors).length > 0 ? liveSensors : pump.sensors,
-                };
+        for (const pump of pumps) {
+            this.cachePumpControl(pump);
 
-                if (!this.ensuredPumps.has(pump.deviceNumber)) {
-                    await ensurePumpObjects(this, livePump);
-                    this.ensuredPumps.add(pump.deviceNumber);
-                    this.log.info(
-                        `[poll] #${id} discovered pump ${pump.deviceNumber} "${pump.name ?? "?"}" ` +
-                            `(index ${pump.index}, control address ${pump.controlAddress !== undefined ? `0x${pump.controlAddress.toString(16)}` : "unknown"}, ` +
-                            `live sensors [${sensorIds.join(", ")}])`,
-                    );
-                }
+            // Discover the pump's live sensor set once (scan 0..10 via 0x5500), then re-read the
+            // present ones; fast sensors (rpm/power) every poll, slow ones only every Nth poll.
+            let sensorIds = this.liveSensorIds.get(pump.deviceNumber);
+            let liveSensors: Record<number, number>;
+            if (sensorIds === undefined) {
+                const discovery = await this.discoverLiveSensors(pump.index);
+                sensorIds = discovery.ids;
+                liveSensors = discovery.values;
+                this.liveSensorIds.set(pump.deviceNumber, sensorIds);
+            } else {
+                const readSlow = id % SLOW_SENSOR_EVERY === 0;
+                const idsToRead = readSlow ? sensorIds : sensorIds.filter(s => FAST_SENSOR_IDS.includes(s));
+                liveSensors = await this.readLiveSensors(pump.index, idsToRead);
+            }
 
-                await writePumpStates(this, livePump);
-                this.log.debug(
-                    `[poll] #${id} pump ${pump.deviceNumber}: on=${livePump.dmx.deviceOn} ` +
-                        `speed=${livePump.dmx.dimmerValue} (raw) fc=${livePump.dmx.fcStatus}/${livePump.dmx.fcMode} ` +
-                        `connected=${livePump.isConnected} ` +
-                        `power=${livePump.sensors[10] ?? "?"}W rpm=${livePump.sensors[1] ?? "?"} (live)`,
+            const livePump: PumpInfo = {
+                ...pump,
+                sensors: Object.keys(liveSensors).length > 0 ? liveSensors : pump.sensors,
+            };
+
+            if (!this.ensuredPumps.has(pump.deviceNumber)) {
+                await ensurePumpObjects(this, livePump);
+                this.ensuredPumps.add(pump.deviceNumber);
+                this.log.info(
+                    `[poll] #${id} discovered pump ${pump.deviceNumber} "${pump.name ?? "?"}" ` +
+                        `(index ${pump.index}, control address ${pump.controlAddress !== undefined ? `0x${pump.controlAddress.toString(16)}` : "unknown"}, ` +
+                        `live sensors [${sensorIds.join(", ")}])`,
                 );
             }
 
-            await this.setConnected(true);
-            const took = Date.now() - startedAt;
-            const summary =
-                `gateway ${inventory.gateway.serialNumber} "${inventory.gateway.name}" online=${online}, ` +
-                `${inventory.pumps.length} pump(s), ${took} ms`;
-            // First successful cycle is worth an info line; subsequent ones stay at debug to avoid spam.
-            if (id === 1) {
-                this.log.info(`[poll] #${id} ok — ${summary}`);
-            } else {
-                this.log.debug(`[poll] #${id} ok — ${summary}`);
-            }
-        } catch (error) {
-            await this.setConnected(false);
-            const message = error instanceof Error ? error.message : String(error);
-            this.log.error(`[poll] #${id} failed while writing objects/states: ${message}`);
-        } finally {
-            this.scheduleNextPoll();
+            await writePumpStates(this, livePump, { includeControl });
+            const control = includeControl
+                ? `on=${livePump.dmx.deviceOn} speed=${livePump.dmx.dimmerValue} (raw) `
+                : "";
+            this.log.debug(
+                `[poll] #${id} pump ${pump.deviceNumber}: ${control}connected=${livePump.isConnected} ` +
+                    `power=${livePump.sensors[SENSOR_POWER_W] ?? "?"}W rpm=${livePump.sensors[SENSOR_SPEED_RPM] ?? "?"} (live)`,
+            );
+        }
+
+        await this.setConnected(true);
+        const took = Date.now() - startedAt;
+        const summary = `gateway ${gateway.serialNumber} "${gateway.name}" online=${online}, ${pumps.length} pump(s), ${took} ms`;
+        if (id === 1) {
+            this.log.info(`[poll] #${id} ok — ${summary}`);
+        } else {
+            this.log.debug(`[poll] #${id} ok — ${summary}`);
         }
     }
 
@@ -505,7 +555,7 @@ class Pondpump extends utils.Adapter {
             }
         }
         this.log.info(
-            `[cloud/live] device index ${deviceIndex} sensor scan (0..${SENSOR_SCAN_COUNT - 1}): ${scan.join(" ")}`,
+            `[live] device index ${deviceIndex} sensor scan (0..${SENSOR_SCAN_COUNT - 1}): ${scan.join(" ")}`,
         );
         return {
             ids: Object.keys(values)
@@ -533,28 +583,37 @@ class Pondpump extends utils.Adapter {
             }
         }
         if (read.length > 0) {
-            this.log.debug(`[cloud/live] device index ${deviceIndex}: ${read.join(" ")}`);
+            this.log.debug(`[live] device index ${deviceIndex}: ${read.join(" ")}`);
         }
         return result;
     }
 
     /**
-     * Read a single live RDM sensor value for a device via the SendONetPacket tunnel (0x5500).
+     * Send a raw ONet packet (base64) over the active transport and return the reply (base64).
+     * The local channel is preferred when ready; otherwise the cloud SendONetPacket tunnel is used.
+     *
+     * @param dataB64 - the request packet, base64-encoded
+     */
+    private async sendOnet(dataB64: string): Promise<string | undefined> {
+        if (this.local?.isReady) {
+            return this.local.sendOnet(dataB64);
+        }
+        if (this.cloud && this.gatewayId) {
+            return extractResponseData(await this.cloud.sendPacket(this.gatewayId, dataB64));
+        }
+        return undefined;
+    }
+
+    /**
+     * Read a single live RDM sensor value for a device (0x5500), over cloud or local transport.
      *
      * @param deviceIndex - the pump's device index
      * @param sensorNumber - the RDM sensor number
      * @returns the live value, or undefined on failure
      */
     private async readLiveSensor(deviceIndex: number, sensorNumber: number): Promise<number | undefined> {
-        if (!this.cloud || !this.gatewayId) {
-            return undefined;
-        }
         try {
-            const response = await this.cloud.sendPacket(
-                this.gatewayId,
-                buildSensorRead(deviceIndex, sensorNumber, this.nextTxn()),
-            );
-            const dataB64 = extractResponseData(response);
+            const dataB64 = await this.sendOnet(buildSensorRead(deviceIndex, sensorNumber, this.nextTxn()));
             if (!dataB64) {
                 return undefined;
             }
@@ -565,7 +624,7 @@ class Pondpump extends utils.Adapter {
             return parsed.value;
         } catch (error) {
             this.log.debug(
-                `[cloud/live] read device ${deviceIndex} sensor ${sensorNumber} failed: ` +
+                `[live] read device ${deviceIndex} sensor ${sensorNumber} failed: ` +
                     `${error instanceof Error ? error.message : String(error)}`,
             );
             return undefined;
@@ -581,7 +640,7 @@ class Pondpump extends utils.Adapter {
             this.clearTimeout(this.pollTimer);
             this.pollTimer = undefined;
         }
-        this.log.debug(`[cloud/cmd] scheduling confirmation poll in ${COMMAND_CONFIRM_DELAY_MS} ms`);
+        this.log.debug(`[cmd] scheduling confirmation poll in ${COMMAND_CONFIRM_DELAY_MS} ms`);
         this.pollTimer = this.setTimeout(() => {
             this.pollTimer = undefined;
             void this.poll();
@@ -602,10 +661,11 @@ class Pondpump extends utils.Adapter {
         const deviceNumber = Number(match[1]);
         const field = match[2];
         const ctrl = this.pumpControl.get(deviceNumber);
-        if (!this.cloud || !this.gatewayId || !ctrl) {
+        const transportReady = this.local?.isReady || (this.cloud && this.gatewayId);
+        if (!transportReady || !ctrl) {
             this.log.warn(
-                `[cloud/cmd] cannot handle ${id}=${JSON.stringify(state.val)} yet — ` +
-                    "pump/gateway not known (waiting for the first successful poll)",
+                `[cmd] cannot handle ${id}=${JSON.stringify(state.val)} yet — ` +
+                    "pump/transport not ready (waiting for the first successful poll)",
             );
             return;
         }
@@ -613,13 +673,13 @@ class Pondpump extends utils.Adapter {
         try {
             if (field === "on") {
                 const on = state.val === true || state.val === "true" || state.val === 1;
-                this.log.info(`[cloud/cmd] pump ${deviceNumber}: set on=${on} (device index ${ctrl.index})`);
-                await this.cloud.sendPacket(this.gatewayId, buildSetOn(ctrl.index, on, this.nextTxn()));
+                this.log.info(`[cmd] pump ${deviceNumber}: set on=${on} (device index ${ctrl.index})`);
+                await this.sendOnet(buildSetOn(ctrl.index, on, this.nextTxn()));
                 await this.setState(`pumps.${deviceNumber}.control.on`, { val: on, ack: true });
             } else {
                 if (ctrl.controlAddress === undefined) {
                     this.log.error(
-                        `[cloud/cmd] pump ${deviceNumber}: no control address known (RDM param 96 missing) — ` +
+                        `[cmd] pump ${deviceNumber}: no control address known (RDM param 96 missing) — ` +
                             "cannot set the speed",
                     );
                     return;
@@ -630,10 +690,10 @@ class Pondpump extends utils.Adapter {
                         : Math.max(0, Math.min(DIMMER_MAX, Math.round(Number(state.val))));
                 const percent = Math.round((raw / DIMMER_MAX) * 100);
                 this.log.info(
-                    `[cloud/cmd] pump ${deviceNumber}: set speed raw=${raw} (${percent}%, ` +
+                    `[cmd] pump ${deviceNumber}: set speed raw=${raw} (${percent}%, ` +
                         `control address 0x${ctrl.controlAddress.toString(16)})`,
                 );
-                await this.cloud.sendPacket(this.gatewayId, buildSetDimmer(ctrl.controlAddress, raw, this.nextTxn()));
+                await this.sendOnet(buildSetDimmer(ctrl.controlAddress, raw, this.nextTxn()));
                 // Reflect both representations immediately; the confirmation poll reconciles with the device.
                 await this.setState(`pumps.${deviceNumber}.control.speed`, { val: percent, ack: true });
                 await this.setState(`pumps.${deviceNumber}.control.speedRaw`, { val: raw, ack: true });
@@ -641,7 +701,7 @@ class Pondpump extends utils.Adapter {
             this.scheduleConfirmPoll();
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            this.log.error(`[cloud/cmd] failed to send command for ${id}=${JSON.stringify(state.val)}: ${message}`);
+            this.log.error(`[cmd] failed to send command for ${id}=${JSON.stringify(state.val)}: ${message}`);
         }
     }
 
@@ -681,7 +741,7 @@ class Pondpump extends utils.Adapter {
             // ack=true values are confirmations from the device (or deletions) — not commands, ignore them
             return;
         }
-        this.log.debug(`[cloud/cmd] command received: ${id} = ${JSON.stringify(state.val)} (ack=false)`);
+        this.log.debug(`[cmd] command received: ${id} = ${JSON.stringify(state.val)} (ack=false)`);
         void this.handleCommand(id, state);
     }
 }

@@ -5,6 +5,7 @@
  *   - DeviceTable requests (0x4000), one per slot → the pump entries (name, control address, …).
  */
 
+import type { GatewayInfo, PumpInfo } from "../cloud/inventory";
 import { parseFrameHeader } from "../cloud/onet";
 import type { OnetTransport } from "../transport";
 import {
@@ -24,7 +25,12 @@ export interface LocalInventory {
     devices: DeviceTableEntry[];
 }
 
-/** Send a framed ONet request and return the reply payload (bytes after the 16-byte header). */
+/**
+ * Send a framed ONet request and return the reply payload (bytes after the 16-byte header).
+ *
+ * @param transport - the transport to send over
+ * @param frame - the raw ONet request frame
+ */
 async function requestPayload(transport: OnetTransport, frame: Buffer): Promise<Buffer | undefined> {
     const replyB64 = await transport.sendOnet(frame.toString("base64"));
     if (!replyB64) {
@@ -67,4 +73,34 @@ export async function fetchLocalInventory(
     }
 
     return { gateway, devices };
+}
+
+/**
+ * Map a locally-read inventory to the same domain model used by the cloud path, so the shared
+ * object/state writers work unchanged. The dmx state (on/off, speed) is not known locally yet and is
+ * filled with placeholders; the caller writes only telemetry/status for local pumps (not control).
+ *
+ * @param local - the inventory read over the local channel
+ */
+export function toDomainInventory(local: LocalInventory): { gateway: GatewayInfo; pumps: PumpInfo[] } {
+    const gateway: GatewayInfo = {
+        serialNumber: local.gateway?.serialNumber ?? "",
+        name: local.gateway?.lname || "OASE Controller",
+        pondName: local.gateway?.name ?? "",
+        gatewayType: "GatewayCloud",
+        isOnline: true,
+    };
+    const pumps: PumpInfo[] = local.devices.map(d => ({
+        deviceNumber: d.deviceNumber,
+        index: d.index,
+        name: d.name,
+        articleNumber: d.articleNumber,
+        deviceType: "GardenPump",
+        isConnected: true,
+        controlAddress: d.controlAddress,
+        dmx: { fcStatus: "", fcMode: 0, dimmerValue: 0, deviceOn: false },
+        sensors: {},
+        rdm: [],
+    }));
+    return { gateway, pumps };
 }

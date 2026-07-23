@@ -294,21 +294,36 @@ export function gatewayStateValues(gw: GatewayInfo, online: boolean): StateValue
     ];
 }
 
+/** Options for {@link pumpStateValues}. */
+export interface PumpStateOptions {
+    /**
+     * Whether to include the dmx-derived control/status readback (on, speed, fcStatus, fcMode).
+     * Set false when the current dmx state is not known (e.g. the local transport, until decoded),
+     * so those states are not overwritten with placeholder values. Defaults to true.
+     */
+    includeControl?: boolean;
+}
+
 /**
  * Map a pump's reported state to concrete state values.
  *
  * @param pump - pump info from the inventory
+ * @param options - controls which value groups are emitted
  */
-export function pumpStateValues(pump: PumpInfo): StateValueDef[] {
+export function pumpStateValues(pump: PumpInfo, options: PumpStateOptions = {}): StateValueDef[] {
+    const includeControl = options.includeControl ?? true;
     const base = pumpId(pump.deviceNumber);
-    const values: StateValueDef[] = [
-        { id: `${base}.control.on`, val: pump.dmx.deviceOn },
-        { id: `${base}.control.speed`, val: dimmerToPercent(pump.dmx.dimmerValue) },
-        { id: `${base}.control.speedRaw`, val: pump.dmx.dimmerValue },
-        { id: `${base}.status.fcStatus`, val: pump.dmx.fcStatus },
-        { id: `${base}.status.fcMode`, val: pump.dmx.fcMode },
-        { id: `${base}.status.connected`, val: pump.isConnected },
-    ];
+    const values: StateValueDef[] = [];
+    if (includeControl) {
+        values.push(
+            { id: `${base}.control.on`, val: pump.dmx.deviceOn },
+            { id: `${base}.control.speed`, val: dimmerToPercent(pump.dmx.dimmerValue) },
+            { id: `${base}.control.speedRaw`, val: pump.dmx.dimmerValue },
+            { id: `${base}.status.fcStatus`, val: pump.dmx.fcStatus },
+            { id: `${base}.status.fcMode`, val: pump.dmx.fcMode },
+        );
+    }
+    values.push({ id: `${base}.status.connected`, val: pump.isConnected });
     if (pump.sensors[SENSOR_POWER_W] !== undefined) {
         values.push({ id: `${base}.telemetry.power`, val: pump.sensors[SENSOR_POWER_W] });
     }
@@ -378,7 +393,8 @@ export async function ensurePumpObjects(writer: ObjectWriter, pump: PumpInfo): P
  *
  * @param writer - adapter (or mock) used to write states
  * @param pump - pump info from the inventory
+ * @param options - controls which value groups are written (see {@link PumpStateOptions})
  */
-export async function writePumpStates(writer: ObjectWriter, pump: PumpInfo): Promise<void> {
-    await writeValues(writer, pumpStateValues(pump));
+export async function writePumpStates(writer: ObjectWriter, pump: PumpInfo, options?: PumpStateOptions): Promise<void> {
+    await writeValues(writer, pumpStateValues(pump, options));
 }
