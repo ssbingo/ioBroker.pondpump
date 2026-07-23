@@ -81,6 +81,7 @@ Releases are created with `npm run release` (release-script) and published autom
 
 ### **WORK IN PROGRESS**
 
+- (ssbingo) Phase 2 (cloud control): pump speed and on/off are now writable and sent to the controller via the cloud `SendONetPacket` tunnel. The ONet packet builder is verified byte-for-byte against real app commands (set-dimmer 0x6400 = [control address, 0–255]; on/off 0x5200); writes are scaled (0–100 % ↔ 0–255), confirmed with ack:true and reconciled by a follow-up poll
 - (ssbingo) Extensive, component-tagged logging (`[config]`, `[startup]`, `[conn]`, `[poll]`, `[cloud/auth]`, `[cloud/http]`, `[shutdown]`) so any failure can be pinpointed from the logs; poll cycles are numbered with timing, connection changes and per-pump values are logged, and secrets are never logged (only presence/length)
 - (ssbingo) Cloud auth: real Azure AD B2C refresh-token grant (account.oase.com); refresh token entered once (encrypted), access tokens refreshed and rotated automatically; account password never used
 - (ssbingo) Phase 1 (cloud read-only): CloudClient with bearer session handling, defensive inventory parser matched to the real wire format, gateway/pump objects with live speed and status states, chained poll loop

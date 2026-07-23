@@ -19,9 +19,11 @@ const GW: GatewayInfo = {
 
 const PUMP: PumpInfo = {
     deviceNumber: 1000001,
+    index: 0,
     articleNumber: 73656,
     deviceType: "GardenPump",
     isConnected: true,
+    controlAddress: 0x21,
     dmx: { fcStatus: "SfcOff", fcMode: 0, dimmerValue: 178, deviceOn: true },
     rdm: [],
 };
@@ -91,9 +93,9 @@ describe("pumpObjectDefs", () => {
         );
     });
 
-    it("keeps control states read-only in phase 1", () => {
+    it("makes control states writable (phase 2 command path)", () => {
         for (const id of [`${base}.control.on`, `${base}.control.speed`, `${base}.control.speedRaw`]) {
-            expect((map.get(id)?.common as ioBroker.StateCommon).write, id).to.equal(false);
+            expect((map.get(id)?.common as ioBroker.StateCommon).write, id).to.equal(true);
         }
     });
 

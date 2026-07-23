@@ -2,20 +2,23 @@
  * ioBroker object model + state mapping for the OASE pond setup.
  *
  * The object builders are pure functions returning `{ id, obj }` definitions so the state
- * roles and read/write flags can be unit-tested without a running adapter. The `ensure*`
- * / `write*` helpers apply them via `setObjectNotExistsAsync` (never plain `setObject`,
- * which would overwrite user custom settings) and write confirmed values with `ack: true`.
+ * roles and read/write flags can be unit-tested without a running adapter. `ensure*Objects`
+ * creates/updates the objects via `extendObjectAsync` (merges `common` across versions while
+ * preserving user custom settings; never plain `setObject`) and should be called once per
+ * session; `write*States` writes confirmed values with `ack: true` on every poll.
  *
- * Phase 1 is read-only: control states are created with `write: false`. Phase 2 will flip
- * them to writable via `extendObjectAsync` and wire the command path.
+ * Control states (on/speed/speedRaw) are writable (Phase 2); commands are handled in main.ts.
  */
 
 import { dimmerToPercent, type GatewayInfo, type PumpInfo } from "./cloud/inventory";
 
 /** Subset of the adapter API needed to create objects and write states. */
 export interface ObjectWriter {
-    /** Create an object if it does not exist yet (never overwrites custom settings). */
-    setObjectNotExistsAsync(id: string, obj: ioBroker.SettableObject): Promise<unknown>;
+    /**
+     * Create/update an object, merging `common` (roles, write flag) across adapter versions
+     * while preserving user custom settings (history etc.). Called once per object per session.
+     */
+    extendObjectAsync(id: string, obj: ioBroker.SettableObject): Promise<unknown>;
     /** Write a state value. */
     setStateAsync(id: string, val: ioBroker.StateValue, ack: boolean): Promise<unknown>;
 }
@@ -116,7 +119,7 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
                 type: "boolean",
                 role: "switch.power",
                 read: true,
-                write: false, // Phase 2: write
+                write: true,
                 def: false,
             }),
         },
@@ -130,7 +133,7 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
                 min: 0,
                 max: 100,
                 read: true,
-                write: false, // Phase 2: write
+                write: true,
             }),
         },
         {
@@ -142,7 +145,7 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
                 min: 0,
                 max: 255,
                 read: true,
-                write: false, // Phase 2: write
+                write: true,
             }),
         },
 
@@ -204,7 +207,7 @@ export function pumpStateValues(pump: PumpInfo): StateValueDef[] {
 
 async function ensureObjects(writer: ObjectWriter, defs: ObjectDef[]): Promise<void> {
     for (const def of defs) {
-        await writer.setObjectNotExistsAsync(def.id, def.obj);
+        await writer.extendObjectAsync(def.id, def.obj);
     }
 }
 
@@ -215,24 +218,42 @@ async function writeValues(writer: ObjectWriter, values: StateValueDef[]): Promi
 }
 
 /**
- * Create gateway objects (if missing) and write the current values with ack:true.
+ * Create/update the gateway objects. Call once per session (not every poll).
  *
- * @param writer - adapter (or mock) used to create objects and write states
+ * @param writer - adapter (or mock) used to create objects
+ * @param gw - gateway metadata from the inventory
+ */
+export async function ensureGatewayObjects(writer: ObjectWriter, gw: GatewayInfo): Promise<void> {
+    await ensureObjects(writer, gatewayObjectDefs(gw));
+}
+
+/**
+ * Write the current gateway state values with ack:true.
+ *
+ * @param writer - adapter (or mock) used to write states
  * @param gw - gateway metadata from the inventory
  * @param online - whether the gateway is currently reachable
  */
-export async function applyGateway(writer: ObjectWriter, gw: GatewayInfo, online: boolean): Promise<void> {
-    await ensureObjects(writer, gatewayObjectDefs(gw));
+export async function writeGatewayStates(writer: ObjectWriter, gw: GatewayInfo, online: boolean): Promise<void> {
     await writeValues(writer, gatewayStateValues(gw, online));
 }
 
 /**
- * Create pump objects (if missing) and write the current values with ack:true.
+ * Create/update a pump's objects. Call once per pump per session (not every poll).
  *
- * @param writer - adapter (or mock) used to create objects and write states
+ * @param writer - adapter (or mock) used to create objects
  * @param pump - pump info from the inventory
  */
-export async function applyPump(writer: ObjectWriter, pump: PumpInfo): Promise<void> {
+export async function ensurePumpObjects(writer: ObjectWriter, pump: PumpInfo): Promise<void> {
     await ensureObjects(writer, pumpObjectDefs(pump));
+}
+
+/**
+ * Write a pump's current state values with ack:true.
+ *
+ * @param writer - adapter (or mock) used to write states
+ * @param pump - pump info from the inventory
+ */
+export async function writePumpStates(writer: ObjectWriter, pump: PumpInfo): Promise<void> {
     await writeValues(writer, pumpStateValues(pump));
 }

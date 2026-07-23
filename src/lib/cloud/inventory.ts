@@ -40,12 +40,16 @@ export interface DmxPumpState {
 export interface PumpInfo {
     /** Unique device number, used as the ioBroker object id. */
     deviceNumber: number;
+    /** Zero-based position in the inventory device list (used for on/off commands). */
+    index: number;
     /** OASE article number, e.g. 73656. */
     articleNumber?: number;
     /** Device type string, e.g. "GardenPump". */
     deviceType: string;
     /** Whether the controller currently sees the pump. */
     isConnected: boolean;
+    /** Control address (RDM address) used for set-dimmer commands, e.g. 0x21. */
+    controlAddress?: number;
     /** Current speed/on-off state. */
     dmx: DmxPumpState;
     /** Raw RDM telemetry, kept for later decoding. */
@@ -83,6 +87,28 @@ export interface Inventory {
 /** OASE attribute ids seen in the cloud capture. */
 const ATTR_FIRMWARE = 102;
 const ATTR_POND_NAME = 103;
+
+/** RDM parameter id whose payload carries the pump's control address, and the byte offset of it. */
+const CONTROL_ADDRESS_PARAM = 96;
+const CONTROL_ADDRESS_OFFSET = 15;
+
+/**
+ * Extract a pump's control address (RDM address) from its RDM parameter 96, if present.
+ *
+ * @param rdm - the pump's RDM telemetry entries
+ */
+function extractControlAddress(rdm: RawRdmEntry[]): number | undefined {
+    const entry = rdm.find(e => e.parameterId === CONTROL_ADDRESS_PARAM);
+    if (!entry?.valueB64) {
+        return undefined;
+    }
+    try {
+        const bytes = Buffer.from(entry.valueB64, "base64");
+        return bytes.length > CONTROL_ADDRESS_OFFSET ? bytes[CONTROL_ADDRESS_OFFSET] : undefined;
+    } catch {
+        return undefined;
+    }
+}
 
 /** Device type string identifying a pump in the inventory. */
 export const PUMP_DEVICE_TYPE = "GardenPump";
@@ -287,7 +313,7 @@ function parseRdm(raw: unknown): RawRdmEntry[] {
     return result;
 }
 
-function parsePump(raw: Record<string, unknown>): PumpInfo {
+function parsePump(raw: Record<string, unknown>, index: number): PumpInfo {
     const deviceNumber = toNumber(pick(raw, "deviceNumber", "DeviceNumber"), NaN);
     if (!Number.isFinite(deviceNumber)) {
         throw new Error("pump entry has no device number");
@@ -297,16 +323,19 @@ function parsePump(raw: Record<string, unknown>): PumpInfo {
         (isRecord(connectionState) ? pick(connectionState, "isConnected", "IsConnected") : undefined) ??
             pick(raw, "isConnected", "IsConnected"),
     );
+    const rdm = parseRdm(pick(raw, "rdmData", "RdmData"));
     return {
         deviceNumber,
+        index,
         articleNumber:
             pick(raw, "articleNumber", "ArticleNumber") !== undefined
                 ? toNumber(pick(raw, "articleNumber", "ArticleNumber"))
                 : undefined,
         deviceType: toStringOrUndefined(pick(raw, "deviceType", "DeviceType")) ?? PUMP_DEVICE_TYPE,
         isConnected,
+        controlAddress: extractControlAddress(rdm),
         dmx: parseDmxPumpState(pick(raw, "dmxPumpState", "DmxPumpState")),
-        rdm: parseRdm(pick(raw, "rdmData", "RdmData")),
+        rdm,
     };
 }
 
@@ -335,7 +364,9 @@ export function parseInventory(raw: unknown): Inventory {
         (isRecord(gatewayRaw) ? pick(gatewayRaw, "devices", "Devices") : undefined) ?? pick(raw, "devices", "Devices");
     const pumps: PumpInfo[] = [];
     if (Array.isArray(devicesRaw)) {
-        for (const device of devicesRaw) {
+        // The device's position in this list is its device index (used for on/off commands).
+        for (let i = 0; i < devicesRaw.length; i++) {
+            const device = devicesRaw[i];
             if (!isRecord(device)) {
                 continue;
             }
@@ -343,7 +374,7 @@ export function parseInventory(raw: unknown): Inventory {
             if (deviceType !== undefined && deviceType !== PUMP_DEVICE_TYPE) {
                 continue; // only pumps are handled in this adapter
             }
-            pumps.push(parsePump(device));
+            pumps.push(parsePump(device, i));
         }
     }
 

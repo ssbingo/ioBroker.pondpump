@@ -30,6 +30,8 @@ const REAL_SAMPLE = {
                     rdmData: [
                         { key: { parameterId: 513, sensorId: 1 }, value: { value: "AQnOAAAAAAAA", timestamp: "t" } },
                         { key: { parameterId: 32824 }, value: { value: "GQ==", timestamp: "t" } },
+                        // RDM param 96: byte[15] = 0x21 is the pump's control address
+                        { key: { parameterId: 96 }, value: { value: "AQAB+gQAASMRIAACAQEAIQAACw==", timestamp: "t" } },
                     ],
                     dmxPumpState: {
                         value: { fcStatus: "SfcOff", fcMode: 0, dimmerValue: 178, deviceOn: true },
@@ -76,6 +78,14 @@ describe("parseInventory (real cloud shape)", () => {
         expect(inv.pumps.map(p => p.deviceNumber)).to.deep.equal([1000001, 1000002]);
     });
 
+    it("assigns the device index and extracts the control address from RDM param 96", () => {
+        const inv = parseInventory(REAL_SAMPLE);
+        expect(inv.pumps[0].index).to.equal(0);
+        expect(inv.pumps[1].index).to.equal(1);
+        expect(inv.pumps[0].controlAddress).to.equal(0x21); // from RDM param 96 byte[15]
+        expect(inv.pumps[1].controlAddress).to.equal(undefined); // pump 2 has no param 96 in the fixture
+    });
+
     it("unwraps dmxPumpState.value and connectionState.isConnected", () => {
         const inv = parseInventory(REAL_SAMPLE);
         const first = inv.pumps[0];
@@ -90,7 +100,7 @@ describe("parseInventory (real cloud shape)", () => {
     it("parses rdmData with the key/value nesting", () => {
         const inv = parseInventory(REAL_SAMPLE);
         const rdm = inv.pumps[0].rdm;
-        expect(rdm).to.have.length(2);
+        expect(rdm).to.have.length(3);
         expect(rdm[0]).to.deep.include({ parameterId: 513, sensorId: 1, valueB64: "AQnOAAAAAAAA" });
         expect(rdm[1]).to.deep.include({ parameterId: 32824, valueB64: "GQ==" });
         expect(rdm[1].sensorId).to.equal(undefined);

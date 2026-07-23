@@ -264,6 +264,48 @@ export class CloudClient {
         );
     }
 
+    /**
+     * Send a local ONet packet to the gateway via the cloud tunnel
+     * (`POST /Gateway/{gatewayId}/SendONetPacket`). Re-authenticates once on a 401.
+     *
+     * @param gatewayId - the gateway's cloud UUID
+     * @param dataB64 - the base64-encoded ONet packet
+     */
+    public async sendPacket(gatewayId: string, dataB64: string): Promise<void> {
+        await this.ensureAccessToken();
+        try {
+            await this.postSendPacket(gatewayId, dataB64);
+        } catch (error) {
+            if (error instanceof CloudAuthError) {
+                this.log.debug("[cloud/auth] SendONetPacket unauthorized, refreshing the access token once");
+                await this.ensureAccessToken(true);
+                await this.postSendPacket(gatewayId, dataB64);
+                return;
+            }
+            throw error;
+        }
+    }
+
+    private async postSendPacket(gatewayId: string, dataB64: string): Promise<void> {
+        const path = `/Gateway/${gatewayId}/SendONetPacket`;
+        const response = await this.request(`${this.baseUrl}${path}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "*/*",
+                "api-version": "4.2",
+                Authorization: `Bearer ${this.accessToken}`,
+            },
+            body: JSON.stringify({ Data: dataB64 }),
+        });
+        if (response.status === 401 || response.status === 403) {
+            throw new CloudAuthError(`Unauthorized for ${path} (HTTP ${response.status})`);
+        }
+        if (!response.ok) {
+            throw new CloudRequestError(`SendONetPacket failed (HTTP ${response.status})`, response.status);
+        }
+    }
+
     private async getJson(path: string): Promise<unknown> {
         const response = await this.request(`${this.baseUrl}${path}`, {
             method: "GET",
