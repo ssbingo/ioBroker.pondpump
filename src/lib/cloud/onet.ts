@@ -25,6 +25,8 @@ export const PACKET_SET_DIMMER = 0x6400;
 export const PACKET_SET_ON = 0x5200;
 /** Packet type the app sends as a status poll (its reply likely carries fresh live data). */
 export const PACKET_POLL = 0x5100;
+/** Packet type the app sends as a richer status/telemetry request. */
+export const PACKET_STATUS = 0x5500;
 
 /** Maximum raw dimmer value. */
 export const DIMMER_MAX = 255;
@@ -85,4 +87,13 @@ export function buildSetOn(deviceIndex: number, on: boolean, txn: number): strin
  */
 export function buildPoll(txn: number): string {
     return buildPacket(PACKET_POLL, [0, 0, 0, 0], txn);
+}
+
+/**
+ * Build the richer status/telemetry request (0x5500), replaying the payload captured from the app.
+ *
+ * @param txn - transaction number
+ */
+export function buildStatusRequest(txn: number): string {
+    return buildPacket(PACKET_STATUS, [0, 0, 0, 0, 1, 2, 2, 1, 1], txn);
 }

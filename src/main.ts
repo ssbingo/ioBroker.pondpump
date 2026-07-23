@@ -17,7 +17,7 @@ import {
 } from "./lib/cloud/client";
 import { type PumpInfo, parseInventory } from "./lib/cloud/inventory";
 import { ensureGatewayObjects, ensurePumpObjects, writeGatewayStates, writePumpStates } from "./lib/objects";
-import { buildPoll, buildSetDimmer, buildSetOn, DIMMER_MAX } from "./lib/cloud/onet";
+import { buildPoll, buildSetDimmer, buildSetOn, buildStatusRequest, DIMMER_MAX } from "./lib/cloud/onet";
 
 /** Minimum poll interval enforced regardless of configuration (seconds). */
 const MIN_POLL_INTERVAL_S = 5;
@@ -344,13 +344,30 @@ class Pondpump extends utils.Adapter {
         if (!this.cloud || !this.gatewayId) {
             return;
         }
+        await this.probePacket(id, "0x5100", buildPoll(this.nextTxn()));
+        await this.probePacket(id, "0x5500", buildStatusRequest(this.nextTxn()));
+    }
+
+    /**
+     * Send one probe packet and log its raw reply (diagnostic). Never throws.
+     *
+     * @param id - the current poll id (for log correlation)
+     * @param label - short packet label for the log
+     * @param packet - the base64 ONet packet to send
+     */
+    private async probePacket(id: number, label: string, packet: string): Promise<void> {
+        if (!this.cloud || !this.gatewayId) {
+            return;
+        }
         try {
-            const reply = await this.cloud.sendPacket(this.gatewayId, buildPoll(this.nextTxn()));
+            const reply = await this.cloud.sendPacket(this.gatewayId, packet);
             const text = typeof reply === "string" ? reply : JSON.stringify(reply);
-            this.log.debug(`[cloud/poke] #${id} 0x5100 reply: ${text.length > 400 ? `${text.slice(0, 400)}…` : text}`);
+            this.log.debug(
+                `[cloud/poke] #${id} ${label} reply: ${text.length > 400 ? `${text.slice(0, 400)}…` : text}`,
+            );
         } catch (error) {
             this.log.debug(
-                `[cloud/poke] #${id} 0x5100 failed: ${error instanceof Error ? error.message : String(error)}`,
+                `[cloud/poke] #${id} ${label} failed: ${error instanceof Error ? error.message : String(error)}`,
             );
         }
     }
