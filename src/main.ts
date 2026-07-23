@@ -23,14 +23,7 @@ import {
     SENSOR_SPEED_RPM,
 } from "./lib/cloud/inventory";
 import { ensureGatewayObjects, ensurePumpObjects, writeGatewayStates, writePumpStates } from "./lib/objects";
-import {
-    buildFrame,
-    buildSensorRead,
-    buildSetDimmer,
-    buildSetOn,
-    DIMMER_MAX,
-    parseSensorReadReply,
-} from "./lib/cloud/onet";
+import { buildSensorRead, buildSetDimmer, buildSetOn, DIMMER_MAX, parseSensorReadReply } from "./lib/cloud/onet";
 import { generateSelfSignedCert } from "./lib/local/cert";
 import { LocalClient } from "./lib/local/client";
 import { fetchLocalInventory, toDomainInventory } from "./lib/local/inventory";
@@ -344,48 +337,7 @@ class Pondpump extends utils.Adapter {
         // Listen for control commands and start the poll loop over the local channel.
         this.subscribeStates("pumps.*.control.*");
         this.log.info("[local] local channel established — starting poll loop over the LAN");
-        await this.probeSetpoint();
         void this.poll();
-    }
-
-    /**
-     * Diagnostic (phase-3 setpoint bring-up): read RDM params via the 0x5500 mechanism using the
-     * generalised format `[idx u32][01 02 <param BE>][trailing]`. Param 32825 is the dimmer setpoint
-     * (0..255); 32824/32815 are neighbours (mode/on-off). Log the raw replies to confirm the format.
-     */
-    private async probeSetpoint(): Promise<void> {
-        const params = [32825, 32824, 32815];
-        for (const deviceIndex of [0, 1]) {
-            for (const param of params) {
-                for (const trailing of [[], [0]]) {
-                    const payload = [
-                        deviceIndex & 0xff,
-                        (deviceIndex >>> 8) & 0xff,
-                        (deviceIndex >>> 16) & 0xff,
-                        (deviceIndex >>> 24) & 0xff,
-                        0x01,
-                        0x02,
-                        (param >>> 8) & 0xff,
-                        param & 0xff,
-                        ...trailing,
-                    ];
-                    try {
-                        const replyB64 = await this.sendOnet(
-                            buildFrame(0x5500, payload, this.nextTxn()).toString("base64"),
-                        );
-                        const hex = replyB64 ? Buffer.from(replyB64, "base64").toString("hex") : "(no reply)";
-                        this.log.info(
-                            `[local/rdm] dev ${deviceIndex} param ${param} trail=${trailing.length} → ${hex}`,
-                        );
-                    } catch (error) {
-                        this.log.info(
-                            `[local/rdm] dev ${deviceIndex} param ${param} trail=${trailing.length} → error: ` +
-                                `${error instanceof Error ? error.message : String(error)}`,
-                        );
-                    }
-                }
-            }
-        }
     }
 
     /** One poll cycle: fetch inventory (cloud or local), update objects/states, reschedule. */
