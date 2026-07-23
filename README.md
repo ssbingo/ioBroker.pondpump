@@ -63,18 +63,6 @@ All settings are available in the Admin UI (JSON config):
 | Device password | Device password for local authentication (stored encrypted) |
 | Bind address / port | Local TLS server the controller connects back to |
 
-### Development
-
-```bash
-npm install        # install dependencies
-npm run build      # compile TypeScript (esbuild + type check)
-npm run lint       # ESLint 9 (@iobroker/eslint-config)
-npm test           # unit + package tests
-npm run test:integration  # adapter start/stop in a real js-controller sandbox
-```
-
-Releases are created with `npm run release` (release-script) and published automatically by GitHub Actions on `v*` tags.
-
 ## Changelog
 <!--
     Placeholder for the next version (at the beginning of the line):
