@@ -171,7 +171,7 @@ export class CloudClient {
             return await this.getJson(INVENTORY_PATH);
         } catch (error) {
             if (error instanceof CloudAuthError) {
-                this.log.debug("Inventory request unauthorized, refreshing the access token once");
+                this.log.debug("[cloud/auth] inventory request unauthorized, refreshing the access token once");
                 await this.ensureAccessToken(true);
                 return await this.getJson(INVENTORY_PATH);
             }
@@ -200,6 +200,11 @@ export class CloudClient {
             );
         }
 
+        this.log.debug(
+            `[cloud/auth] refreshing access token (grant=refresh_token, client_id=${this.clientId}, ` +
+                `refresh_token len=${this.refreshToken.length})`,
+        );
+
         const body = new URLSearchParams({
             grant_type: "refresh_token",
             client_id: this.clientId,
@@ -219,6 +224,10 @@ export class CloudClient {
             const errorCode = isRecord(parsed) && typeof parsed.error === "string" ? parsed.error : "";
             const description =
                 isRecord(parsed) && typeof parsed.error_description === "string" ? parsed.error_description : "";
+            this.log.debug(
+                `[cloud/auth] token endpoint rejected the request: HTTP ${response.status}` +
+                    `${errorCode ? ` error=${errorCode}` : ""}${description ? ` desc=${description}` : ""}`,
+            );
             if (response.status === 400 || response.status === 401 || errorCode === "invalid_grant") {
                 const suffix = errorCode ? `, ${errorCode}` : "";
                 const details = description ? ` Details: ${description}` : "";
@@ -231,6 +240,9 @@ export class CloudClient {
 
         const accessToken = extractToken(parsed);
         if (!accessToken) {
+            this.log.debug(
+                `[cloud/auth] token response had no access_token; keys=${isRecord(parsed) ? Object.keys(parsed).join(",") : typeof parsed}`,
+            );
             throw new CloudAuthError("Token refresh succeeded but no access token was found in the response");
         }
         this.accessToken = accessToken;
@@ -243,11 +255,12 @@ export class CloudClient {
             isRecord(parsed) && typeof parsed.refresh_token === "string" ? parsed.refresh_token : "";
         if (newRefreshToken && newRefreshToken !== this.refreshToken) {
             this.refreshToken = newRefreshToken;
+            this.log.debug(`[cloud/auth] refresh token rotated (new len=${newRefreshToken.length})`);
             this.onRefreshToken?.(newRefreshToken);
         }
 
         this.log.debug(
-            `Obtained cloud access token (valid ${Math.round((this.accessTokenExpiry - Date.now()) / 1000)}s)`,
+            `[cloud/auth] access token acquired, valid ${Math.round((this.accessTokenExpiry - Date.now()) / 1000)}s`,
         );
     }
 
@@ -267,21 +280,34 @@ export class CloudClient {
 
     /**
      * Perform an HTTP request with a hard timeout via AbortController.
+     * Logs method, URL (without query string) status and timing; never the body/headers.
      *
      * @param url - absolute request URL
      * @param init - fetch request options
      */
     private async request(url: string, init: RequestInit): Promise<Response> {
+        const method = init.method ?? "GET";
+        const logUrl = url.split("?")[0];
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+        const startedAt = Date.now();
         try {
-            return await this.fetchImpl(url, { ...init, signal: controller.signal });
+            const response = await this.fetchImpl(url, { ...init, signal: controller.signal });
+            this.log.debug(
+                `[cloud/http] ${method} ${logUrl} -> HTTP ${response.status} (${Date.now() - startedAt} ms)`,
+            );
+            return response;
         } catch (error) {
+            const elapsed = Date.now() - startedAt;
             if (error instanceof Error && error.name === "AbortError") {
-                throw new CloudRequestError(`Request to ${url} timed out after ${this.timeoutMs} ms`);
+                this.log.warn(`[cloud/http] ${method} ${logUrl} timed out after ${this.timeoutMs} ms`);
+                throw new CloudRequestError(`Request to ${logUrl} timed out after ${this.timeoutMs} ms`);
             }
+            this.log.warn(
+                `[cloud/http] ${method} ${logUrl} failed after ${elapsed} ms: ${error instanceof Error ? error.message : String(error)}`,
+            );
             throw new CloudRequestError(
-                `Request to ${url} failed: ${error instanceof Error ? error.message : String(error)}`,
+                `Request to ${logUrl} failed: ${error instanceof Error ? error.message : String(error)}`,
             );
         } finally {
             clearTimeout(timer);

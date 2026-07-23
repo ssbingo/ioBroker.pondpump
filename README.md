@@ -81,6 +81,7 @@ Releases are created with `npm run release` (release-script) and published autom
 
 ### **WORK IN PROGRESS**
 
+- (ssbingo) Extensive, component-tagged logging (`[config]`, `[startup]`, `[conn]`, `[poll]`, `[cloud/auth]`, `[cloud/http]`, `[shutdown]`) so any failure can be pinpointed from the logs; poll cycles are numbered with timing, connection changes and per-pump values are logged, and secrets are never logged (only presence/length)
 - (ssbingo) Cloud auth: real Azure AD B2C refresh-token grant (account.oase.com); refresh token entered once (encrypted), access tokens refreshed and rotated automatically; account password never used
 - (ssbingo) Phase 1 (cloud read-only): CloudClient with bearer session handling, defensive inventory parser matched to the real wire format, gateway/pump objects with live speed and status states, chained poll loop
 - (ssbingo) initial release
