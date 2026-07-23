@@ -349,27 +349,39 @@ class Pondpump extends utils.Adapter {
     }
 
     /**
-     * Diagnostic (phase-3 setpoint bring-up): probe GET_LIVE_SCENE (0xC500) with the likely payload
-     * variants and log the replies, to find how the controller reports the current on/off + speed
-     * setpoint. Removed once the format is known.
+     * Diagnostic (phase-3 setpoint bring-up): read RDM params via the 0x5500 mechanism using the
+     * generalised format `[idx u32][01 02 <param BE>][trailing]`. Param 32825 is the dimmer setpoint
+     * (0..255); 32824/32815 are neighbours (mode/on-off). Log the raw replies to confirm the format.
      */
     private async probeSetpoint(): Promise<void> {
-        const variants: { label: string; payload: number[] }[] = [
-            { label: "empty", payload: [] },
-            { label: "idx0", payload: [0, 0, 0, 0] },
-            { label: "idx1", payload: [1, 0, 0, 0] },
-            { label: "addr0x21", payload: [0x21] },
-            { label: "addr0x23", payload: [0x23] },
-        ];
-        for (const v of variants) {
-            try {
-                const replyB64 = await this.sendOnet(buildFrame(0xc500, v.payload, this.nextTxn()).toString("base64"));
-                const hex = replyB64 ? Buffer.from(replyB64, "base64").toString("hex") : "(no reply)";
-                this.log.info(`[local/scene] GET_LIVE_SCENE 0xC500 ${v.label} → ${hex}`);
-            } catch (error) {
-                this.log.info(
-                    `[local/scene] GET_LIVE_SCENE 0xC500 ${v.label} → error: ${error instanceof Error ? error.message : String(error)}`,
-                );
+        const params = [32825, 32824, 32815];
+        for (const deviceIndex of [0, 1]) {
+            for (const param of params) {
+                for (const trailing of [[], [0]]) {
+                    const payload = [
+                        deviceIndex & 0xff,
+                        (deviceIndex >>> 8) & 0xff,
+                        (deviceIndex >>> 16) & 0xff,
+                        (deviceIndex >>> 24) & 0xff,
+                        0x01,
+                        0x02,
+                        (param >>> 8) & 0xff,
+                        param & 0xff,
+                        ...trailing,
+                    ];
+                    try {
+                        const replyB64 = await this.sendOnet(buildFrame(0x5500, payload, this.nextTxn()).toString("base64"));
+                        const hex = replyB64 ? Buffer.from(replyB64, "base64").toString("hex") : "(no reply)";
+                        this.log.info(
+                            `[local/rdm] dev ${deviceIndex} param ${param} trail=${trailing.length} → ${hex}`,
+                        );
+                    } catch (error) {
+                        this.log.info(
+                            `[local/rdm] dev ${deviceIndex} param ${param} trail=${trailing.length} → error: ` +
+                                `${error instanceof Error ? error.message : String(error)}`,
+                        );
+                    }
+                }
             }
         }
     }
