@@ -43,20 +43,21 @@ describe("encodePassword / get64Bytes", () => {
 });
 
 describe("buildTcpReq (UDP wake)", () => {
-    it("frames the target IPv4 + TLS port (UInt16 LE) as the payload", () => {
+    it("frames the TLS port (UInt16 LE) first, then the IPv4, as the payload", () => {
         const frame = buildTcpReq("192.168.1.50", 5999, 7);
         const header = parseFrameHeader(frame);
         expect(header?.packetType).to.equal(PACKET_TCP_REQ);
         expect(header?.txn).to.equal(7);
         expect(header?.payloadLength).to.equal(6);
         const payload = frame.subarray(HEADER_SIZE);
-        // 5999 = 0x176F -> LE 6f 17
-        expect([...payload]).to.deep.equal([192, 168, 1, 50, 0x6f, 0x17]);
+        // 5999 = 0x176F -> LE 6f 17, then the IP octets
+        expect([...payload]).to.deep.equal([0x6f, 0x17, 192, 168, 1, 50]);
     });
 
     it("falls back to 0.0.0.0 for a non-dotted bind address", () => {
         const payload = buildTcpReq("not-an-ip", 5999, 1).subarray(HEADER_SIZE);
-        expect([...payload.subarray(0, 4)]).to.deep.equal([0, 0, 0, 0]);
+        // the IP sits at offset 2..6 (after the 2-byte port)
+        expect([...payload.subarray(2, 6)]).to.deep.equal([0, 0, 0, 0]);
     });
 });
 
