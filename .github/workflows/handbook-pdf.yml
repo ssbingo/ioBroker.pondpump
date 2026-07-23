@@ -42,7 +42,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/handbook/en/manual.pdf docs/handbook/de/manual.pdf
+          git add doc/handbook/en/manual.pdf doc/handbook/de/manual.pdf
           if git diff --cached --quiet; then
             echo "PDFs unchanged — nothing to commit."
           else

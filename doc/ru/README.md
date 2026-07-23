@@ -2,6 +2,14 @@
 
 > [English README](../../README.md)
 
+---
+
+<p align="center">
+  <a href="https://www.buymeacoffee.com/ssbingo"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=ssbingo&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
+</p>
+
+---
+
 Управление и мониторинг прудовых насосов **OASE AquaMax Eco Titanium** через **OASE Garden Controller Cloud (EGC)** — локально и через облако.
 
 ## Отказ от ответственности

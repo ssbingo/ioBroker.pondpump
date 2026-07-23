@@ -10,6 +10,14 @@
 
 **Tests:** ![Test and Release](https://github.com/ssbingo/ioBroker.pondpump/workflows/Test%20and%20Release/badge.svg)
 
+---
+
+<p align="center">
+  <a href="https://www.buymeacoffee.com/ssbingo"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=ssbingo&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
+</p>
+
+---
+
 ## pondpump adapter for ioBroker
 
 Control and monitor **OASE AquaMax Eco Titanium** pond pumps via the **OASE Garden Controller Cloud (EGC)** — locally and via cloud.
@@ -83,21 +91,21 @@ All settings are available in the Admin UI (JSON config):
 
 ## Documentation
 
-📖 **Beginner's handbook:** [English](docs/handbook/en/manual.md) ([PDF](docs/handbook/en/manual.pdf)) ·
-[Deutsch](docs/handbook/de/manual.md) ([PDF](docs/handbook/de/manual.pdf))
+📖 **Beginner's handbook:** [English](doc/handbook/en/manual.md) ([PDF](doc/handbook/en/manual.pdf)) ·
+[Deutsch](doc/handbook/de/manual.md) ([PDF](doc/handbook/de/manual.pdf))
 
 Translated documentation:
 
-- 🇩🇪 [Deutsche Dokumentation](docs/de/README.md)
-- 🇷🇺 [Документация на русском](docs/ru/README.md)
-- 🇳🇱 [Nederlandse documentatie](docs/nl/README.md)
-- 🇫🇷 [Documentation française](docs/fr/README.md)
-- 🇮🇹 [Documentazione italiana](docs/it/README.md)
-- 🇪🇸 [Documentación en español](docs/es/README.md)
-- 🇵🇱 [Dokumentacja polska](docs/pl/README.md)
-- 🇵🇹 [Documentação portuguesa](docs/pt/README.md)
-- 🇺🇦 [Документація українською](docs/uk/README.md)
-- 🇨🇳 [简体中文文档](docs/zh-cn/README.md)
+- 🇩🇪 [Deutsche Dokumentation](doc/de/README.md)
+- 🇷🇺 [Документация на русском](doc/ru/README.md)
+- 🇳🇱 [Nederlandse documentatie](doc/nl/README.md)
+- 🇫🇷 [Documentation française](doc/fr/README.md)
+- 🇮🇹 [Documentazione italiana](doc/it/README.md)
+- 🇪🇸 [Documentación en español](doc/es/README.md)
+- 🇵🇱 [Dokumentacja polska](doc/pl/README.md)
+- 🇵🇹 [Documentação portuguesa](doc/pt/README.md)
+- 🇺🇦 [Документація українською](doc/uk/README.md)
+- 🇨🇳 [简体中文文档](doc/zh-cn/README.md)
 
 Older changelogs can be found in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 

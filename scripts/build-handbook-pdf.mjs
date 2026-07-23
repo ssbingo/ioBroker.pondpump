@@ -1,12 +1,12 @@
 /*
- * Render the beginner handbooks (docs/handbook/<lang>/manual.md) to PDF via md-to-pdf (Chromium).
+ * Render the beginner handbooks (doc/handbook/<lang>/manual.md) to PDF via md-to-pdf (Chromium).
  * Run locally (needs the Chromium system libraries) or, more reliably, in the "Handbook PDFs" CI
  * workflow which installs those libraries on the runner.
  */
 import { mdToPdf } from "md-to-pdf";
 import { writeFile } from "node:fs/promises";
 
-const files = ["docs/handbook/en/manual.md", "docs/handbook/de/manual.md"];
+const files = ["doc/handbook/en/manual.md", "doc/handbook/de/manual.md"];
 
 const footer =
     '<div style="width:100%;font-size:8px;color:#8aa0a6;text-align:center;padding:0 12mm;">' +
@@ -14,7 +14,7 @@ const footer =
     "</div>";
 
 const config = {
-    stylesheet: ["docs/handbook/style.css"],
+    stylesheet: ["doc/handbook/style.css"],
     document_title: "ioBroker.pondpump — Handbook",
     launch_options: { args: ["--no-sandbox", "--disable-setuid-sandbox"] },
     pdf_options: {

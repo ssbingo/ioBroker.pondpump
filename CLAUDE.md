@@ -2,7 +2,7 @@
 
 > Diese Datei wird von Claude Code in VS Code automatisch als Projektkontext geladen.
 > Sie fasst Ziel, Entscheidungen und die **zwingend einzuhaltenden** ioBroker-Regeln zusammen
-> und verweist auf die Detaildokumente unter `docs/context/`.
+> und verweist auf die Detaildokumente unter `doc/context/`.
 
 ## Was wir bauen
 Ein **eigener ioBroker-Adapter** zur lokalen und/oder cloud-basierten Steuerung + Auswertung von
@@ -22,7 +22,7 @@ Bewusst getrennt vom vorhandenen Community-Adapter `mr-suw/ioBroker.oasecontrol`
 Planung abgeschlossen. **Nächster Schritt: Phase 0** — TypeScript-Gerüst via `@iobroker/create-adapter`,
 regelkonforme `io-package.json` (11 Sprachen), `admin/jsonConfig.json`, GitHub-Actions-CI, ESLint 9;
 leerer Adapter muss sauber starten/stoppen (Compact-Mode-Test). Danach **Phase 1: Cloud read-only**.
-Phasenplan im Detail: `docs/context/04-project-plan.md`.
+Phasenplan im Detail: `doc/context/04-project-plan.md`.
 
 ## ioBroker-Compliance-Skill (mitgeliefert)
 Der vollständige, aufrufbare Compliance-Skill liegt unter **`.claude/skills/iobroker-adapter-dev/`**
@@ -30,7 +30,7 @@ Der vollständige, aufrufbare Compliance-Skill liegt unter **`.claude/skills/iob
 Release, Changelog, States/Rollen, CI, ESLint oder README **anwenden**.
 
 ## HARTE ioBroker-Regeln — beim Coden IMMER einhalten
-(Vollständig im Skill `.claude/skills/iobroker-adapter-dev/`; Kurzverweis `docs/context/03-iobroker-compliance.md`.)
+(Vollständig im Skill `.claude/skills/iobroker-adapter-dev/`; Kurzverweis `doc/context/03-iobroker-compliance.md`.)
 
 - **States brauchen eine gültige Rolle** aus der offiziellen Liste — **nie** die generische Rolle `state`.
 - **Objekthierarchie** `device → channel → folder → state`; ein `state` hat **nie** Kind-Objekte.
@@ -51,10 +51,10 @@ Release, Changelog, States/Rollen, CI, ESLint oder README **anwenden**.
 Gerätepasswort und Cloud-Capture liegen in **`secrets/`** (per `.gitignore` ausgeschlossen — **niemals committen**).
 
 ## Dokumenten-Index
-- `docs/context/01-conversation-and-decisions.md` — kompletter Gesprächsverlauf & Begründungen
-- `docs/context/02-technical-findings.md` — Protokoll, Gerätemodell, Ports, Netz, RDM, Passwort-Herleitung
-- `docs/context/03-iobroker-compliance.md` — Verweis + Kurzüberblick zum Compliance-Skill
+- `doc/context/01-conversation-and-decisions.md` — kompletter Gesprächsverlauf & Begründungen
+- `doc/context/02-technical-findings.md` — Protokoll, Gerätemodell, Ports, Netz, RDM, Passwort-Herleitung
+- `doc/context/03-iobroker-compliance.md` — Verweis + Kurzüberblick zum Compliance-Skill
 - `.claude/skills/iobroker-adapter-dev/` — **vollständiger, aufrufbarer Compliance-Skill** (SKILL.md + references/)
-- `docs/context/04-project-plan.md` — detaillierter Projekt-/Phasenplan
+- `doc/context/04-project-plan.md` — detaillierter Projekt-/Phasenplan
 - `secrets/DEVICE_SECRETS.md` — dekodiertes Passwort + Geräte-Identität (git-ignoriert)
 - `secrets/cloud-capture-inventory.json` — Roh-/Parsed-Capture (git-ignoriert)

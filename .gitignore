@@ -2,7 +2,7 @@
 secrets/
 
 # Nur lokal — nicht auf GitHub veröffentlichen (interner Kontext + Compliance-Skill)
-docs/context/
+doc/context/
 .claude/skills/iobroker-adapter-dev/
 
 # No dot-directories except github/vscode/claude
