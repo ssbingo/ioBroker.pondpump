@@ -27,9 +27,14 @@ import {
     PACKET_ALIVE,
 } from "./protocol";
 
-/** TLS settings tuned for the controller's legacy stack (old ciphers, no TLSv1.3). */
+/**
+ * TLS ciphers tuned for the controller's legacy stack. Old RSA suites (no ECDHE, so no
+ * ServerKeyExchange) come first and are enforced by honorCipherOrder — this keeps the ServerHello
+ * small and avoids the elliptic-curve exchange that very old firmware often rejects. `@SECLEVEL=0`
+ * re-enables the SHA1/3DES suites that OpenSSL 3 disables by default.
+ */
 const DEFAULT_CIPHERS =
-    "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:AES128-SHA:AES256-SHA:DES-CBC3-SHA:AES128-GCM-SHA256:DEFAULT:@SECLEVEL=0";
+    "AES128-SHA:AES256-SHA:DES-CBC3-SHA:AES128-SHA256:AES256-SHA256:AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:DEFAULT:@SECLEVEL=0";
 
 /** Construction options for {@link LocalClient}. */
 export interface LocalClientOptions {
@@ -189,12 +194,23 @@ export class LocalClient implements OnetTransport {
                     ciphers: this.opts.ciphers,
                     minVersion: "TLSv1",
                     maxVersion: "TLSv1.2",
-                    honorCipherOrder: false,
+                    honorCipherOrder: true, // let our legacy-first order win, so old RSA suites are chosen
                     requestCert: false,
                     rejectUnauthorized: false,
                 },
                 socket => this.onControllerSocket(socket),
             );
+            // Raw TCP connect (before TLS): confirms the controller reached our server at all.
+            server.on("connection", socket => {
+                this.log.info(
+                    `[local/tls] inbound TCP connection from ${socket.remoteAddress ?? "?"}:${socket.remotePort ?? "?"} ` +
+                        "(TLS handshake starting)",
+                );
+            });
+            // TLS handshake failure: the reason the controller aborted (cipher, cert, protocol, …).
+            server.on("tlsClientError", (err, socket) => {
+                this.log.warn(`[local/tls] TLS handshake failed with ${socket.remoteAddress ?? "?"}: ${err.message}`);
+            });
             server.on("error", err => {
                 this.log.error(`[local/tls] server error: ${err.message}`);
                 if (!this.server) {
