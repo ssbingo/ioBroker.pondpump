@@ -93,6 +93,8 @@ export class LocalClient implements OnetTransport {
     private authed = false;
     private stopping = false;
     private txn = 0;
+    /** IP advertised to the controller in the wake packet (auto-detected when bind is 0.0.0.0). */
+    private advertiseIp?: string;
 
     /**
      * @param options - connection parameters (controller IP, TLS bind/port, password, credentials, logger)
@@ -127,7 +129,49 @@ export class LocalClient implements OnetTransport {
     public async connect(): Promise<void> {
         this.stopping = false;
         await this.startServer();
+        this.advertiseIp = await this.resolveAdvertiseIp();
         await this.waitForAuthenticatedConnection();
+    }
+
+    /**
+     * Determine the IPv4 address the controller should connect back to and that is advertised in the
+     * wake packet. Uses the configured bind address when it is a concrete IP; otherwise (0.0.0.0)
+     * asks the OS which local address would be used to reach the controller.
+     */
+    private resolveAdvertiseIp(): Promise<string> {
+        const bind = this.opts.bindAddress;
+        if (bind && bind !== "0.0.0.0" && bind !== "::" && /^\d+\.\d+\.\d+\.\d+$/.test(bind)) {
+            return Promise.resolve(bind);
+        }
+        return new Promise(resolve => {
+            const probe = dgram.createSocket("udp4");
+            const done = (ip: string): void => {
+                try {
+                    probe.close();
+                } catch {
+                    /* already closed */
+                }
+                this.log.info(
+                    `[local/udp] advertising local address ${ip} to the controller ` +
+                        `(bind is ${bind}; auto-detected the route to ${this.opts.ip})`,
+                );
+                resolve(ip);
+            };
+            probe.on("error", () => done("0.0.0.0"));
+            try {
+                // "Connecting" a UDP socket does not send anything; it just fixes the local address
+                // the OS would use to reach the controller, which we then read back.
+                probe.connect(this.opts.udpPort, this.opts.ip, () => {
+                    try {
+                        done(probe.address().address);
+                    } catch {
+                        done("0.0.0.0");
+                    }
+                });
+            } catch {
+                done("0.0.0.0");
+            }
+        });
     }
 
     /** Start (or reuse) the TLS server and begin listening. */
@@ -217,11 +261,13 @@ export class LocalClient implements OnetTransport {
     /** Send the UDP TCP_REQ wake packet to the controller. */
     private sendWake(): void {
         const udp = dgram.createSocket("udp4");
-        const frame = buildTcpReq(this.opts.bindAddress, this.opts.port, this.nextTxn());
-        this.log.debug(
-            `[local/udp] sending wake (TCP_REQ) to ${this.opts.ip}:${this.opts.udpPort} ` +
-                `(${frame.length} bytes, tells controller to connect back to ${this.opts.bindAddress}:${this.opts.port})`,
+        const advertiseIp = this.advertiseIp ?? this.opts.bindAddress;
+        const frame = buildTcpReq(advertiseIp, this.opts.port, this.nextTxn());
+        this.log.info(
+            `[local/udp] sending wake (TCP_REQ) to ${this.opts.ip}:${this.opts.udpPort} — ` +
+                `tells controller to connect back to ${advertiseIp}:${this.opts.port}`,
         );
+        this.log.debug(`[local/udp] wake packet (${frame.length} bytes): ${frame.toString("hex")}`);
         udp.send(frame, this.opts.udpPort, this.opts.ip, err => {
             if (err) {
                 this.log.error(`[local/udp] wake send failed: ${err.message}`);

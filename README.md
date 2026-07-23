@@ -79,6 +79,7 @@ All settings are available in the Admin UI (JSON config):
 
 ### **WORK IN PROGRESS**
 
+- (ssbingo) Phase 3 (local transport): the wake packet now advertises a reachable local address — when `bind` is `0.0.0.0` the adapter auto-detects the host IP that routes to the controller instead of advertising `0.0.0.0`; the wake packet is also logged as hex for diagnostics
 - (ssbingo) Phase 3 (local transport, foundation): TLS server, UDP wake (TCP_REQ) and the 64-byte password handshake over the controller's legacy TLS are in place under connection mode `local`; the ONet application packets are shared with the cloud path. Local inventory and telemetry over the LAN follow next
 
 ### 0.0.2 (2026-07-23)
