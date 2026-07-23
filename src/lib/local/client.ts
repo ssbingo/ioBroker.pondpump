@@ -95,6 +95,8 @@ export class LocalClient implements OnetTransport {
     private txn = 0;
     /** IP advertised to the controller in the wake packet (auto-detected when bind is 0.0.0.0). */
     private advertiseIp?: string;
+    /** Persistent UDP socket for the wake handshake — kept open to receive the controller's reply. */
+    private udp?: dgram.Socket;
 
     /**
      * @param options - connection parameters (controller IP, TLS bind/port, password, credentials, logger)
@@ -258,9 +260,22 @@ export class LocalClient implements OnetTransport {
         }
     }
 
-    /** Send the UDP TCP_REQ wake packet to the controller. */
-    private sendWake(): void {
+    /** Lazily create the persistent UDP socket used for the wake handshake. */
+    private ensureUdp(): dgram.Socket {
+        if (this.udp) {
+            return this.udp;
+        }
         const udp = dgram.createSocket("udp4");
+        udp.on("message", (msg, rinfo) => this.onUdpMessage(msg, rinfo));
+        udp.on("error", err => this.log.warn(`[local/udp] socket error: ${err.message}`));
+        udp.unref(); // never keep the process alive just for this socket
+        this.udp = udp;
+        return udp;
+    }
+
+    /** Send the UDP TCP_REQ wake packet to the controller (socket stays open for the reply). */
+    private sendWake(): void {
+        const udp = this.ensureUdp();
         const advertiseIp = this.advertiseIp ?? this.opts.bindAddress;
         const frame = buildTcpReq(advertiseIp, this.opts.port, this.nextTxn());
         this.log.info(
@@ -272,8 +287,30 @@ export class LocalClient implements OnetTransport {
             if (err) {
                 this.log.error(`[local/udp] wake send failed: ${err.message}`);
             }
-            udp.close();
         });
+    }
+
+    /**
+     * Handle a UDP datagram from the controller (the reply to our wake). For now this is diagnostic:
+     * the raw bytes and any decoded ONet header are logged so the local handshake can be finalised.
+     *
+     * @param msg - the received datagram
+     * @param rinfo - remote address info
+     */
+    private onUdpMessage(msg: Buffer, rinfo: dgram.RemoteInfo): void {
+        this.log.info(
+            `[local/udp] reply from ${rinfo.address}:${rinfo.port} (${msg.length} bytes): ${msg.toString("hex")}`,
+        );
+        const header = parseFrameHeader(msg);
+        if (header) {
+            this.log.info(
+                `[local/udp] reply decoded: ONet type 0x${header.packetType.toString(16)} ` +
+                    `txn=${header.txn} version=${header.version} payloadLen=${header.payloadLength} ` +
+                    `payload=${msg.subarray(16).toString("hex") || "(none)"}`,
+            );
+        } else {
+            this.log.info("[local/udp] reply is not a recognised ONet frame (no 5c234f41 delimiter)");
+        }
     }
 
     /**
@@ -504,6 +541,14 @@ export class LocalClient implements OnetTransport {
         }
         this.failAllPending("adapter shutting down");
         this.authListeners = [];
+        if (this.udp) {
+            try {
+                this.udp.close();
+            } catch {
+                /* already closed */
+            }
+            this.udp = undefined;
+        }
         if (this.socket) {
             this.socket.destroy();
             this.socket = undefined;
