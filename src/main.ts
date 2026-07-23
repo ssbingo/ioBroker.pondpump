@@ -17,7 +17,7 @@ import {
 } from "./lib/cloud/client";
 import { type PumpInfo, parseInventory } from "./lib/cloud/inventory";
 import { ensureGatewayObjects, ensurePumpObjects, writeGatewayStates, writePumpStates } from "./lib/objects";
-import { buildPoll, buildSetDimmer, buildSetOn, buildStatusRequest, DIMMER_MAX } from "./lib/cloud/onet";
+import { buildSensorRead, buildSetDimmer, buildSetOn, DIMMER_MAX } from "./lib/cloud/onet";
 
 /** Minimum poll interval enforced regardless of configuration (seconds). */
 const MIN_POLL_INTERVAL_S = 5;
@@ -344,8 +344,11 @@ class Pondpump extends utils.Adapter {
         if (!this.cloud || !this.gatewayId) {
             return;
         }
-        await this.probePacket(id, "0x5100", buildPoll(this.nextTxn()));
-        await this.probePacket(id, "0x5500", buildStatusRequest(this.nextTxn()));
+        // Hypothesis test: 0x5500 request = [deviceIndex] 01 02 02 01 [sensorNumber];
+        // reply carries the live 16-bit value. Compare sensor 1 (rpm) vs 10 (power), device 0 vs 1.
+        await this.probePacket(id, "dev0 s1(rpm)", buildSensorRead(0, 1, this.nextTxn()));
+        await this.probePacket(id, "dev0 s10(pow)", buildSensorRead(0, 10, this.nextTxn()));
+        await this.probePacket(id, "dev1 s1(rpm)", buildSensorRead(1, 1, this.nextTxn()));
     }
 
     /**

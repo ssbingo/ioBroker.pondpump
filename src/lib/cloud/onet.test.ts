@@ -2,9 +2,9 @@ import { expect } from "chai";
 import {
     buildPacket,
     buildPoll,
+    buildSensorRead,
     buildSetDimmer,
     buildSetOn,
-    buildStatusRequest,
     PACKET_SET_DIMMER,
     PACKET_SET_ON,
 } from "./onet";
@@ -33,9 +33,9 @@ describe("ONet packet builder (verified against captured app commands)", () => {
         expect(buildPoll(93)).to.equal("XCNPQQQAAAACXQBRAAAAAAAAAAA=");
     });
 
-    it("reproduces the richer status request (0x5500)", () => {
+    it("reproduces the captured 0x5500 sensor read (device 0, sensor 1)", () => {
         // captured app request: payload 00 00 00 00 01 02 02 01 01, txn 99
-        expect(buildStatusRequest(99)).to.equal("XCNPQQkAAAACYwBVAAAAAAAAAAABAgIBAQ==");
+        expect(buildSensorRead(0, 1, 99)).to.equal("XCNPQQkAAAACYwBVAAAAAAAAAAABAgIBAQ==");
     });
 
     it("clamps dimmer values to 0..255", () => {

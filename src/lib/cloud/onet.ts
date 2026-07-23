@@ -90,10 +90,26 @@ export function buildPoll(txn: number): string {
 }
 
 /**
- * Build the richer status/telemetry request (0x5500), replaying the payload captured from the app.
+ * Build a live sensor read request (0x5500). The captured app request has the form
+ * `[deviceIndex u32 LE] 01 02 02 01 [sensorNumber]`; the reply carries the live sensor value
+ * as a 16-bit big-endian integer at payload offset 10..11.
  *
+ * @param deviceIndex - the pump's device index (0-based)
+ * @param sensorNumber - the RDM sensor number to read (e.g. 1 = rpm, 10 = power)
  * @param txn - transaction number
  */
-export function buildStatusRequest(txn: number): string {
-    return buildPacket(PACKET_STATUS, [0, 0, 0, 0, 1, 2, 2, 1, 1], txn);
+export function buildSensorRead(deviceIndex: number, sensorNumber: number, txn: number): string {
+    const idx = deviceIndex >>> 0;
+    const payload = [
+        idx & 0xff,
+        (idx >>> 8) & 0xff,
+        (idx >>> 16) & 0xff,
+        (idx >>> 24) & 0xff,
+        1,
+        2,
+        2,
+        1,
+        sensorNumber & 0xff,
+    ];
+    return buildPacket(PACKET_STATUS, payload, txn);
 }
