@@ -506,12 +506,24 @@ class Pondpump extends utils.Adapter {
             }
 
             await writePumpStates(this, livePump, { includeControl });
+
+            // The dmx speed setpoint is not readable locally, but on/off is unambiguous from live
+            // telemetry: a running pump draws power. Derive control.on from power (which drops to 0
+            // the moment the motor cuts, whereas rpm coasts down) when the dmx state is unknown
+            // (local mode), so at least the on/off readback is correct and app changes show up.
+            const rpm = livePump.sensors[SENSOR_SPEED_RPM] ?? 0;
+            const power = livePump.sensors[SENSOR_POWER_W] ?? 0;
+            const derivedOn = power > 0;
+            if (!includeControl) {
+                await this.setState(`pumps.${pump.deviceNumber}.control.on`, { val: derivedOn, ack: true });
+            }
+
             const control = includeControl
                 ? `on=${livePump.dmx.deviceOn} speed=${livePump.dmx.dimmerValue} (raw) `
-                : "";
+                : `on=${derivedOn} (from telemetry) `;
             this.log.debug(
                 `[poll] #${id} pump ${pump.deviceNumber}: ${control}connected=${livePump.isConnected} ` +
-                    `power=${livePump.sensors[SENSOR_POWER_W] ?? "?"}W rpm=${livePump.sensors[SENSOR_SPEED_RPM] ?? "?"} (live)`,
+                    `power=${power}W rpm=${rpm} (live)`,
             );
         }
 
