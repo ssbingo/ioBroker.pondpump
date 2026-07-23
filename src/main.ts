@@ -92,7 +92,7 @@ class Pondpump extends utils.Adapter {
             const raw = await this.cloud.fetchInventory();
             const inventory = parseInventory(raw);
 
-            await applyGateway(this, inventory.gateway, true);
+            await applyGateway(this, inventory.gateway, inventory.gateway.isOnline ?? true);
             for (const pump of inventory.pumps) {
                 await applyPump(this, pump);
             }

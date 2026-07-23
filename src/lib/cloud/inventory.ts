@@ -62,12 +62,14 @@ export interface GatewayInfo {
     articleNumber?: number;
     /** Gateway type string, e.g. "GatewayCloud". */
     gatewayType?: string;
-    /** Human-readable long name (lname), e.g. "EGC Controller Cloud". */
+    /** Human-readable name (pond name, else a sensible default). */
     name: string;
     /** Firmware version (attribute id 102). */
     firmware?: string;
     /** User-assigned pond name (attribute id 103). */
     pondName?: string;
+    /** Whether the gateway is reported online in the cloud. */
+    isOnline?: boolean;
 }
 
 /** Parsed result of `GET /User/Inventory`. */
@@ -151,21 +153,49 @@ function toBoolean(value: unknown): boolean {
 }
 
 /**
- * Look up a value in an OASE attributes array `[{ Id, Value }, ...]` by its numeric id.
+ * Unwrap an OASE `{ Value, Timestamp }` wrapper to its inner value.
+ * Attribute and state values in the real payload are wrapped this way.
  *
- * @param attributes - the attributes array (or anything else, which yields undefined)
- * @param id - numeric attribute id to look up
+ * @param value - a possibly-wrapped value
  */
-function readAttribute(attributes: unknown, id: number): string | undefined {
-    if (!Array.isArray(attributes)) {
-        return undefined;
+function unwrapValue(value: unknown): unknown {
+    if (isRecord(value) && ("Value" in value || "value" in value) && ("Timestamp" in value || "timestamp" in value)) {
+        return pick(value, "Value", "value");
     }
-    for (const entry of attributes) {
-        if (isRecord(entry) && toNumber(pick(entry, "Id", "id"), NaN) === id) {
-            return toStringOrUndefined(pick(entry, "Value", "value"));
+    return value;
+}
+
+/**
+ * Build a map of OASE custom attributes (id -> value).
+ *
+ * Accepts either the real `customAttributesJson` string (a JSON array of
+ * `{ Id, Value: { Value, Timestamp } }`) or an already-parsed attributes array.
+ *
+ * @param raw - the `customAttributesJson` string or an attributes array
+ */
+function parseCustomAttributes(raw: unknown): Map<number, unknown> {
+    const map = new Map<number, unknown>();
+    let list: unknown = raw;
+    if (typeof raw === "string" && raw.trim() !== "") {
+        try {
+            list = JSON.parse(raw);
+        } catch {
+            return map;
         }
     }
-    return undefined;
+    if (!Array.isArray(list)) {
+        return map;
+    }
+    for (const entry of list) {
+        if (!isRecord(entry)) {
+            continue;
+        }
+        const id = toNumber(pick(entry, "Id", "id"), NaN);
+        if (Number.isFinite(id)) {
+            map.set(id, unwrapValue(pick(entry, "Value", "value")));
+        }
+    }
+    return map;
 }
 
 function parseGateway(raw: unknown): GatewayInfo {
@@ -176,8 +206,25 @@ function parseGateway(raw: unknown): GatewayInfo {
     if (!serialNumber) {
         throw new Error("inventory gateway has no serial number");
     }
-    const attributes = pick(raw, "attributes", "Attributes");
-    const name = toStringOrUndefined(pick(raw, "lname", "lName", "LName", "name", "Name")) ?? "EGC Controller Cloud";
+    // Real payload: metadata lives in customAttributesJson; older/curated shapes used
+    // an `attributes` array or flattened fields — support all of them.
+    const attributes = parseCustomAttributes(pick(raw, "customAttributesJson", "attributes", "Attributes"));
+    const firmware =
+        toStringOrUndefined(pick(raw, "firmware", "Firmware", "firmwareAttr_Id102")) ??
+        toStringOrUndefined(attributes.get(ATTR_FIRMWARE));
+    const pondName =
+        toStringOrUndefined(pick(raw, "pondName", "PondName", "pondName_Id103")) ??
+        toStringOrUndefined(attributes.get(ATTR_POND_NAME));
+
+    const onlineState = pick(raw, "onlineState", "OnlineState");
+    const isOnline = toBoolean(
+        pick(raw, "isOnline", "IsOnline") ??
+            (isRecord(onlineState) ? pick(onlineState, "isOnline", "IsOnline") : undefined),
+    );
+
+    const name =
+        toStringOrUndefined(pick(raw, "lname", "lName", "LName", "name", "Name")) ?? pondName ?? "EGC Controller Cloud";
+
     return {
         id: toStringOrUndefined(pick(raw, "id", "Id")),
         serialNumber,
@@ -187,23 +234,25 @@ function parseGateway(raw: unknown): GatewayInfo {
                 : undefined,
         gatewayType: toStringOrUndefined(pick(raw, "gatewayType", "GatewayType")),
         name,
-        firmware:
-            toStringOrUndefined(pick(raw, "firmware", "Firmware", "firmwareAttr_Id102")) ??
-            readAttribute(attributes, ATTR_FIRMWARE),
-        pondName:
-            toStringOrUndefined(pick(raw, "pondName", "PondName", "pondName_Id103")) ??
-            readAttribute(attributes, ATTR_POND_NAME),
+        firmware,
+        pondName,
+        isOnline,
     };
 }
 
 function parseDmxPumpState(raw: unknown): DmxPumpState {
-    const obj = isRecord(raw) ? raw : {};
+    // Real payload wraps the state in `{ value: { ... }, timestamp }`.
+    const wrapper = isRecord(raw) ? raw : {};
+    const valueField = pick(wrapper, "value", "Value");
+    const inner = isRecord(valueField) ? valueField : wrapper;
     return {
-        fcStatus: toStringOrUndefined(pick(obj, "fcStatus", "FcStatus")) ?? "",
-        fcMode: toNumber(pick(obj, "fcMode", "FcMode")),
-        dimmerValue: toNumber(pick(obj, "dimmerValue", "DimmerValue")),
-        deviceOn: toBoolean(pick(obj, "deviceOn", "DeviceOn")),
-        timestamp: toStringOrUndefined(pick(obj, "timestamp", "Timestamp")),
+        fcStatus: toStringOrUndefined(pick(inner, "fcStatus", "FcStatus")) ?? "",
+        fcMode: toNumber(pick(inner, "fcMode", "FcMode")),
+        dimmerValue: toNumber(pick(inner, "dimmerValue", "DimmerValue")),
+        deviceOn: toBoolean(pick(inner, "deviceOn", "DeviceOn")),
+        timestamp: toStringOrUndefined(
+            pick(wrapper, "timestamp", "Timestamp") ?? pick(inner, "timestamp", "Timestamp"),
+        ),
     };
 }
 
@@ -216,15 +265,23 @@ function parseRdm(raw: unknown): RawRdmEntry[] {
         if (!isRecord(entry)) {
             continue;
         }
-        const parameterId = pick(entry, "parameterId", "ParameterId");
+        // Real payload: { key: { parameterId, sensorId }, value: { value, timestamp } }.
+        // Curated shape: { parameterId, sensorId, valueB64 }.
+        const keyField = pick(entry, "key", "Key");
+        const key = isRecord(keyField) ? keyField : entry;
+        const parameterId = pick(key, "parameterId", "ParameterId");
         if (parameterId === undefined) {
             continue;
         }
-        const sensorIdRaw = pick(entry, "sensorId", "SensorId");
+        const sensorIdRaw = pick(key, "sensorId", "SensorId");
+        const valueWrapper = pick(entry, "value", "Value");
+        const valueB64 = isRecord(valueWrapper)
+            ? toStringOrUndefined(pick(valueWrapper, "value", "Value"))
+            : toStringOrUndefined(pick(entry, "valueB64", "ValueB64"));
         result.push({
             parameterId: toNumber(parameterId),
             sensorId: sensorIdRaw !== undefined ? toNumber(sensorIdRaw) : undefined,
-            valueB64: toStringOrUndefined(pick(entry, "valueB64", "ValueB64", "value", "Value")) ?? "",
+            valueB64: valueB64 ?? "",
         });
     }
     return result;
@@ -235,6 +292,11 @@ function parsePump(raw: Record<string, unknown>): PumpInfo {
     if (!Number.isFinite(deviceNumber)) {
         throw new Error("pump entry has no device number");
     }
+    const connectionState = pick(raw, "connectionState", "ConnectionState");
+    const isConnected = toBoolean(
+        (isRecord(connectionState) ? pick(connectionState, "isConnected", "IsConnected") : undefined) ??
+            pick(raw, "isConnected", "IsConnected"),
+    );
     return {
         deviceNumber,
         articleNumber:
@@ -242,7 +304,7 @@ function parsePump(raw: Record<string, unknown>): PumpInfo {
                 ? toNumber(pick(raw, "articleNumber", "ArticleNumber"))
                 : undefined,
         deviceType: toStringOrUndefined(pick(raw, "deviceType", "DeviceType")) ?? PUMP_DEVICE_TYPE,
-        isConnected: toBoolean(pick(raw, "isConnected", "IsConnected")),
+        isConnected,
         dmx: parseDmxPumpState(pick(raw, "dmxPumpState", "DmxPumpState")),
         rdm: parseRdm(pick(raw, "rdmData", "RdmData")),
     };
@@ -250,6 +312,9 @@ function parsePump(raw: Record<string, unknown>): PumpInfo {
 
 /**
  * Parse the raw inventory JSON into the domain model.
+ *
+ * Handles the real cloud shape `{ gateways: [ { devices: [...] } ] }` (the first gateway
+ * is used) as well as a flat `{ gateway, devices }` shape.
  *
  * @param raw - parsed JSON body of `GET /User/Inventory`
  * @returns gateway metadata and the list of pumps
@@ -259,9 +324,15 @@ export function parseInventory(raw: unknown): Inventory {
     if (!isRecord(raw)) {
         throw new Error("inventory response is not an object");
     }
-    const gateway = parseGateway(pick(raw, "gateway", "Gateway"));
 
-    const devicesRaw = pick(raw, "devices", "Devices");
+    // Real payload nests everything under gateways[]; take the first gateway.
+    const gateways = pick(raw, "gateways", "Gateways");
+    const gatewayRaw = Array.isArray(gateways) && gateways.length > 0 ? gateways[0] : pick(raw, "gateway", "Gateway");
+    const gateway = parseGateway(gatewayRaw);
+
+    // Devices live under the gateway in the real payload, or at top level in the flat shape.
+    const devicesRaw =
+        (isRecord(gatewayRaw) ? pick(gatewayRaw, "devices", "Devices") : undefined) ?? pick(raw, "devices", "Devices");
     const pumps: PumpInfo[] = [];
     if (Array.isArray(devicesRaw)) {
         for (const device of devicesRaw) {
