@@ -2,14 +2,19 @@
 title: "ioBroker.pondpump — User Manual"
 ---
 
-# ioBroker.pondpump — User Manual
-
-*A step-by-step guide for controlling and monitoring **OASE AquaMax Eco Titanium** pond pumps in
-ioBroker — written so that newcomers can get it running too.*
-
----
+<div class="cover">
+  <img src="../assets/logo.png" alt="pondpump logo" />
+  <h1>ioBroker.pondpump</h1>
+  <p class="subtitle">User Manual — set up, control and monitor your OASE AquaMax Eco Titanium pond pumps in ioBroker</p>
+  <div class="badge">🐟 Beginner-friendly guide</div>
+</div>
 
 ## 1. What this adapter does
+
+<figure>
+  <img src="../assets/connection.svg" alt="How the adapter connects to the pumps" />
+  <figcaption>How ioBroker reaches your pumps: today via the OASE cloud, and — in local mode — directly over your LAN.</figcaption>
+</figure>
 
 The **pondpump** adapter connects ioBroker to your **OASE AquaMax Eco Titanium** pond pump(s)
 through the **OASE Garden Controller Cloud (EGC)** gateway. Once it is running you can, from
@@ -21,7 +26,7 @@ ioBroker (and therefore from VIS, scripts, scenes, Alexa, etc.):
   mains voltage (V),
 - **see the connection and device status**.
 
-Each pump keeps the name you gave it in the OASE app (e.g. *Main flow*, *UVC bypass*), so you can
+Each pump keeps the name you gave it in the OASE app (e.g. *Waterfall*, *Filter*), so you can
 recognise it in the object tree.
 
 > **Good to know:** the adapter talks to the **controller** (item 55317), which in turn talks to
@@ -64,29 +69,91 @@ token (next chapter).
 
 ---
 
-## 4. Getting a cloud refresh token (the one tricky step)
+## 4. Getting a cloud refresh token (step by step with mitmproxy)
 
 The OASE cloud uses **Microsoft Azure AD B2C** for login. For security the adapter does **not**
 store your account password. Instead it uses a **refresh token** — a long, one-time credential that
-your OASE app receives when it logs in. You capture that token **once** and paste it into the
-adapter; from then on the adapter refreshes it automatically.
+your OASE app receives when it logs in. You capture that token **once** with a small tool called
+**mitmproxy**, paste it into the adapter, and from then on the adapter refreshes it automatically.
 
-**How to capture it (one-time):**
+Don't worry if you've never done this — follow the steps below exactly.
 
-1. Install a TLS-inspecting proxy on your computer, e.g. **mitmproxy** (free), and trust its
-   certificate on the phone that runs the OASE app.
-2. Route the phone's traffic through the proxy.
-3. **Log out and log back in** in the OASE app.
-4. In the proxy, look for a request to **`account.oase.com`** ending in **`/oauth2/v2.0/token`**.
-5. In that request's form body, copy the value of **`refresh_token`** (a long string).
+<figure>
+  <img src="../assets/mitmproxy.svg" alt="mitmproxy sits between your phone and the OASE cloud" />
+  <figcaption>mitmproxy sits between your phone and the OASE cloud, so you can read the login and copy the token.</figcaption>
+</figure>
 
-Paste this value into the adapter setting **"Cloud refresh token"** (chapter 5).
+### 4.1 Install mitmproxy
 
-> **Your account password is never entered into the adapter.** The refresh token can be revoked at
-> any time by logging out everywhere in the OASE app.
->
-> **If you get stuck here:** this is the only advanced step. Once the token is in, everything else is
-> point-and-click.
+1. Go to **<https://mitmproxy.org>** and download it for your computer (Windows, macOS or Linux).
+   It's free.
+2. We'll use **mitmweb**, the version with a **browser interface** (easiest for beginners). Open a
+   terminal / command prompt and run:
+
+   ```bash
+   mitmweb
+   ```
+
+   This opens a web page at **<http://127.0.0.1:8081>** (the control panel) and starts listening for
+   phone traffic on **port 8080**.
+
+### 4.2 Send your phone's traffic through mitmproxy
+
+Your phone and computer must be on the **same Wi-Fi**.
+
+1. Find your **computer's local IP** (e.g. `192.168.1.20`): Windows `ipconfig`, macOS/Linux
+   `ip addr` / `ifconfig`.
+2. On the phone: **Wi-Fi settings → your network → Proxy → Manual** and enter
+   **Server = your computer's IP**, **Port = 8080**. Save.
+3. Open the phone's browser and visit **<http://mitm.it>**. Choose your phone's system, **install**
+   the offered certificate **and trust it**:
+   - **iOS:** install the profile, then *Settings → General → About → Certificate Trust Settings* and
+     turn the mitmproxy certificate **on**.
+   - **Android:** install it as a **CA certificate** (Settings → Security → Encryption & credentials
+     → Install a certificate → CA certificate).
+
+   This certificate is what lets mitmproxy read the otherwise-encrypted OASE traffic. **Remove the
+   proxy and the certificate again when you're done.**
+
+### 4.3 Capture the login and grab the refresh token
+
+1. In the **mitmweb** page, clear the list (so new requests are easy to spot).
+2. In the **OASE app**: **log out**, then **log back in**.
+3. In mitmweb's **filter box** at the top, type one of these to jump straight to the right request —
+   this is the trick that saves you scrolling through hundreds of entries:
+
+   | Type this filter | It shows |
+   | --- | --- |
+   | `~u token` | only requests whose URL contains "token" |
+   | `~d account.oase.com` | only requests to the OASE login server |
+   | `~b refresh_token` | only requests whose body contains `refresh_token` |
+
+4. Click the **POST** request that ends in **`/oauth2/v2.0/token`**.
+5. Open its **Request** tab and look at the form body. Find **`refresh_token=`** and copy the long
+   value after it (up to the next `&`).
+   - **Extra tip:** press **`/`** in mitmweb and search for `refresh_token` to highlight it instantly.
+6. Paste that value into the adapter setting **"Cloud refresh token"** (chapter 5).
+
+> The refresh token is long (hundreds of characters) — copy **all** of it. Treat it like a password:
+> don't share it. You can revoke it any time by logging out everywhere in the OASE app.
+> **Your account password is never entered into the adapter.**
+
+### 4.4 (Advanced) Find the device password for local mode
+
+Only needed if you want connection mode **`local`** / **`both`** (chapter 8). While mitmproxy is
+still running:
+
+1. In the app, open your pond so it loads the pumps (this triggers the inventory download).
+2. In mitmweb's filter box, type **`~u Inventory`** to show the request to **`/User/Inventory`**.
+3. Click it and open the **Response** tab. In the JSON, find the pump's **custom attributes**; the
+   entry with **`Id` = 101** holds the **device password** — a **64-character** value (it may contain
+   `\uXXXX` escape sequences, that's fine).
+4. Copy that value into the adapter setting **"Device password"**. The adapter decodes it and uses it
+   for the local TLS handshake.
+
+> **If mitm.it won't load:** double-check the phone's proxy points at your computer's IP on port
+> 8080, and that traffic is flowing. On iOS you must both **install** *and* **trust** the certificate
+> (two separate steps).
 
 ---
 
@@ -162,7 +229,7 @@ in VIS, charts, or scripts.
 Example (JavaScript adapter):
 
 ```javascript
-// Run the main flow pump at 70 %
+// Run the "Waterfall" pump at 70 %
 setState('pondpump.0.pumps.1234567.control.speed', 70);
 
 // Log its live power

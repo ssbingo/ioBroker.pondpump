@@ -81,6 +81,26 @@ All settings are available in the Admin UI (JSON config):
 - (ssbingo) Pumps are named after their controller name; new stylized adapter icon (own illustration, not the product photo)
 - (ssbingo) Extensive, component-tagged logging so any failure can be pinpointed from the logs, with secrets never logged
 
+## Documentation
+
+📖 **Beginner's handbook:** [English](docs/handbook/en/manual.md) ([PDF](docs/handbook/en/manual.pdf)) ·
+[Deutsch](docs/handbook/de/manual.md) ([PDF](docs/handbook/de/manual.pdf))
+
+Translated documentation:
+
+- 🇩🇪 [Deutsche Dokumentation](docs/de/README.md)
+- 🇷🇺 [Документация на русском](docs/ru/README.md)
+- 🇳🇱 [Nederlandse documentatie](docs/nl/README.md)
+- 🇫🇷 [Documentation française](docs/fr/README.md)
+- 🇮🇹 [Documentazione italiana](docs/it/README.md)
+- 🇪🇸 [Documentación en español](docs/es/README.md)
+- 🇵🇱 [Dokumentacja polska](docs/pl/README.md)
+- 🇵🇹 [Documentação portuguesa](docs/pt/README.md)
+- 🇺🇦 [Документація українською](docs/uk/README.md)
+- 🇨🇳 [简体中文文档](docs/zh-cn/README.md)
+
+Older changelogs can be found in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
+
 ## License
 MIT License
 

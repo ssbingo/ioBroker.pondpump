@@ -72,6 +72,7 @@
     "check": "tsc --noEmit",
     "lint": "eslint -c eslint.config.mjs .",
     "translate": "translate-adapter",
+    "handbook:pdf": "node scripts/build-handbook-pdf.mjs",
     "release": "release-script --numChangelogEntries 10"
   },
   "bugs": {

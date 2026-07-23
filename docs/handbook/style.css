@@ -1,0 +1,223 @@
+/* Handbook stylesheet — modern, print-friendly layout for the pondpump beginner manuals.
+ * Rendered to PDF by md-to-pdf (Chromium). Colours pick up a calm "pond" teal accent. */
+
+:root {
+    --accent: #0e8f8f;
+    --accent-dark: #0b6b6b;
+    --accent-soft: #e6f5f5;
+    --ink: #1f2933;
+    --muted: #5b6b78;
+    --line: #dbe4e8;
+    --code-bg: #f4f7f8;
+    --tip-bg: #eef8f6;
+    --tip-border: #14a08a;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    line-height: 1.62;
+    font-size: 10.6pt;
+    margin: 0;
+}
+
+/* ---------- Cover ---------- */
+.cover {
+    text-align: center;
+    padding: 70px 30px 60px;
+    margin: -0px 0 10px;
+    background: linear-gradient(150deg, #0e8f8f 0%, #0b6b6b 55%, #084f5c 100%);
+    color: #fff;
+    border-radius: 0 0 26px 26px;
+    page-break-after: always;
+}
+.cover img {
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 26px;
+    padding: 12px;
+    filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.3));
+}
+.cover h1 {
+    font-size: 32pt;
+    margin: 28px 0 8px;
+    border: none;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
+.cover .subtitle {
+    font-size: 13pt;
+    color: rgba(255, 255, 255, 0.9);
+    max-width: 480px;
+    margin: 0 auto;
+}
+.cover .badge {
+    display: inline-block;
+    margin-top: 28px;
+    padding: 7px 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 10.5pt;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+/* ---------- Headings ---------- */
+h1,
+h2,
+h3,
+h4 {
+    line-height: 1.25;
+    color: var(--accent-dark);
+    margin-top: 1.5em;
+}
+h1 {
+    font-size: 21pt;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 6px;
+}
+h2 {
+    font-size: 15.5pt;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 5px;
+    padding-left: 12px;
+    border-left: 5px solid var(--accent);
+    page-break-after: avoid;
+}
+h3 {
+    font-size: 12.5pt;
+    color: var(--accent);
+    page-break-after: avoid;
+}
+
+p {
+    margin: 0.6em 0;
+}
+a {
+    color: var(--accent-dark);
+}
+
+/* ---------- Tables ---------- */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    border-radius: 6px;
+    overflow: hidden;
+}
+thead th {
+    background: var(--accent);
+    color: #fff;
+    text-align: left;
+    font-weight: 600;
+}
+th,
+td {
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    vertical-align: top;
+}
+tbody tr:nth-child(even) {
+    background: #f7fafb;
+}
+
+/* ---------- Code ---------- */
+code {
+    font-family: "SFMono-Regular", "JetBrains Mono", Consolas, "Liberation Mono", monospace;
+    font-size: 9.4pt;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: #0b5563;
+}
+pre {
+    background: #0f2b30;
+    color: #e9f6f6;
+    padding: 12px 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    line-height: 1.5;
+    page-break-inside: avoid;
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: 9.4pt;
+}
+/* Keep command blocks clean and legible (neutralise syntax-highlight token colours). */
+pre code,
+pre code * {
+    color: #eafaf7 !important;
+    background: transparent !important;
+    font-weight: 400 !important;
+}
+
+/* ---------- Callouts (blockquotes) ---------- */
+blockquote {
+    margin: 1em 0;
+    padding: 12px 16px 12px 44px;
+    background: var(--tip-bg);
+    border-left: 4px solid var(--tip-border);
+    border-radius: 6px;
+    color: #244; /* slightly muted ink */
+    position: relative;
+    page-break-inside: avoid;
+}
+blockquote::before {
+    content: "💡";
+    position: absolute;
+    left: 14px;
+    top: 11px;
+    font-size: 13pt;
+}
+blockquote p {
+    margin: 0.3em 0;
+}
+
+/* ---------- Lists ---------- */
+ul,
+ol {
+    padding-left: 1.4em;
+}
+li {
+    margin: 0.25em 0;
+}
+
+/* ---------- Figures / images ---------- */
+figure {
+    margin: 1.2em 0;
+    text-align: center;
+    page-break-inside: avoid;
+}
+figure img,
+p > img {
+    max-width: 100%;
+    border-radius: 8px;
+}
+figcaption {
+    color: var(--muted);
+    font-size: 9pt;
+    margin-top: 6px;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 1.8em 0;
+}
+
+/* First page (cover) has no numbered heading rules bleeding in */
+h1:first-of-type {
+    margin-top: 0;
+}
