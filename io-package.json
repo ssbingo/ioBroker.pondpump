@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.0.6",
+        "version": "0.0.7",
         "news": {
-            "0.0.6": {
-                "en": "Maintenance release: CI/tooling update (deploy action) and repository housekeeping. No functional changes to the adapter.",
-                "de": "Wartungs-Release: Aktualisierung von CI/Tooling (Deploy-Action) und Aufräumen des Repositorys. Keine funktionalen Änderungen am Adapter.",
-                "ru": "Обслуживающий выпуск: обновление CI/инструментов (deploy action) и уборка репозитория. Функциональных изменений в адаптере нет.",
-                "pt": "Versão de manutenção: atualização de CI/ferramentas (deploy action) e limpeza do repositório. Sem alterações funcionais no adaptador.",
-                "nl": "Onderhoudsrelease: CI-/tooling-update (deploy action) en opschoning van de repository. Geen functionele wijzigingen aan de adapter.",
-                "fr": "Version de maintenance : mise à jour CI/outils (action de déploiement) et nettoyage du dépôt. Aucune modification fonctionnelle de l'adaptateur.",
-                "it": "Versione di manutenzione: aggiornamento CI/strumenti (deploy action) e pulizia del repository. Nessuna modifica funzionale all'adattatore.",
-                "es": "Versión de mantenimiento: actualización de CI/herramientas (deploy action) y limpieza del repositorio. Sin cambios funcionales en el adaptador.",
-                "pl": "Wydanie konserwacyjne: aktualizacja CI/narzędzi (deploy action) i porządkowanie repozytorium. Bez zmian funkcjonalnych w adapterze.",
-                "uk": "Реліз обслуговування: оновлення CI/інструментів (deploy action) та впорядкування репозиторію. Без функціональних змін в адаптері.",
-                "zh-cn": "维护版本：更新 CI/工具（部署动作）并整理仓库。适配器功能无变化。"
+            "0.0.7": {
+                "en": "Widgets now reflect the real pump speed during Seasonal Flow Control (SFC): the ice crystal spins by the actual speed and the power readouts show the real output. Plus dependency maintenance (leaner widget bundle).",
+                "de": "Die Widgets zeigen bei der Saisonalen Durchflussregelung (SFC) jetzt die echte Pumpengeschwindigkeit: Der Eiskristall dreht sich gemäß der tatsächlichen Drehzahl und die Leistungsanzeigen zeigen den Ist-Wert. Zudem Abhängigkeits-Pflege (schlankeres Widget-Bundle).",
+                "ru": "Виджеты теперь отображают реальную скорость насоса при сезонной регулировке потока (SFC): ледяной кристалл вращается с фактической скоростью, а показания мощности показывают реальную выработку. Плюс обслуживание зависимостей (более компактный пакет виджетов).",
+                "pt": "Os widgets agora refletem a velocidade real da bomba durante o Controlo Sazonal de Fluxo (SFC): o cristal de gelo gira conforme a velocidade real e os valores de potência mostram a saída real. Além disso, manutenção de dependências (pacote de widgets mais enxuto).",
+                "nl": "De widgets tonen nu de echte pompsnelheid tijdens seizoensgebonden debietregeling (SFC): het ijskristal draait met de werkelijke snelheid en de vermogensweergaven tonen de echte uitvoer. Plus onderhoud van afhankelijkheden (compacter widgetpakket).",
+                "fr": "Les widgets reflètent désormais la vitesse réelle de la pompe pendant la régulation saisonnière du débit (SFC) : le cristal de glace tourne à la vitesse réelle et les valeurs de puissance affichent la sortie réelle. Plus une maintenance des dépendances (paquet de widgets allégé).",
+                "it": "I widget mostrano ora la velocità reale della pompa durante la regolazione stagionale del flusso (SFC): il cristallo di ghiaccio ruota alla velocità effettiva e i valori di potenza mostrano l'uscita reale. Inoltre manutenzione delle dipendenze (bundle dei widget più snello).",
+                "es": "Los widgets ahora reflejan la velocidad real de la bomba durante el control estacional de caudal (SFC): el cristal de hielo gira según la velocidad real y los valores de potencia muestran la salida real. Además, mantenimiento de dependencias (paquete de widgets más ligero).",
+                "pl": "Widżety odzwierciedlają teraz rzeczywistą prędkość pompy podczas sezonowej regulacji przepływu (SFC): kryształ lodu obraca się z rzeczywistą prędkością, a wskazania mocy pokazują rzeczywisty wynik. Ponadto konserwacja zależności (szczuplejszy pakiet widżetów).",
+                "uk": "Віджети тепер відображають реальну швидкість насоса під час сезонного регулювання потоку (SFC): крижаний кристал обертається з фактичною швидкістю, а показники потужності показують реальний вихід. Плюс обслуговування залежностей (компактніший пакет віджетів).",
+                "zh-cn": "在季节性流量控制 (SFC) 期间，小部件现在反映水泵的真实转速：冰晶按实际转速旋转，功率读数显示真实输出。此外还有依赖项维护（更精简的小部件包）。"
             }
         },
         "titleLang": {
