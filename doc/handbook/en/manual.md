@@ -298,7 +298,59 @@ connect back to.
 
 ---
 
-## 9. Troubleshooting
+## 9. vis-2 widgets
+
+The adapter ships **two ready-made vis-2 widgets** — there is nothing extra to install. As soon as the
+adapter is installed, vis-2 restarts automatically and the widgets appear in the vis-2 editor under the
+widget group **"Pond Pump"**.
+
+> **Tip:** If the widgets don't show up in the editor right after installation, reload the editor page
+> in your browser once (**Ctrl + F5**).
+
+### 9.1 Adding a widget and linking it to a pump
+
+1. Open the **vis-2 editor** and drag one of the two widgets from the **"Pond Pump"** group onto your
+   view.
+2. On the right, in the widget settings, pick your `pondpump` instance under **Instance** (e.g.
+   `pondpump.0`).
+3. Below it, pick the pump under **Pump** — the list automatically shows every detected pump by name.
+
+That's all you need to configure: the widgets know the matching object IDs themselves and connect to
+the selected pump automatically.
+
+### 9.2 The "Pump visualization" widget (PumpVisual)
+
+This widget shows the pump graphically:
+
+- An **impeller** spins depending on the pump speed — in 10 % steps, from a slow crawl to fast.
+- When the pump is **off**, the impeller stands still with a **red cross** over it.
+- When **Seasonal Flow Control (SFC)** is active, a rotating **ice crystal** replaces the impeller.
+- Below the graphic are the live values: **power** (W), **speed** (rpm) and **Power** (the setpoint in %).
+
+A coloured badge in the top-right shows the state: **Running**, **Off** or **Seasonal mode**.
+
+### 9.3 The "Pump control" widget (PumpControl)
+
+This widget controls the pump:
+
+- **On / Off** switches the pump.
+- The **slider** sets the power in percent. The command is only sent when you release the slider, so
+  dragging never floods the device with commands. The **quick buttons** (0/25/50/75/100 %) set the
+  value directly.
+- **Seasonal Flow Control (SFC)** can be switched on/off with the button. The button reacts instantly
+  (with a spinner until the device confirms) — no need to press it repeatedly.
+
+> **What is SFC?** "Seasonal Flow Control" is OASE's temperature-dependent seasonal flow regulation:
+> when SFC is active the pump automatically reduces its flow rate and delivery head (by up to −50 %),
+> adapting to the pond biology over the year. It is **not** frost protection.
+
+### 9.4 Adjusting the appearance
+
+In the widget settings under **Appearance** you can, among other things, choose the **accent colour**,
+hide the **card background**, turn off the **animation**, or show/hide individual parts (values,
+on/off buttons, quick buttons, SFC).
+
+## 10. Troubleshooting
 
 | Symptom | What to check |
 | --- | --- |
@@ -313,7 +365,7 @@ include the debug log around the failure.
 
 ---
 
-## 10. Privacy & safety
+## 11. Privacy & safety
 
 - Your **OASE account password** is never entered into or stored by the adapter.
 - The **refresh token** and **device password** are stored **encrypted** in ioBroker.

@@ -307,7 +307,62 @@ der Controller sich zurückverbinden soll.
 
 ---
 
-## 9. Fehlerbehebung
+## 9. vis-2-Widgets
+
+Der Adapter bringt **zwei fertige vis-2-Widgets** mit — du musst nichts extra installieren. Sobald der
+Adapter installiert ist, wird vis-2 automatisch neu gestartet, und die Widgets stehen im vis-2-Editor
+unter der Widget-Gruppe **„Pond Pump"** bereit.
+
+> **Tipp:** Erscheinen die Widgets nach der Installation nicht sofort im Editor, lade die Editor-Seite
+> im Browser einmal neu (**Strg + F5**).
+
+### 9.1 Widget einfügen und mit einer Pumpe verbinden
+
+1. Öffne den **vis-2-Editor** und ziehe eines der beiden Widgets aus der Gruppe **„Pond Pump"** auf
+   deine Ansicht.
+2. Wähle rechts in den Widget-Einstellungen unter **Instanz** deine `pondpump`-Instanz (z. B.
+   `pondpump.0`).
+3. Wähle darunter unter **Pumpe** die gewünschte Pumpe aus — die Liste zeigt automatisch alle
+   erkannten Pumpen mit ihrem Namen.
+
+Mehr musst du nicht einstellen: Die Widgets kennen die passenden Objekt-IDs selbst und verbinden sich
+automatisch mit der gewählten Pumpe.
+
+### 9.2 Widget „Pumpen-Visualisierung" (PumpVisual)
+
+Dieses Widget stellt die Pumpe grafisch dar:
+
+- Ein **Flügelrad** dreht sich abhängig von der Drehzahl — in 10-%-Stufen, von langsamem Kriechen bis
+  schnell.
+- Ist die Pumpe **aus**, steht das Flügelrad still und ein **rotes Kreuz** liegt darüber.
+- Ist die **Saisonale Durchflussregelung (SFC)** aktiv, dreht sich statt des Flügelrads ein
+  **Eiskristall**.
+- Darunter stehen die Live-Werte: **Leistung** (W), **Drehzahl** (rpm) und **Power** (Sollwert in %).
+
+Oben rechts zeigt ein farbiges Abzeichen den Zustand: **Läuft**, **Aus** oder **Saison-Modus**.
+
+### 9.3 Widget „Pumpen-Steuerung" (PumpControl)
+
+Mit diesem Widget steuerst du die Pumpe:
+
+- **Ein / Aus** schaltet die Pumpe.
+- Der **Schieberegler** stellt die Leistung (Power) in Prozent ein. Das Kommando wird erst beim
+  Loslassen gesendet, damit das Gerät beim Ziehen nicht mit Befehlen überflutet wird. Die
+  **Schnellwahl-Tasten** (0/25/50/75/100 %) setzen den Wert direkt.
+- Die **Saisonale Durchflussregelung (SFC)** lässt sich mit dem Button aktivieren/deaktivieren. Der
+  Button reagiert sofort (mit Spinner, bis das Gerät bestätigt) — mehrfaches Drücken ist nicht nötig.
+
+> **Was ist SFC?** „Seasonal Flow Control" ist OASEs temperaturabhängige, saisonale
+> Durchflussregelung: Bei aktivem SFC senkt die Pumpe Fördermenge und Förderhöhe automatisch
+> (bis zu −50 %) und passt sich so übers Jahr an die Teichbiologie an. Es ist **kein Frostschutz**.
+
+### 9.4 Aussehen anpassen
+
+In den Widget-Einstellungen unter **Darstellung** kannst du u. a. die **Akzentfarbe** wählen, den
+**Kartenhintergrund** ausblenden, die **Animation** abschalten oder einzelne Bereiche (Werte,
+Ein/Aus-Tasten, Schnellwahl, SFC) ein- und ausblenden.
+
+## 10. Fehlerbehebung
 
 | Symptom | Was zu prüfen ist |
 | --- | --- |
@@ -322,7 +377,7 @@ Füge bei einer Fehlermeldung das Debug-Log rund um den Fehler bei.
 
 ---
 
-## 10. Datenschutz & Sicherheit
+## 11. Datenschutz & Sicherheit
 
 - Dein **OASE-Kontopasswort** wird nie in den Adapter eingegeben oder gespeichert.
 - Der **Refresh-Token** und das **Gerätepasswort** werden in ioBroker **verschlüsselt** gespeichert.
