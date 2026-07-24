@@ -20,6 +20,29 @@ updates:
       - dependency-name: "@types/node"
         update-types:
           - version-update:semver-major
+      # vis-2 widget toolchain: the vis-2 host shares React 18 and MUI 6 as module-federation
+      # singletons, and the latest @iobroker/adapter-react-v5 (8.3.x) + the flagship
+      # ioBroker.vis-2-widgets-material both stay on React 18 / MUI 6 / Vite 7 / plugin-react 5.
+      # Bumping these majors would break singleton compatibility with the host — pinned by major.
+      - dependency-name: "react"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "react-dom"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@mui/material"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "vite"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@vitejs/plugin-react"
+        update-types:
+          - version-update:semver-major
+      # TypeScript 7 (tsgo) is not yet supported by @iobroker/eslint-config — stay on 5.x
+      - dependency-name: "typescript"
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: "/"
