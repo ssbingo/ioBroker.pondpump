@@ -83,14 +83,16 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
         return REL_IDS;
     }
 
-    /** True when frost-control (SFC) mode is currently active. */
+    /**
+     * True when Seasonal Flow Control (SFC) is active. The device reports this in `status.fcStatus`
+     * as e.g. "SfcOn" / "SfcOff", so anything containing "off" (or an empty/none value) is inactive.
+     */
     private isSfc(): boolean {
-        const mode = this.num("status.fcMode");
-        if (mode !== null && mode > 0) {
-            return true;
-        }
         const s = this.str("status.fcStatus").trim().toLowerCase();
-        return s !== "" && !["0", "off", "inactive", "none", "aus"].includes(s);
+        if (s === "" || s.includes("off") || ["0", "inactive", "none", "aus", "false"].includes(s)) {
+            return false;
+        }
+        return true;
     }
 
     private displaySpeed(): number {

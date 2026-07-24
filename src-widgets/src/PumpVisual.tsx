@@ -122,14 +122,16 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
         return this.bool("control.on") || (this.num("telemetry.speed") ?? 0) > 0;
     }
 
-    /** True when seasonal frost-control (SFC / ice-crystal) mode is active. */
+    /**
+     * True when Seasonal Flow Control (SFC) is active. The device reports this in `status.fcStatus`
+     * as e.g. "SfcOn" / "SfcOff", so anything containing "off" (or an empty/none value) is inactive.
+     */
     private isSfc(): boolean {
-        const mode = this.num("status.fcMode");
-        if (mode !== null && mode > 0) {
-            return true;
-        }
         const s = this.str("status.fcStatus").trim().toLowerCase();
-        return s !== "" && !["0", "off", "inactive", "none", "aus"].includes(s);
+        if (s === "" || s.includes("off") || ["0", "inactive", "none", "aus", "false"].includes(s)) {
+            return false;
+        }
+        return true;
     }
 
     /** Rotation duration in seconds, from the speed quantised to 10 % steps (0 = standstill). */
@@ -144,8 +146,12 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
         if (step <= 0) {
             return 0;
         }
-        // Inverse mapping: constant angular travel per speed unit. 10 % → 4 s, 100 % → 0.4 s.
-        return Math.round((40 / step) * 100) / 100;
+        // Exponential mapping: every 10 % step is a constant ~0.74x of the previous duration, so
+        // neighbouring speeds stay clearly distinguishable across the whole range (a linear/inverse
+        // mapping compresses the fast end). 10 % → ~3.7 s (slow crawl), 50 % → ~1.1 s, 100 % → 0.25 s.
+        const MAX_S = 5;
+        const MIN_S = 0.25;
+        return Math.round(MAX_S * Math.pow(MIN_S / MAX_S, step / 100) * 100) / 100;
     }
 
     // eslint-disable-next-line class-methods-use-this
