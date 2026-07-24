@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.0.3",
+        "version": "0.0.4",
         "news": {
-            "0.0.3": {
-                "en": "Local (LAN) mode is complete: run the whole adapter over the local network without the cloud — inventory, live telemetry and on/off + speed control.\nDocumentation: README docs in 11 languages and beginner handbooks (English and German, with a mitmproxy guide) as PDF.",
-                "de": "Der lokale (LAN) Modus ist vollständig: Führen Sie den gesamten Adapter über das lokale Netzwerk ohne Cloud aus - Inventar, Live-Telemetrie und Ein-/Aus- und Geschwindigkeitssteuerung.\nDokumentation: README docs in 11 Sprachen und Anfängerhandbücher (Englisch und Deutsch, mit Mitmproxy Guide) als PDF.",
-                "ru": "Локальный (LAN) режим завершен: запустить весь адаптер по локальной сети без облака — инвентаризация, живая телеметрия и включение/выключение + управление скоростью.\nДокументация: Документы README на 11 языках и справочники для начинающих (английский и немецкий языки, с руководством по mitmproxy) в формате PDF.",
-                "pt": "O modo local (LAN) está completo: execute todo o adaptador pela rede local sem a nuvem — inventário, telemetria ao vivo e controle de velocidade ligado/desligado +.\nDocumentação: Documentos README em 11 idiomas e manuais para iniciantes (inglês e alemão, com guia mitmproxy) como PDF.",
-                "nl": "Lokale (LAN) modus is voltooid: draai de hele adapter over het lokale netwerk zonder de cloud inventaris, live telemetrie en aan/uit + snelheidsregeling.\nDocumentatie: README doceert in 11 talen en beginner handboeken (Engels en Duits, met een mitmproxy gids) als PDF.",
-                "fr": "Le mode local (LAN) est complet: exécutez l'ensemble de l'adaptateur sur le réseau local sans le cloud — inventaire, télémétrie en direct et contrôle de vitesse on/off +.\nDocumentation: documents README en 11 langues et manuels pour débutants (anglais et allemand, avec un guide mitmproxy) en format PDF.",
-                "it": "La modalità locale (LAN) è completa: eseguire l'intero adattatore sulla rete locale senza il cloud — inventario, telemetria live e on/off + controllo della velocità.\nDocumentazione: README docs in 11 lingue e manuali principianti (inglese e tedesco, con una guida mitmproxy) in formato PDF.",
-                "es": "El modo local (LAN) está completo: ejecute todo el adaptador sobre la red local sin la nube — inventario, telemetría en vivo y control de velocidad en/off +.\nDocumentación: README docs en 11 idiomas y manuales principiantes (inglés y alemán, con una guía mitmproxy) como PDF.",
-                "pl": "Tryb lokalny (LAN) jest zakończony: uruchom cały adapter w sieci lokalnej bez chmury - inwentaryzacja, telemetria na żywo i kontrola prędkości włączenia / wyłączenia +.\nDokumentacja: README docs in 11 languages and beginner handbooks (English and German, with a mitmproxy guide) as PDF.",
-                "uk": "Режим локального (LAN) завершено: запустіть весь адаптер через локальну мережу без хмари — інвентаризацію, живу телеметрію та / від + контроль швидкості.\nДокументація: DOME docs на 11 мовах та ручних книгах (англійська та німецька, з мітмпроксигідом) як PDF.",
-                "zh-cn": "本地(局域网)模式完成:将整个适配器运行在局域网上,没有云层——盘点,直播遥测和上/下+速度控制.\n文件:以11种语言编写的README Docs和初学者手册(英文和德文,配有薄膜指南)作为PDF."
+            "0.0.4": {
+                "en": "Cloud and local are now mutually exclusive connection modes; the old combined mode was removed. Switching between them rebuilds the device objects cleanly, and a new state shows the active data source (cloud or local).",
+                "de": "Cloud und Local schließen sich nun gegenseitig aus; der alte kombinierte Modus wurde entfernt. Durch den Wechsel zwischen ihnen werden die Geräteobjekte sauber neu aufgebaut, und ein neuer Zustand zeigt die aktive Datenquelle (Cloud oder lokal).",
+                "ru": "Облачный и локальный теперь являются взаимоисключающими режимами соединения; старый комбинированный режим был удален. Переключение между ними восстанавливает объекты устройства чисто, а новое состояние показывает активный источник данных (облачный или локальный).",
+                "pt": "Cloud e local agora são modos de conexão mutuamente exclusivos; o antigo modo combinado foi removido. Alternar entre eles reconstrui os objetos do dispositivo de forma limpa, e um novo estado mostra a fonte de dados ativa (nuvem ou local).",
+                "nl": "Cloud en lokaal zijn nu onderling exclusieve verbindingsmodi; de oude gecombineerde modus is verwijderd. Schakelen tussen hen herbouwt de apparaatobjecten schoon, en een nieuwe staat toont de actieve gegevensbron (cloud of lokaal).",
+                "fr": "Cloud et local sont désormais des modes de connexion mutuellement exclusifs ; l'ancien mode combiné a été supprimé. Le passage entre eux reconstitue les objets de l'appareil proprement, et un nouvel état montre la source de données active (cloud ou local).",
+                "it": "Cloud e locale sono ora modalità di connessione reciprocamente esclusive; la vecchia modalità combinata è stata rimossa. Passare tra di loro ricostruisce gli oggetti del dispositivo in modo pulito, e un nuovo stato mostra la fonte di dati attiva (cloud o locale).",
+                "es": "Cloud y local son ahora modos de conexión mutuamente excluyentes; el antiguo modo combinado fue eliminado. Cambiar entre ellos reconstruye los objetos del dispositivo de forma limpia, y un nuevo estado muestra la fuente de datos activa (cerca o local).",
+                "pl": "Cloud i local są wzajemnie wykluczającymi się trybami połączeń; stary połączony tryb został usunięty. Przełączanie między nimi odbudowuje obiekty urządzenia czysto, a nowy stan pokazuje aktywne źródło danych (chmura lub lokalne).",
+                "uk": "Хмара і локальні тепер взаємовиключні режими з'єднання; видалено старий комбінований режим. Переключення між ними перебудує об'єкти пристрою чисто, а новий стан показує джерело даних, що містяться в активному джерелі даних.",
+                "zh-cn": "云和局部现在都是相互排斥的连接模式;旧的联合模式被移除. 在它们之间切换可以干净地重建设备对象,一个新的状态会显示活动数据源(云或局部)."
             }
         },
         "titleLang": {
