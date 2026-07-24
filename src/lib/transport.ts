@@ -26,13 +26,13 @@ export interface TransportLogger {
  */
 export interface AdapterTimers {
     /** Schedule a one-shot timer (auto-cancelled on adapter unload). */
-    setTimeout(cb: () => void, ms: number): ioBroker.Timeout | undefined;
-    /** Cancel a one-shot timer created via {@link setTimeout}. */
-    clearTimeout(handle: ioBroker.Timeout | undefined): void;
+    setTimeout: (cb: () => void, ms: number) => ioBroker.Timeout | undefined;
+    /** Cancel a one-shot timer. */
+    clearTimeout: (handle: ioBroker.Timeout | undefined) => void;
     /** Schedule a repeating timer (auto-cancelled on adapter unload). */
-    setInterval(cb: () => void, ms: number): ioBroker.Interval | undefined;
-    /** Cancel a repeating timer created via {@link setInterval}. */
-    clearInterval(handle: ioBroker.Interval | undefined): void;
+    setInterval: (cb: () => void, ms: number) => ioBroker.Interval | undefined;
+    /** Cancel a repeating timer. */
+    clearInterval: (handle: ioBroker.Interval | undefined) => void;
 }
 
 /** A channel that can exchange raw ONet packets with the controller. */

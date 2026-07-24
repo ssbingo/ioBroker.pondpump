@@ -16,7 +16,9 @@ node_modules
 nbproject
 
 # Build-Artefakte
-build/
+# Das Root-`build/` wird committet (repochecker E5019 verlangt build/*.js in git;
+# `common.noGit` wird vom Schema abgelehnt). Nur der Widget-Zwischenbuild bleibt ignoriert.
+/src-widgets/build/
 
 # npm package files
 iobroker.*.tgz
