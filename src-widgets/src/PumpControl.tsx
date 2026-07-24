@@ -6,7 +6,7 @@ import PumpWidgetBase, { type PumpBaseRxData, type PumpBaseState } from "./PumpW
 import { pondpumpCommonGroup, pumpChannelOf } from "./common";
 
 // Sub-states (relative to the pump device channel) this widget reads/commands.
-const REL_IDS = ["control.on", "control.speed", "status.fcMode", "status.fcStatus"];
+const REL_IDS = ["control.on", "control.speed", "control.sfc", "status.fcMode", "status.fcStatus"];
 
 // SFC (Seasonal Flow Control) activation. The 0x5000 device command was reverse-engineered and the
 // adapter now handles the writable `control.sfc` state, so the activate/deactivate button is live.
@@ -27,22 +27,29 @@ interface PumpControlState extends PumpBaseState {
     drag: number;
     /** True while the user drags the slider — display the local value, commit on release. */
     dragging: boolean;
+    /** Optimistic SFC target while a toggle is awaiting confirmation, or null when idle. */
+    sfcPending: boolean | null;
 }
 
 /**
  * Widget 2 — pump control.
  *
- * On/off (`control.on`) and speed "Power" %  (`control.speed`) are fully functional; the speed
- * command is only sent when the slider is released, so dragging never floods the device with
- * commands. The frost-protection (SFC) section shows the current state; its activate button is
- * disabled until the SFC device command is reverse-engineered (see {@link SFC_ACTIVATION_SUPPORTED}).
+ * On/off (`control.on`), speed "Power" % (`control.speed`) and Seasonal Flow Control (`control.sfc`)
+ * are all functional. The speed command is only sent when the slider is released, so dragging never
+ * floods the device. The SFC button uses optimistic UI: it flips to the target state immediately and
+ * shows a busy spinner (blocking further clicks) until the adapter confirms via `control.sfc` — which
+ * the adapter reflects with `ack:true` right after sending the command, much faster than waiting for
+ * the next `status.fcStatus` poll.
  */
 export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpControlState> {
     static adapter: string;
 
+    /** Fallback timer that clears an unconfirmed optimistic SFC toggle. */
+    private sfcTimer: ReturnType<typeof setTimeout> | null = null;
+
     constructor(props: VisRxWidgetProps) {
         super(props);
-        this.state = { ...this.state, drag: 0, dragging: false };
+        this.state = { ...this.state, drag: 0, dragging: false, sfcPending: null };
     }
 
     static getWidgetInfo(): RxWidgetInfo {
@@ -125,14 +132,67 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
         this.write("control.on", false);
     };
 
-    private onToggleSfc = (active: boolean): void => {
-        if (!SFC_ACTIVATION_SUPPORTED) {
-            return;
+    /**
+     * The confirmed SFC state: prefer the writable `control.sfc` (the adapter reflects it with
+     * ack:true right after the command), falling back to the device's `fcStatus` before the first
+     * command of the session.
+     */
+    private currentSfc(): boolean {
+        const v = this.state.fv["control.sfc"];
+        if (typeof v === "boolean") {
+            return v;
         }
-        // control.sfc is the (write) command state the adapter will map to the OASE SFC command
-        // once it is reverse-engineered. Until then this button is disabled and never reached.
-        this.write("control.sfc", !active);
+        return this.isSfc();
+    }
+
+    /** The SFC state to display: the optimistic target while pending, otherwise the confirmed state. */
+    private displayedSfc(): boolean {
+        return this.state.sfcPending ?? this.currentSfc();
+    }
+
+    private clearSfcPending(): void {
+        if (this.sfcTimer) {
+            clearTimeout(this.sfcTimer);
+            this.sfcTimer = null;
+        }
+        if (this.state.sfcPending !== null) {
+            this.setState({ sfcPending: null });
+        }
+    }
+
+    private onToggleSfc = (): void => {
+        if (!SFC_ACTIVATION_SUPPORTED || this.state.sfcPending !== null) {
+            return; // already awaiting confirmation — ignore extra clicks
+        }
+        const target = !this.displayedSfc();
+        this.write("control.sfc", target); // ack:false command; adapter confirms via control.sfc
+        this.setState({ sfcPending: target });
+        if (this.sfcTimer) {
+            clearTimeout(this.sfcTimer);
+        }
+        // Fallback: stop showing "busy" even if no confirmation ever arrives (transport hiccup).
+        this.sfcTimer = setTimeout(() => {
+            this.sfcTimer = null;
+            if (this.ppMounted) {
+                this.setState({ sfcPending: null });
+            }
+        }, 15000);
     };
+
+    componentDidUpdate(): void {
+        // Clear the optimistic state once the confirmed state has caught up to the target.
+        if (this.state.sfcPending !== null && this.currentSfc() === this.state.sfcPending) {
+            this.clearSfcPending();
+        }
+    }
+
+    componentWillUnmount(): void {
+        if (this.sfcTimer) {
+            clearTimeout(this.sfcTimer);
+            this.sfcTimer = null;
+        }
+        super.componentWillUnmount();
+    }
 
     renderWidgetBody(props: RxRenderWidgetProps): React.JSX.Element {
         super.renderWidgetBody(props);
@@ -161,7 +221,8 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
 
         const on = this.bool("control.on");
         const speed = this.displaySpeed();
-        const sfc = this.isSfc();
+        const sfcBusy = this.state.sfcPending !== null;
+        const sfcShown = this.displayedSfc();
 
         return (
             <div
@@ -238,12 +299,11 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
                             </div>
                             <button
                                 type="button"
-                                className={sfc ? "pp-active-sfc" : ""}
-                                disabled={!SFC_ACTIVATION_SUPPORTED}
-                                title={SFC_ACTIVATION_SUPPORTED ? "" : t("sfc_pending")}
-                                onClick={() => this.onToggleSfc(sfc)}
+                                className={`${sfcShown ? "pp-active-sfc" : ""}${sfcBusy ? " pp-busy" : ""}`}
+                                disabled={sfcBusy}
+                                onClick={this.onToggleSfc}
                             >
-                                {sfc ? t("sfc_deactivate") : t("sfc_activate")}
+                                {sfcShown ? t("sfc_deactivate") : t("sfc_activate")}
                             </button>
                         </div>
                     </>

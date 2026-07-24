@@ -9,6 +9,7 @@ import { pondpumpCommonGroup, pumpChannelOf } from "./common";
 const REL_IDS = [
     "control.on",
     "control.speed",
+    "control.sfc",
     "telemetry.power",
     "telemetry.speed",
     "status.fcStatus",
@@ -123,10 +124,15 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
     }
 
     /**
-     * True when Seasonal Flow Control (SFC) is active. The device reports this in `status.fcStatus`
-     * as e.g. "SfcOn" / "SfcOff", so anything containing "off" (or an empty/none value) is inactive.
+     * True when Seasonal Flow Control (SFC) is active. Prefers the writable `control.sfc` (the adapter
+     * reflects it with ack:true right after a command, so the crystal reacts quickly), falling back to
+     * the device's `fcStatus` ("SfcOn"/"SfcOff") before the first command of the session.
      */
     private isSfc(): boolean {
+        const v = this.state.fv["control.sfc"];
+        if (typeof v === "boolean") {
+            return v;
+        }
         const s = this.str("status.fcStatus").trim().toLowerCase();
         if (s === "" || s.includes("off") || ["0", "inactive", "none", "aus", "false"].includes(s)) {
             return false;
