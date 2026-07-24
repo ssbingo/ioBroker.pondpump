@@ -22,7 +22,14 @@ import {
     SENSOR_POWER_W,
     SENSOR_SPEED_RPM,
 } from "./lib/cloud/inventory";
-import { ensureGatewayObjects, ensurePumpObjects, writeGatewayStates, writePumpStates } from "./lib/objects";
+import {
+    ensureGatewayObjects,
+    ensurePumpObjects,
+    GATEWAY_ID,
+    PUMPS_ROOT_ID,
+    writeGatewayStates,
+    writePumpStates,
+} from "./lib/objects";
 import { buildSensorRead, buildSetDimmer, buildSetOn, DIMMER_MAX, parseSensorReadReply } from "./lib/cloud/onet";
 import { generateSelfSignedCert } from "./lib/local/cert";
 import { LocalClient } from "./lib/local/client";
@@ -88,8 +95,8 @@ function extractResponseData(response: unknown): string | undefined {
 class Pondpump extends utils.Adapter {
     private cloud?: CloudClient;
     private local?: LocalClient;
-    /** Active connection mode. */
-    private mode: "cloud" | "local" | "both" = "cloud";
+    /** Active connection mode (cloud or local — mutually exclusive). */
+    private mode: "cloud" | "local" = "cloud";
     /** Local inventory (gateway + pumps), read once over the channel and cached. */
     private localInventory?: { gateway: GatewayInfo; pumps: PumpInfo[] };
     private pollTimer?: ioBroker.Timeout;
@@ -130,15 +137,30 @@ class Pondpump extends utils.Adapter {
         // Reset the connection indicator during startup
         await this.setConnected(false);
 
-        const mode = this.config.connectionMode;
-        if (mode !== "cloud" && mode !== "local" && mode !== "both") {
+        // Cloud and local are mutually exclusive; the legacy "both" value is migrated to cloud.
+        const configured = String(this.config.connectionMode);
+        let mode: "cloud" | "local";
+        if (configured === "local") {
+            mode = "local";
+        } else if (configured === "cloud") {
+            mode = "cloud";
+        } else if (configured === "both") {
+            this.log.warn(
+                "[config] connection mode 'both' is no longer supported — falling back to 'cloud'. " +
+                    "Please set the connection mode to 'cloud' or 'local' in the adapter settings.",
+            );
+            mode = "cloud";
+        } else {
             this.log.error(
-                `[config] invalid connection mode ${JSON.stringify(mode)} — expected "cloud", "local" or "both". ` +
+                `[config] invalid connection mode ${JSON.stringify(configured)} — expected "cloud" or "local". ` +
                     "Check the adapter configuration; the adapter will not do anything.",
             );
             return;
         }
         this.mode = mode;
+
+        // Expose the active data source and rebuild the objects cleanly if the mode changed.
+        await this.applyConnectionType(mode);
 
         this.pollIntervalMs = Math.max(MIN_POLL_INTERVAL_S, this.config.pollInterval || 30) * 1000;
         const baseUrl = this.config.cloudBaseUrl || DEFAULT_BASE_URL;
@@ -151,8 +173,7 @@ class Pondpump extends utils.Adapter {
                 `refreshTokenConfigured=${this.config.cloudRefreshToken ? "yes" : "no"}`,
         );
 
-        // Phase 3: the local transport. In 'both' mode the cloud path still drives objects/telemetry;
-        // the local channel is brought up on its own once the unified poll runs over either transport.
+        // Local transport: bring up the LAN channel and poll over it. Otherwise use the cloud path.
         if (mode === "local") {
             await this.runLocal();
             return;
@@ -239,6 +260,53 @@ class Pondpump extends utils.Adapter {
             }
             this.lastConnected = connected;
         }
+    }
+
+    /**
+     * Record the active data source in `info.connectionType`, and — when the mode changed since the
+     * previous run — remove the old gateway/pump object tree so cloud and local objects never mix.
+     *
+     * @param mode - the connection mode this session runs in
+     */
+    private async applyConnectionType(mode: "cloud" | "local"): Promise<void> {
+        await this.setObjectNotExistsAsync("info.connectionType", {
+            type: "state",
+            common: {
+                name: "Active data source (cloud or local)",
+                type: "string",
+                role: "text",
+                read: true,
+                write: false,
+                def: "",
+            },
+            native: {},
+        });
+        const previous = await this.getStateAsync("info.connectionType");
+        const previousMode = typeof previous?.val === "string" && previous.val ? previous.val : undefined;
+        if (previousMode && previousMode !== mode) {
+            this.log.info(
+                `[config] connection mode changed from '${previousMode}' to '${mode}' — ` +
+                    "rebuilding the device objects cleanly",
+            );
+            for (const id of [GATEWAY_ID, PUMPS_ROOT_ID]) {
+                try {
+                    await this.delObjectAsync(id, { recursive: true });
+                    this.log.debug(`[config] removed old object tree '${id}'`);
+                } catch (error) {
+                    this.log.debug(
+                        `[config] could not remove '${id}': ${error instanceof Error ? error.message : String(error)}`,
+                    );
+                }
+            }
+            // The in-memory "already ensured" flags are fresh per process start, so the next poll
+            // re-creates the objects; clear any cached local inventory just in case.
+            this.gatewayEnsured = false;
+            this.ensuredPumps.clear();
+            this.liveSensorIds.clear();
+            this.localInventory = undefined;
+        }
+        await this.setState("info.connectionType", { val: mode, ack: true });
+        this.log.debug(`[config] active data source: ${mode}`);
     }
 
     /** Create the (non-writable) state that persists the rotating cloud refresh token. */

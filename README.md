@@ -64,7 +64,7 @@ All settings are available in the Admin UI (JSON config):
 
 | Setting | Description |
 | --- | --- |
-| Connection mode | `cloud`, `local` or `both` (local preferred) |
+| Connection mode | `cloud` or `local` (mutually exclusive) |
 | Poll interval | Polling interval in seconds (default 30) |
 | Cloud user / password | OASE cloud account credentials (password stored encrypted) |
 | Controller IP | IP address of the EGC gateway (local mode) |
@@ -76,6 +76,10 @@ All settings are available in the Admin UI (JSON config):
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+
+- (ssbingo) Phase 7 — cloud and local are now mutually exclusive: the `both` connection mode was removed (a saved `both` is migrated to `cloud`). When you switch between `cloud` and `local`, the device objects are rebuilt cleanly so the two never mix, and the new `info.connectionType` state shows which data source is active
 
 ### 0.0.3 (2026-07-23)
 

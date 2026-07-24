@@ -39,7 +39,7 @@ OASE 云使用 **Azure AD B2C** (`account.oase.com`)。适配器通过 refresh-t
 
 | 设置 | 说明 |
 | --- | --- |
-| 连接模式 | `cloud`、`local` 或 `both` |
+| 连接模式 | `cloud` / `local` |
 | 轮询间隔 | 轮询间隔（秒，默认 30） |
 | 云端 refresh token | 从一次 OASE 应用登录中捕获（以加密方式存储） |
 | 控制器 IP | EGC 网关的 IP 地址（本地模式） |

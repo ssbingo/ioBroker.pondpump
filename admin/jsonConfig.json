@@ -10,6 +10,7 @@
         "connectionMode": {
             "type": "select",
             "label": "Connection mode",
+            "help": "Choose one transport: cloud or local. The two are mutually exclusive.",
             "options": [
                 {
                     "label": "Cloud",
@@ -18,10 +19,6 @@
                 {
                     "label": "Local",
                     "value": "local"
-                },
-                {
-                    "label": "Both (local preferred)",
-                    "value": "both"
                 }
             ],
             "newLine": true,

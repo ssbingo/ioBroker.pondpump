@@ -39,7 +39,7 @@ Il cloud OASE utilizza **Azure AD B2C** (`account.oase.com`). L'adapter si auten
 
 | Impostazione | Descrizione |
 | --- | --- |
-| Modalità di connessione | `cloud`, `local` o `both` |
+| Modalità di connessione | `cloud` / `local` |
 | Intervallo di polling | Intervallo di polling in secondi (predefinito 30) |
 | Refresh token cloud | Catturato da un accesso all'app OASE (memorizzato in forma cifrata) |
 | IP del controller | Indirizzo IP del gateway EGC (modalità locale) |

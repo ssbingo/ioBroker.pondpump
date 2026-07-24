@@ -171,7 +171,7 @@ Your phone and computer must be on the **same Wi-Fi**.
 
 ### 4.4 (Advanced) Find the device password for local mode
 
-Only needed if you want connection mode **`local`** / **`both`** (chapter 8). While mitmproxy is
+Only needed if you want connection mode **`local`** (chapter 8). While mitmproxy is
 still running:
 
 1. In the app, open your pond so it loads the pumps (this triggers the inventory download).
@@ -196,7 +196,7 @@ Open **Instances → pondpump.0 → settings** (the wrench icon). The settings a
 
 | Setting | What to enter |
 | --- | --- |
-| **Connection mode** | `cloud` for the normal (internet) path. `local` / `both` are for the in-house LAN path (chapter 8, experimental). |
+| **Connection mode** | `cloud` for the internet path, `local` for the in-house LAN path (chapter 8). The two are mutually exclusive. |
 | **Poll interval** | How often (seconds) the adapter reads status. Default **30**. Minimum 5. |
 
 ### Cloud
@@ -206,7 +206,7 @@ Open **Instances → pondpump.0 → settings** (the wrench icon). The settings a
 | **Cloud refresh token** | The token from chapter 4 (stored encrypted). |
 | *Advanced (base URL, token URL, client id, scope)* | Leave at their defaults unless OASE changes their cloud. |
 
-### Local (only for `local` / `both`)
+### Local (only for `local`)
 
 | Setting | What to enter |
 | --- | --- |

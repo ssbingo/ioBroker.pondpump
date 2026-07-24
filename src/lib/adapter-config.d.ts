@@ -4,8 +4,8 @@
 declare global {
     namespace ioBroker {
         interface AdapterConfig {
-            /** Which transport to use: cloud, local or both (local preferred) */
-            connectionMode: "cloud" | "local" | "both";
+            /** Which transport to use: cloud or local (mutually exclusive) */
+            connectionMode: "cloud" | "local";
             /** IP address of the OASE Garden Controller Cloud gateway (local mode) */
             ip: string;
             /** Bind address of the local TLS server (ioBroker host) */

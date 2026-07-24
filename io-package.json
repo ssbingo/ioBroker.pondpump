@@ -129,6 +129,19 @@
                 "def": false
             },
             "native": {}
+        },
+        {
+            "_id": "info.connectionType",
+            "type": "state",
+            "common": {
+                "role": "text",
+                "name": "Active data source (cloud or local)",
+                "type": "string",
+                "read": true,
+                "write": false,
+                "def": ""
+            },
+            "native": {}
         }
     ]
 }

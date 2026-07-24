@@ -175,7 +175,7 @@ Smartphone und Rechner müssen im **selben WLAN** sein.
 
 ### 4.4 (Fortgeschritten) Gerätepasswort für den lokalen Modus finden
 
-Nur nötig, wenn du den Verbindungsmodus **`local`** / **`both`** möchtest (Kapitel 8). Während
+Nur nötig, wenn du den Verbindungsmodus **`local`** möchtest (Kapitel 8). Während
 mitmproxy noch läuft:
 
 1. Öffne in der App deinen Teich, damit die Pumpen geladen werden (das löst den Inventar-Download
@@ -203,7 +203,7 @@ gruppiert:
 
 | Einstellung | Was du einträgst |
 | --- | --- |
-| **Verbindungsmodus** | `cloud` für den normalen (Internet-)Weg. `local` / `both` für den hausinternen LAN-Weg (Kapitel 8, experimentell). |
+| **Verbindungsmodus** | `cloud` für den Internet-Weg, `local` für den hausinternen LAN-Weg (Kapitel 8). Die beiden schließen sich gegenseitig aus. |
 | **Abfrageintervall** | Wie oft (Sekunden) der Adapter den Status liest. Standard **30**. Minimum 5. |
 
 ### Cloud
@@ -213,7 +213,7 @@ gruppiert:
 | **Cloud-Refresh-Token** | Der Token aus Kapitel 4 (verschlüsselt gespeichert). |
 | *Erweitert (Base-URL, Token-URL, Client-ID, Scope)* | Standardwerte belassen, außer OASE ändert die Cloud. |
 
-### Lokal (nur für `local` / `both`)
+### Lokal (nur für `local`)
 
 | Einstellung | Was du einträgst |
 | --- | --- |

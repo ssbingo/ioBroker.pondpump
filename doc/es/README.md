@@ -39,7 +39,7 @@ La nube de OASE utiliza **Azure AD B2C** (`account.oase.com`). El adaptador se a
 
 | Ajuste | Descripción |
 | --- | --- |
-| Modo de conexión | `cloud`, `local` o `both` |
+| Modo de conexión | `cloud` / `local` |
 | Intervalo de sondeo | Intervalo de sondeo en segundos (predeterminado 30) |
 | Refresh token de la nube | Capturado desde un inicio de sesión en la aplicación de OASE (se almacena cifrado) |
 | IP del controlador | Dirección IP de la pasarela EGC (modo local) |

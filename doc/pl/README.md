@@ -39,7 +39,7 @@ Chmura OASE korzysta z **Azure AD B2C** (`account.oase.com`). Adapter uwierzytel
 
 | Ustawienie | Opis |
 | --- | --- |
-| Tryb połączenia | `cloud`, `local` lub `both` |
+| Tryb połączenia | `cloud` / `local` |
 | Interwał odpytywania | Interwał odpytywania w sekundach (domyślnie 30) |
 | Token odświeżający chmury | Przechwycony z logowania w aplikacji OASE (przechowywany w postaci zaszyfrowanej) |
 | Adres IP kontrolera | Adres IP bramy EGC (tryb lokalny) |
