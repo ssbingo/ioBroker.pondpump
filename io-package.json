@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.0.5",
+        "version": "0.0.6",
         "news": {
-            "0.0.5": {
-                "en": "The adapter now bundles two vis-2 widgets: a graphical pump visualization (animated impeller/ice crystal with live values) and a control widget (on/off and speed). Widgets select instance and pump themselves; vis-2 restarts automatically on install. Seasonal Flow Control (SFC) can now be switched from the adapter and the control widget.",
-                "de": "Der Adapter bringt jetzt zwei vis-2-Widgets mit: eine grafische Pumpen-Visualisierung (animiertes Flügelrad/Eiskristall mit Live-Werten) und ein Steuer-Widget (Ein/Aus und Drehzahl). Die Widgets wählen Instanz und Pumpe selbst; vis-2 wird bei der Installation automatisch neu gestartet. Die Saisonale Durchflussregelung (SFC) lässt sich nun aus dem Adapter und dem Steuer-Widget schalten.",
-                "ru": "Адаптер теперь включает два виджета vis-2: графическую визуализацию насоса (анимированная крыльчатка/ледяной кристалл с текущими значениями) и виджет управления (вкл/выкл и скорость). Виджеты сами выбирают экземпляр и насос; vis-2 автоматически перезапускается при установке. Сезонную регулировку потока (SFC) теперь можно переключать из адаптера и виджета управления.",
-                "pt": "O adaptador agora inclui dois widgets vis-2: uma visualização gráfica da bomba (rotor/cristal de gelo animado com valores em tempo real) e um widget de controlo (ligar/desligar e velocidade). Os widgets selecionam a instância e a bomba sozinhos; o vis-2 reinicia automaticamente na instalação. O controlo sazonal de fluxo (SFC) pode agora ser comutado a partir do adaptador e do widget de controlo.",
-                "nl": "De adapter bevat nu twee vis-2-widgets: een grafische pompvisualisatie (geanimeerde waaier/ijskristal met live-waarden) en een bedieningswidget (aan/uit en snelheid). De widgets kiezen zelf instantie en pomp; vis-2 wordt bij installatie automatisch herstart. Seizoensgebonden debietregeling (SFC) kan nu vanuit de adapter en het bedieningswidget worden geschakeld.",
-                "fr": "L'adaptateur intègre désormais deux widgets vis-2 : une visualisation graphique de la pompe (turbine/cristal de glace animé avec valeurs en direct) et un widget de commande (marche/arrêt et vitesse). Les widgets choisissent eux-mêmes l'instance et la pompe ; vis-2 redémarre automatiquement à l'installation. La régulation saisonnière du débit (SFC) peut désormais être commutée depuis l'adaptateur et le widget de commande.",
-                "it": "L'adattatore include ora due widget vis-2: una visualizzazione grafica della pompa (girante/cristallo di ghiaccio animato con valori in tempo reale) e un widget di controllo (on/off e velocità). I widget scelgono da soli istanza e pompa; vis-2 si riavvia automaticamente all'installazione. La regolazione stagionale del flusso (SFC) può ora essere commutata dall'adattatore e dal widget di controllo.",
-                "es": "El adaptador ahora incluye dos widgets vis-2: una visualización gráfica de la bomba (rodete/cristal de hielo animado con valores en vivo) y un widget de control (encendido/apagado y velocidad). Los widgets seleccionan la instancia y la bomba por sí mismos; vis-2 se reinicia automáticamente al instalar. El control estacional de caudal (SFC) ahora se puede conmutar desde el adaptador y el widget de control.",
-                "pl": "Adapter zawiera teraz dwa widżety vis-2: graficzną wizualizację pompy (animowany wirnik/kryształ lodu z wartościami na żywo) oraz widżet sterowania (wł/wył i prędkość). Widżety same wybierają instancję i pompę; vis-2 jest automatycznie restartowany po instalacji. Sezonową regulację przepływu (SFC) można teraz przełączać z poziomu adaptera i widżetu sterowania.",
-                "uk": "Адаптер тепер містить два віджети vis-2: графічну візуалізацію насоса (анімована крильчатка/крижаний кристал із поточними значеннями) та віджет керування (увімк/вимк і швидкість). Віджети самі обирають екземпляр і насос; vis-2 автоматично перезапускається під час встановлення. Сезонне регулювання потоку (SFC) тепер можна перемикати з адаптера та віджета керування.",
-                "zh-cn": "适配器现在附带两个 vis-2 小部件：图形化水泵可视化（随转速动画的叶轮/冰晶，带实时数值）和控制小部件（开/关和转速）。小部件自行选择实例和水泵；安装时 vis-2 会自动重启。 现在可以从适配器和控制小部件切换季节性流量控制 (SFC)。"
+            "0.0.6": {
+                "en": "Maintenance release: CI/tooling update (deploy action) and repository housekeeping. No functional changes to the adapter.",
+                "de": "Wartungs-Release: Aktualisierung von CI/Tooling (Deploy-Action) und Aufräumen des Repositorys. Keine funktionalen Änderungen am Adapter.",
+                "ru": "Обслуживающий выпуск: обновление CI/инструментов (deploy action) и уборка репозитория. Функциональных изменений в адаптере нет.",
+                "pt": "Versão de manutenção: atualização de CI/ferramentas (deploy action) e limpeza do repositório. Sem alterações funcionais no adaptador.",
+                "nl": "Onderhoudsrelease: CI-/tooling-update (deploy action) en opschoning van de repository. Geen functionele wijzigingen aan de adapter.",
+                "fr": "Version de maintenance : mise à jour CI/outils (action de déploiement) et nettoyage du dépôt. Aucune modification fonctionnelle de l'adaptateur.",
+                "it": "Versione di manutenzione: aggiornamento CI/strumenti (deploy action) e pulizia del repository. Nessuna modifica funzionale all'adattatore.",
+                "es": "Versión de mantenimiento: actualización de CI/herramientas (deploy action) y limpieza del repositorio. Sin cambios funcionales en el adaptador.",
+                "pl": "Wydanie konserwacyjne: aktualizacja CI/narzędzi (deploy action) i porządkowanie repozytorium. Bez zmian funkcjonalnych w adapterze.",
+                "uk": "Реліз обслуговування: оновлення CI/інструментів (deploy action) та впорядкування репозиторію. Без функціональних змін в адаптері.",
+                "zh-cn": "维护版本：更新 CI/工具（部署动作）并整理仓库。适配器功能无变化。"
             }
         },
         "titleLang": {
