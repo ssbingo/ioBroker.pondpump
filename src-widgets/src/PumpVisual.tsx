@@ -155,7 +155,7 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
     }
 
     // eslint-disable-next-line class-methods-use-this
-    private renderImpeller(spin: boolean, dur: number, accent: string): React.JSX.Element {
+    private renderImpeller(spin: boolean, dur: number, accent: string, crossed: boolean): React.JSX.Element {
         const blade = "M60 47 C 50 43 48 29 54 15 C 57 11 63 11 66 15 C 72 29 70 43 60 47 Z";
         const spinning = spin && dur > 0;
         const style = spinning ? ({ ["--pp-dur"]: `${dur}s` } as React.CSSProperties) : undefined;
@@ -216,6 +216,22 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
                         fill="#7fb4e0"
                     />
                 </g>
+                {crossed ? (
+                    <g className="pp-crossmark">
+                        <line
+                            x1="28"
+                            y1="28"
+                            x2="92"
+                            y2="92"
+                        />
+                        <line
+                            x1="92"
+                            y1="28"
+                            x2="28"
+                            y2="92"
+                        />
+                    </g>
+                ) : null}
             </svg>
         );
     }
@@ -296,30 +312,6 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
     }
 
     // eslint-disable-next-line class-methods-use-this
-    private renderCross(): React.JSX.Element {
-        return (
-            <svg
-                className="pp-cross"
-                viewBox="0 0 120 120"
-                preserveAspectRatio="xMidYMid meet"
-            >
-                <line
-                    x1="30"
-                    y1="30"
-                    x2="90"
-                    y2="90"
-                />
-                <line
-                    x1="90"
-                    y1="30"
-                    x2="30"
-                    y2="90"
-                />
-            </svg>
-        );
-    }
-
-    // eslint-disable-next-line class-methods-use-this
     private fmt(v: number | null, digits = 0): string {
         return v === null ? "–" : v.toFixed(digits);
     }
@@ -354,16 +346,11 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
 
         let graphic: React.JSX.Element;
         if (!running) {
-            graphic = (
-                <>
-                    {this.renderImpeller(false, 0, accent)}
-                    {this.renderCross()}
-                </>
-            );
+            graphic = this.renderImpeller(false, 0, accent, true);
         } else if (sfc) {
             graphic = this.renderIce(animate, dur);
         } else {
-            graphic = this.renderImpeller(animate, dur, accent);
+            graphic = this.renderImpeller(animate, dur, accent, false);
         }
 
         const badgeClass = !running ? "pp-badge--off" : sfc ? "pp-badge--sfc" : "pp-badge--on";
