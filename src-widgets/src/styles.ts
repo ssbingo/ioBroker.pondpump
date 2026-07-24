@@ -44,6 +44,8 @@ const CSS = `
 .pp-row .k{color:#8fa0b6}
 .pp-row .v{font-weight:700;font-variant-numeric:tabular-nums}
 .pp-slider{width:100%;accent-color:var(--pp-accent,#38aaff);cursor:pointer}
+.pp-slider:disabled{opacity:.5;cursor:not-allowed}
+.pp-quick button:disabled{opacity:.5;cursor:not-allowed}
 .pp-quick{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .pp-quick button{flex:1 1 0;min-width:44px;border:0;border-radius:8px;padding:6px 2px;font-size:12px;font-weight:700;
   cursor:pointer;color:#cdd7e4;background:rgba(255,255,255,.06)}

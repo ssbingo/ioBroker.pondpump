@@ -123,31 +123,11 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
         return this.bool("control.on") || (this.num("telemetry.speed") ?? 0) > 0;
     }
 
-    /**
-     * True when Seasonal Flow Control (SFC) is active. Prefers the writable `control.sfc` (the adapter
-     * reflects it with ack:true right after a command, so the crystal reacts quickly), falling back to
-     * the device's `fcStatus` ("SfcOn"/"SfcOff") before the first command of the session.
-     */
-    private isSfc(): boolean {
-        const v = this.state.fv["control.sfc"];
-        if (typeof v === "boolean") {
-            return v;
-        }
-        const s = this.str("status.fcStatus").trim().toLowerCase();
-        if (s === "" || s.includes("off") || ["0", "inactive", "none", "aus", "false"].includes(s)) {
-            return false;
-        }
-        return true;
-    }
-
-    /** Rotation duration in seconds, from the speed quantised to 10 % steps (0 = standstill). */
+    /** Rotation duration in seconds, from the ACTUAL pump speed quantised to 10 % steps (0 = standstill). */
     private spinDuration(): number {
-        // Prefer the setpoint ("Power" %); fall back to a normalised motor speed if absent.
-        let pct = this.num("control.speed");
-        if (pct === null) {
-            const rpm = this.num("telemetry.speed");
-            pct = rpm !== null ? Math.min(100, (rpm / 3000) * 100) : 0;
-        }
+        // Use the real output (actualSpeedPct), so during SFC — where the device overrides the flow
+        // while the setpoint stays put — the animation still matches how fast the pump really runs.
+        const pct = this.actualSpeedPct();
         const step = Math.round(Math.max(0, Math.min(100, pct)) / 10) * 10; // 0,10,…,100
         if (step <= 0) {
             return 0;
@@ -244,8 +224,8 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
 
     // eslint-disable-next-line class-methods-use-this
     private renderIce(spin: boolean, dur: number): React.JSX.Element {
-        // A moderate, steady rotation reads best for the seasonal ice-crystal mode.
-        const d = dur > 0 ? Math.max(2.2, dur * 2) : 3.2;
+        // Speed-based like the impeller, so the crystal reflects the (SFC-driven) real pump speed.
+        const d = dur > 0 ? dur : 3.2;
         const style = spin ? ({ ["--pp-dur"]: `${d}s` } as React.CSSProperties) : undefined;
         return (
             <svg
@@ -347,8 +327,10 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
         }
 
         const running = this.isRunning();
-        const sfc = this.isSfc();
+        const sfc = this.sfcActive();
         const dur = this.spinDuration();
+        // Show the real output as "Power": during SFC it reflects the overridden flow, not the setpoint.
+        const powerPct = sfc ? this.actualSpeedPct() : (this.num("control.speed") ?? this.actualSpeedPct());
 
         let graphic: React.JSX.Element;
         if (!running) {
@@ -392,7 +374,7 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
                         </div>
                         <div className="pp-val">
                             <div className="n">
-                                {this.fmt(this.num("control.speed"))}
+                                {this.fmt(powerPct)}
                                 <span className="u">%</span>
                             </div>
                             <div className="k">{t("lbl_power")}</div>

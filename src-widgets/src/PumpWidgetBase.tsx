@@ -34,6 +34,8 @@ export default abstract class PumpWidgetBase<
     protected tickTimer: ReturnType<typeof setInterval> | null = null;
     /** Set > 0 in a subclass constructor to receive a periodic re-render (for animations). */
     protected tickMs = 0;
+    /** Learned motor speed (rpm) at 100 % output, used to derive the actual % during SFC. */
+    protected rpmAt100 = 0;
 
     /** Sub-state ids (relative to the pump channel) this widget subscribes to. */
     protected abstract relIds(): string[];
@@ -154,5 +156,38 @@ export default abstract class PumpWidgetBase<
 
     protected bool(key: string): boolean {
         return this.state.fv[key] === true;
+    }
+
+    /**
+     * True when Seasonal Flow Control (SFC) is active. Prefers the writable `control.sfc` (the adapter
+     * reflects it with ack:true right after a command), falling back to the device's `fcStatus`
+     * ("SfcOn"/"SfcOff") before the first command of the session.
+     */
+    protected sfcActive(): boolean {
+        const v = this.state.fv["control.sfc"];
+        if (typeof v === "boolean") {
+            return v;
+        }
+        const s = this.str("status.fcStatus").trim().toLowerCase();
+        return s !== "" && !s.includes("off") && !["0", "inactive", "none", "aus", "false"].includes(s);
+    }
+
+    /**
+     * The pump's ACTUAL output as a percentage (0..100). In normal operation this equals the setpoint
+     * (`control.speed`); during SFC the device overrides the flow while the setpoint stays put, so the
+     * value is derived from the live motor speed via a calibration (rpm ∝ setpoint) that is learned
+     * while SFC is off. Falls back to the setpoint until the calibration is known.
+     */
+    protected actualSpeedPct(): number {
+        const setpoint = this.num("control.speed");
+        const rpm = this.num("telemetry.speed");
+        // Learn rpm-at-100% only in normal mode, where the setpoint reflects the real output.
+        if (!this.sfcActive() && setpoint !== null && setpoint > 5 && rpm !== null && rpm > 0) {
+            this.rpmAt100 = rpm / (setpoint / 100);
+        }
+        if (rpm !== null && this.rpmAt100 > 0) {
+            return Math.max(0, Math.min(100, (rpm / this.rpmAt100) * 100));
+        }
+        return setpoint ?? 0;
     }
 }

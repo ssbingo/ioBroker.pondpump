@@ -6,7 +6,7 @@ import PumpWidgetBase, { type PumpBaseRxData, type PumpBaseState } from "./PumpW
 import { pondpumpCommonGroup, pumpChannelOf } from "./common";
 
 // Sub-states (relative to the pump device channel) this widget reads/commands.
-const REL_IDS = ["control.on", "control.speed", "control.sfc", "status.fcMode", "status.fcStatus"];
+const REL_IDS = ["control.on", "control.speed", "control.sfc", "telemetry.speed", "status.fcMode", "status.fcStatus"];
 
 // SFC (Seasonal Flow Control) activation. The 0x5000 device command was reverse-engineered and the
 // adapter now handles the writable `control.sfc` state, so the activate/deactivate button is live.
@@ -90,18 +90,6 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
         return REL_IDS;
     }
 
-    /**
-     * True when Seasonal Flow Control (SFC) is active. The device reports this in `status.fcStatus`
-     * as e.g. "SfcOn" / "SfcOff", so anything containing "off" (or an empty/none value) is inactive.
-     */
-    private isSfc(): boolean {
-        const s = this.str("status.fcStatus").trim().toLowerCase();
-        if (s === "" || s.includes("off") || ["0", "inactive", "none", "aus", "false"].includes(s)) {
-            return false;
-        }
-        return true;
-    }
-
     private displaySpeed(): number {
         if (this.state.dragging) {
             return this.state.drag;
@@ -132,22 +120,9 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
         this.write("control.on", false);
     };
 
-    /**
-     * The confirmed SFC state: prefer the writable `control.sfc` (the adapter reflects it with
-     * ack:true right after the command), falling back to the device's `fcStatus` before the first
-     * command of the session.
-     */
-    private currentSfc(): boolean {
-        const v = this.state.fv["control.sfc"];
-        if (typeof v === "boolean") {
-            return v;
-        }
-        return this.isSfc();
-    }
-
     /** The SFC state to display: the optimistic target while pending, otherwise the confirmed state. */
     private displayedSfc(): boolean {
-        return this.state.sfcPending ?? this.currentSfc();
+        return this.state.sfcPending ?? this.sfcActive();
     }
 
     private clearSfcPending(): void {
@@ -181,7 +156,7 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
 
     componentDidUpdate(): void {
         // Clear the optimistic state once the confirmed state has caught up to the target.
-        if (this.state.sfcPending !== null && this.currentSfc() === this.state.sfcPending) {
+        if (this.state.sfcPending !== null && this.sfcActive() === this.state.sfcPending) {
             this.clearSfcPending();
         }
     }
@@ -223,6 +198,9 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
         const speed = this.displaySpeed();
         const sfcBusy = this.state.sfcPending !== null;
         const sfcShown = this.displayedSfc();
+        // While SFC is active the device overrides manual power, so show the real output on a
+        // disabled slider instead of the (now-inactive) setpoint.
+        const sliderVal = sfcShown ? Math.round(this.actualSpeedPct()) : speed;
 
         return (
             <div
@@ -257,7 +235,9 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
 
                 <div className="pp-row">
                     <span className="k">{t("lbl_power")}</span>
-                    <span className="v">{Math.round(speed)} %</span>
+                    <span className="v">
+                        {Math.round(sliderVal)} %{sfcShown ? ` · ${t("state_sfc")}` : ""}
+                    </span>
                 </div>
                 <input
                     className="pp-slider"
@@ -265,7 +245,8 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
                     min={0}
                     max={100}
                     step={1}
-                    value={speed}
+                    value={sliderVal}
+                    disabled={sfcShown}
                     onChange={this.onSliderInput}
                     onMouseUp={this.commitSlider}
                     onTouchEnd={this.commitSlider}
@@ -279,6 +260,7 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
                             <button
                                 key={v}
                                 type="button"
+                                disabled={sfcShown}
                                 onClick={() => this.onQuick(v)}
                             >
                                 {v} %
