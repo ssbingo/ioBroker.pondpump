@@ -30,7 +30,14 @@ import {
     writeGatewayStates,
     writePumpStates,
 } from "./lib/objects";
-import { buildSensorRead, buildSetDimmer, buildSetOn, DIMMER_MAX, parseSensorReadReply } from "./lib/cloud/onet";
+import {
+    buildSensorRead,
+    buildSetDimmer,
+    buildSetOn,
+    buildSetSfc,
+    DIMMER_MAX,
+    parseSensorReadReply,
+} from "./lib/cloud/onet";
 import { generateSelfSignedCert } from "./lib/local/cert";
 import { LocalClient } from "./lib/local/client";
 import { fetchLocalInventory, toDomainInventory } from "./lib/local/inventory";
@@ -750,7 +757,7 @@ class Pondpump extends utils.Adapter {
      * @param state - the new (ack:false) state
      */
     private async handleCommand(id: string, state: ioBroker.State): Promise<void> {
-        const match = /\.pumps\.(\d+)\.control\.(on|speed|speedRaw)$/.exec(id);
+        const match = /\.pumps\.(\d+)\.control\.(on|sfc|speed|speedRaw)$/.exec(id);
         if (!match) {
             return; // not a control command
         }
@@ -772,6 +779,11 @@ class Pondpump extends utils.Adapter {
                 this.log.info(`[cmd] pump ${deviceNumber}: set on=${on} (device index ${ctrl.index})`);
                 await this.sendOnet(buildSetOn(ctrl.index, on, this.nextTxn()));
                 await this.setState(`pumps.${deviceNumber}.control.on`, { val: on, ack: true });
+            } else if (field === "sfc") {
+                const on = state.val === true || state.val === "true" || state.val === 1;
+                this.log.info(`[cmd] pump ${deviceNumber}: set SFC ${on ? "on" : "off"} (device index ${ctrl.index})`);
+                await this.sendOnet(buildSetSfc(ctrl.index, on, this.nextTxn()));
+                await this.setState(`pumps.${deviceNumber}.control.sfc`, { val: on, ack: true });
             } else {
                 if (ctrl.controlAddress === undefined) {
                     this.log.error(

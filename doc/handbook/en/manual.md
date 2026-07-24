@@ -96,15 +96,16 @@ mitmproxy is a small, free program. We'll use its browser version, **mitmweb**. 
 4. Now open **PowerShell**:
    - Press the **Windows key**, type **`PowerShell`**, and click **Windows PowerShell** in the list.
    - A dark window with a blinking text cursor appears — this is the command line.
-5. Type this command and press **Enter**:
+5. Type this command and press **Enter** (it pins the proxy port to **8080**):
 
    ```powershell
-   mitmweb
+   mitmweb --listen-port 8080
    ```
 
-6. If Windows asks whether to **allow network access**, click **Allow**. Your browser opens a new tab
-   at **<http://127.0.0.1:8081>** — that's the mitmproxy control panel. mitmproxy is now waiting for
-   phone traffic on **port 8080**. ✅
+6. If Windows asks whether to **allow network access**, click **Allow**. The control panel opens
+   automatically at **<http://127.0.0.1:8081>** in your computer's browser — that's the mitmproxy
+   panel you'll watch. The actual **proxy listens on port 8080** and waits there for the phone's
+   traffic. ✅
 7. **Keep this PowerShell window open** the whole time — closing it stops mitmproxy. Later, to stop
    it, click the window and press **Ctrl + C**.
 
@@ -117,13 +118,13 @@ mitmproxy is a small, free program. We'll use its browser version, **mitmweb**. 
 1. Open **Terminal** (press **Cmd + Space**, type **`Terminal`**, press Enter).
 2. The easiest way is with [Homebrew](https://brew.sh): run `brew install mitmproxy`. (No Homebrew?
    Download the macOS build from **<https://mitmproxy.org/downloads/>** and unzip it.)
-3. Run **`mitmweb`**. A browser tab opens at **<http://127.0.0.1:8081>**.
+3. Run **`mitmweb --listen-port 8080`**. A browser tab opens at **<http://127.0.0.1:8081>**.
 
 #### Linux
 
 1. Install it with **`pipx install mitmproxy`** (or your distribution's package, or the binaries from
    the downloads page).
-2. Run **`mitmweb`** in a terminal and open **<http://127.0.0.1:8081>**.
+2. Run **`mitmweb --listen-port 8080`** in a terminal and open **<http://127.0.0.1:8081>**.
 
 In every case: the browser page on **:8081** is the control panel you'll watch, and **port 8080** is
 where your phone will send its traffic (next step).

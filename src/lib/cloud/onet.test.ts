@@ -6,6 +6,7 @@ import {
     parseSensorReadReply,
     buildSetDimmer,
     buildSetOn,
+    buildSetSfc,
     PACKET_SET_DIMMER,
     PACKET_SET_ON,
 } from "./onet";
@@ -27,6 +28,13 @@ describe("ONet packet builder (verified against captured app commands)", () => {
         expect(buildSetOn(0, false, 70)).to.equal("XCNPQQUAAAACRgBSAAAAAAAAAAAA");
         // #4: device index 0, on, txn 74
         expect(buildSetOn(0, true, 74)).to.equal("XCNPQQUAAAACSgBSAAAAAAAAAAAB");
+    });
+
+    it("reproduces Seasonal Flow Control (SFC) commands (0x5000)", () => {
+        // Captured from the app: device index 0, SFC on, txn 46
+        expect(buildSetSfc(0, true, 46)).to.equal("XCNPQQYAAAACLgBQAAAAAAAAAAABAA==");
+        // Captured from the app: device index 0, SFC off, txn 48
+        expect(buildSetSfc(0, false, 48)).to.equal("XCNPQQYAAAACMABQAAAAAAAAAAAAAA==");
     });
 
     it("reproduces the status poll (0x5100)", () => {

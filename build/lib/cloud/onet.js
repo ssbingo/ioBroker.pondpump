@@ -24,6 +24,7 @@ __export(onet_exports, {
   PACKET_POLL: () => PACKET_POLL,
   PACKET_SET_DIMMER: () => PACKET_SET_DIMMER,
   PACKET_SET_ON: () => PACKET_SET_ON,
+  PACKET_SET_SFC: () => PACKET_SET_SFC,
   PACKET_STATUS: () => PACKET_STATUS,
   PROTOCOL_VERSION: () => PROTOCOL_VERSION,
   buildFrame: () => buildFrame,
@@ -32,6 +33,7 @@ __export(onet_exports, {
   buildSensorRead: () => buildSensorRead,
   buildSetDimmer: () => buildSetDimmer,
   buildSetOn: () => buildSetOn,
+  buildSetSfc: () => buildSetSfc,
   parseFrameHeader: () => parseFrameHeader,
   parseSensorReadReply: () => parseSensorReadReply
 });
@@ -40,6 +42,7 @@ const DELIMITER = [92, 35, 79, 65];
 const PROTOCOL_VERSION = 2;
 const PACKET_SET_DIMMER = 25600;
 const PACKET_SET_ON = 20992;
+const PACKET_SET_SFC = 20480;
 const PACKET_POLL = 20736;
 const PACKET_STATUS = 21760;
 const DIMMER_MAX = 255;
@@ -85,6 +88,11 @@ function buildSetOn(deviceIndex, on, txn) {
   const payload = [idx & 255, idx >>> 8 & 255, idx >>> 16 & 255, idx >>> 24 & 255, on ? 1 : 0];
   return buildPacket(PACKET_SET_ON, payload, txn);
 }
+function buildSetSfc(deviceIndex, on, txn) {
+  const idx = deviceIndex >>> 0;
+  const payload = [idx & 255, idx >>> 8 & 255, idx >>> 16 & 255, idx >>> 24 & 255, on ? 1 : 0, 0];
+  return buildPacket(PACKET_SET_SFC, payload, txn);
+}
 function buildPoll(txn) {
   return buildPacket(PACKET_POLL, [0, 0, 0, 0], txn);
 }
@@ -126,6 +134,7 @@ function parseSensorReadReply(dataB64) {
   PACKET_POLL,
   PACKET_SET_DIMMER,
   PACKET_SET_ON,
+  PACKET_SET_SFC,
   PACKET_STATUS,
   PROTOCOL_VERSION,
   buildFrame,
@@ -134,6 +143,7 @@ function parseSensorReadReply(dataB64) {
   buildSensorRead,
   buildSetDimmer,
   buildSetOn,
+  buildSetSfc,
   parseFrameHeader,
   parseSensorReadReply
 });

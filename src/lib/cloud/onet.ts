@@ -23,6 +23,8 @@ export const PROTOCOL_VERSION = 2;
 export const PACKET_SET_DIMMER = 0x6400;
 /** Packet type for switching a pump on/off. */
 export const PACKET_SET_ON = 0x5200;
+/** Packet type for switching a pump's Seasonal Flow Control (SFC) on/off. */
+export const PACKET_SET_SFC = 0x5000;
 /** Packet type the app sends as a status poll (its reply likely carries fresh live data). */
 export const PACKET_POLL = 0x5100;
 /** Packet type the app sends as a richer status/telemetry request. */
@@ -126,6 +128,23 @@ export function buildSetOn(deviceIndex: number, on: boolean, txn: number): strin
     const idx = deviceIndex >>> 0;
     const payload = [idx & 0xff, (idx >>> 8) & 0xff, (idx >>> 16) & 0xff, (idx >>> 24) & 0xff, on ? 1 : 0];
     return buildPacket(PACKET_SET_ON, payload, txn);
+}
+
+/**
+ * Build a "switch Seasonal Flow Control (SFC) on/off" command for a pump.
+ *
+ * Captured byte-for-byte from the OASE app: packet type 0x5000, payload
+ * `[deviceIndex u32 LE, flag(1=on, 0=off), 0]` (a trailing constant 0 byte, unlike the 0x5200
+ * on/off command). SFC = Seasonal Flow Control: temperature-dependent seasonal throughput reduction.
+ *
+ * @param deviceIndex - the pump's device index (0-based, order of the inventory device list)
+ * @param on - true to activate SFC, false to deactivate
+ * @param txn - transaction number
+ */
+export function buildSetSfc(deviceIndex: number, on: boolean, txn: number): string {
+    const idx = deviceIndex >>> 0;
+    const payload = [idx & 0xff, (idx >>> 8) & 0xff, (idx >>> 16) & 0xff, (idx >>> 24) & 0xff, on ? 1 : 0, 0];
+    return buildPacket(PACKET_SET_SFC, payload, txn);
 }
 
 /**

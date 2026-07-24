@@ -157,6 +157,17 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
                 write: true,
             }),
         },
+        {
+            id: `${base}.control.sfc`,
+            obj: stateObj({
+                name: "Seasonal Flow Control (SFC)",
+                type: "boolean",
+                role: "switch",
+                read: true,
+                write: true,
+                def: false,
+            }),
+        },
 
         { id: `${base}.status`, obj: channel("Status") },
         {
@@ -279,6 +290,20 @@ function unmappedSensorIds(pump: PumpInfo): number[] {
 }
 
 /**
+ * Whether Seasonal Flow Control (SFC) is active, derived from the device's `fcStatus` string.
+ * The device reports e.g. "SfcOn" / "SfcOff", so anything containing "off" (or empty/none) is off.
+ *
+ * @param fcStatus - the raw fcStatus string from the device (dmx)
+ */
+export function isSfcActive(fcStatus: string | undefined): boolean {
+    const s = (fcStatus ?? "").trim().toLowerCase();
+    if (s === "" || s.includes("off") || ["0", "inactive", "none", "aus", "false"].includes(s)) {
+        return false;
+    }
+    return true;
+}
+
+/**
  * Map gateway metadata + reachability to concrete state values.
  *
  * @param gw - gateway metadata from the inventory
@@ -319,6 +344,7 @@ export function pumpStateValues(pump: PumpInfo, options: PumpStateOptions = {}):
             { id: `${base}.control.on`, val: pump.dmx.deviceOn },
             { id: `${base}.control.speed`, val: dimmerToPercent(pump.dmx.dimmerValue) },
             { id: `${base}.control.speedRaw`, val: pump.dmx.dimmerValue },
+            { id: `${base}.control.sfc`, val: isSfcActive(pump.dmx.fcStatus) },
             { id: `${base}.status.fcStatus`, val: pump.dmx.fcStatus },
             { id: `${base}.status.fcMode`, val: pump.dmx.fcMode },
         );

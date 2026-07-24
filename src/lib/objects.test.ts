@@ -40,6 +40,7 @@ const ALLOWED_ROLES = new Set([
     "info.name",
     "indicator.reachable",
     "indicator.connected",
+    "switch",
     "switch.power",
     "level.dimmer",
     "level",

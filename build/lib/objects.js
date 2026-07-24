@@ -24,6 +24,7 @@ __export(objects_exports, {
   ensurePumpObjects: () => ensurePumpObjects,
   gatewayObjectDefs: () => gatewayObjectDefs,
   gatewayStateValues: () => gatewayStateValues,
+  isSfcActive: () => isSfcActive,
   pumpObjectDefs: () => pumpObjectDefs,
   pumpStateValues: () => pumpStateValues,
   writeGatewayStates: () => writeGatewayStates,
@@ -120,6 +121,17 @@ function pumpObjectDefs(pump) {
         max: 255,
         read: true,
         write: true
+      })
+    },
+    {
+      id: `${base}.control.sfc`,
+      obj: stateObj({
+        name: "Seasonal Flow Control (SFC)",
+        type: "boolean",
+        role: "switch",
+        read: true,
+        write: true,
+        def: false
       })
     },
     { id: `${base}.status`, obj: channel("Status") },
@@ -227,6 +239,13 @@ function unmappedSensorIds(pump) {
   ]);
   return Object.keys(pump.sensors).map(Number).filter((id) => !mapped.has(id)).sort((a, b) => a - b);
 }
+function isSfcActive(fcStatus) {
+  const s = (fcStatus != null ? fcStatus : "").trim().toLowerCase();
+  if (s === "" || s.includes("off") || ["0", "inactive", "none", "aus", "false"].includes(s)) {
+    return false;
+  }
+  return true;
+}
 function gatewayStateValues(gw, online) {
   var _a, _b;
   return [
@@ -247,6 +266,7 @@ function pumpStateValues(pump, options = {}) {
       { id: `${base}.control.on`, val: pump.dmx.deviceOn },
       { id: `${base}.control.speed`, val: (0, import_inventory.dimmerToPercent)(pump.dmx.dimmerValue) },
       { id: `${base}.control.speedRaw`, val: pump.dmx.dimmerValue },
+      { id: `${base}.control.sfc`, val: isSfcActive(pump.dmx.fcStatus) },
       { id: `${base}.status.fcStatus`, val: pump.dmx.fcStatus },
       { id: `${base}.status.fcMode`, val: pump.dmx.fcMode }
     );
@@ -302,6 +322,7 @@ async function writePumpStates(writer, pump, options) {
   ensurePumpObjects,
   gatewayObjectDefs,
   gatewayStateValues,
+  isSfcActive,
   pumpObjectDefs,
   pumpStateValues,
   writeGatewayStates,

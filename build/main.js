@@ -622,7 +622,7 @@ class Pondpump extends utils.Adapter {
    */
   async handleCommand(id, state) {
     var _a;
-    const match = /\.pumps\.(\d+)\.control\.(on|speed|speedRaw)$/.exec(id);
+    const match = /\.pumps\.(\d+)\.control\.(on|sfc|speed|speedRaw)$/.exec(id);
     if (!match) {
       return;
     }
@@ -642,6 +642,11 @@ class Pondpump extends utils.Adapter {
         this.log.info(`[cmd] pump ${deviceNumber}: set on=${on} (device index ${ctrl.index})`);
         await this.sendOnet((0, import_onet.buildSetOn)(ctrl.index, on, this.nextTxn()));
         await this.setState(`pumps.${deviceNumber}.control.on`, { val: on, ack: true });
+      } else if (field === "sfc") {
+        const on = state.val === true || state.val === "true" || state.val === 1;
+        this.log.info(`[cmd] pump ${deviceNumber}: set SFC ${on ? "on" : "off"} (device index ${ctrl.index})`);
+        await this.sendOnet((0, import_onet.buildSetSfc)(ctrl.index, on, this.nextTxn()));
+        await this.setState(`pumps.${deviceNumber}.control.sfc`, { val: on, ack: true });
       } else {
         if (ctrl.controlAddress === void 0) {
           this.log.error(

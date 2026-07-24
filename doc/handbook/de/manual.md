@@ -99,15 +99,16 @@ den Schritten für **dein** Betriebssystem.
    - Drücke die **Windows-Taste**, tippe **`PowerShell`** und klicke in der Liste auf **Windows
      PowerShell**.
    - Es erscheint ein dunkles Fenster mit blinkendem Cursor — das ist die Kommandozeile.
-5. Tippe diesen Befehl ein und drücke **Enter**:
+5. Tippe diesen Befehl ein und drücke **Enter** (er legt den Proxy-Port eindeutig auf **8080**):
 
    ```powershell
-   mitmweb
+   mitmweb --listen-port 8080
    ```
 
-6. Fragt Windows nach dem **Netzwerkzugriff**, klicke **Zulassen**. Dein Browser öffnet einen neuen
-   Tab unter **<http://127.0.0.1:8081>** — das ist das mitmproxy-Bedienfeld. mitmproxy wartet nun auf
-   **Port 8080** auf den Smartphone-Datenverkehr. ✅
+6. Fragt Windows nach dem **Netzwerkzugriff**, klicke **Zulassen**. Es öffnet sich automatisch die
+   Oberfläche unter **<http://127.0.0.1:8081>** im Browser deines Rechners — das ist das
+   mitmproxy-Bedienfeld, das du beobachtest. Der eigentliche **Proxy lauscht auf Port 8080** und
+   wartet dort auf den Smartphone-Datenverkehr. ✅
 7. **Lass dieses PowerShell-Fenster die ganze Zeit offen** — schließt du es, stoppt mitmproxy. Zum
    Beenden später ins Fenster klicken und **Strg + C** drücken.
 
@@ -120,13 +121,13 @@ den Schritten für **dein** Betriebssystem.
 1. Öffne das **Terminal** (**Cmd + Leertaste**, **`Terminal`** tippen, Enter).
 2. Am einfachsten mit [Homebrew](https://brew.sh): `brew install mitmproxy`. (Kein Homebrew? Lade die
    macOS-Version von **<https://mitmproxy.org/downloads/>** und entpacke sie.)
-3. Starte **`mitmweb`**. Ein Browser-Tab öffnet sich unter **<http://127.0.0.1:8081>**.
+3. Starte **`mitmweb --listen-port 8080`**. Ein Browser-Tab öffnet sich unter **<http://127.0.0.1:8081>**.
 
 #### Linux
 
 1. Installiere es mit **`pipx install mitmproxy`** (oder über das Paket deiner Distribution bzw. die
    Binaries von der Download-Seite).
-2. Starte **`mitmweb`** in einem Terminal und öffne **<http://127.0.0.1:8081>**.
+2. Starte **`mitmweb --listen-port 8080`** in einem Terminal und öffne **<http://127.0.0.1:8081>**.
 
 In jedem Fall gilt: Die Browser-Seite auf **:8081** ist das Bedienfeld, das du beobachtest, und über
 **Port 8080** schickt gleich dein Smartphone seinen Datenverkehr (nächster Schritt).

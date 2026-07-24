@@ -8,9 +8,9 @@ import { pondpumpCommonGroup, pumpChannelOf } from "./common";
 // Sub-states (relative to the pump device channel) this widget reads/commands.
 const REL_IDS = ["control.on", "control.speed", "status.fcMode", "status.fcStatus"];
 
-// SFC (seasonal frost-control) activation is not yet available: the device command has not been
-// reverse-engineered. Flip to true once the adapter handles `control.sfc` so the button enables.
-const SFC_ACTIVATION_SUPPORTED = false;
+// SFC (Seasonal Flow Control) activation. The 0x5000 device command was reverse-engineered and the
+// adapter now handles the writable `control.sfc` state, so the activate/deactivate button is live.
+const SFC_ACTIVATION_SUPPORTED = true;
 
 const QUICK_STEPS = [0, 25, 50, 75, 100];
 
