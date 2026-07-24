@@ -16,6 +16,8 @@
  * API: GET https://app-oasecloud-prod.azurewebsites.net/User/Inventory (Bearer).
  */
 
+import type { AdapterTimers } from "../transport";
+
 /** Minimal logging interface (satisfied by adapter.log). */
 export interface CloudLogger {
     /** Log a debug message. */
@@ -46,6 +48,8 @@ export interface CloudClientOptions {
     fetchImpl?: typeof fetch;
     /** Logger (usually adapter.log). */
     log: CloudLogger;
+    /** Adapter-managed timers (auto-cancelled on unload — see {@link AdapterTimers}). */
+    timers: AdapterTimers;
     /** Called with a rotated refresh token so the caller can persist it. */
     onRefreshToken?: (refreshToken: string) => void;
 }
@@ -122,6 +126,7 @@ export class CloudClient {
     private readonly timeoutMs: number;
     private readonly fetchImpl: typeof fetch;
     private readonly log: CloudLogger;
+    private readonly timers: AdapterTimers;
     private readonly onRefreshToken?: (refreshToken: string) => void;
 
     private refreshToken: string;
@@ -140,6 +145,7 @@ export class CloudClient {
         this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
         this.log = options.log;
+        this.timers = options.timers;
         this.onRefreshToken = options.onRefreshToken;
     }
 
@@ -331,7 +337,7 @@ export class CloudClient {
         const method = init.method ?? "GET";
         const logUrl = url.split("?")[0];
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+        const timer = this.timers.setTimeout(() => controller.abort(), this.timeoutMs);
         const startedAt = Date.now();
         try {
             const response = await this.fetchImpl(url, { ...init, signal: controller.signal });
@@ -352,7 +358,7 @@ export class CloudClient {
                 `Request to ${logUrl} failed: ${error instanceof Error ? error.message : String(error)}`,
             );
         } finally {
-            clearTimeout(timer);
+            this.timers.clearTimeout(timer);
         }
     }
 

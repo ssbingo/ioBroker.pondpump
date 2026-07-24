@@ -208,6 +208,12 @@ class Pondpump extends utils.Adapter {
                 warn: m => this.log.warn(m),
                 error: m => this.log.error(m),
             },
+            timers: {
+                setTimeout: (cb, ms) => this.setTimeout(cb, ms),
+                clearTimeout: handle => this.clearTimeout(handle),
+                setInterval: (cb, ms) => this.setInterval(cb, ms),
+                clearInterval: handle => this.clearInterval(handle),
+            },
             onRefreshToken: token => {
                 // Persist the rotated token so restarts keep working (states DB, local).
                 this.log.debug(`[cloud/auth] persisting rotated refresh token to ${REFRESH_TOKEN_STATE}`);
@@ -389,6 +395,12 @@ class Pondpump extends utils.Adapter {
                 info: m => this.log.info(m),
                 warn: m => this.log.warn(m),
                 error: m => this.log.error(m),
+            },
+            timers: {
+                setTimeout: (cb, ms) => this.setTimeout(cb, ms),
+                clearTimeout: handle => this.clearTimeout(handle),
+                setInterval: (cb, ms) => this.setInterval(cb, ms),
+                clearInterval: handle => this.clearInterval(handle),
             },
             onConnectionChange: up => {
                 void this.setConnected(up);

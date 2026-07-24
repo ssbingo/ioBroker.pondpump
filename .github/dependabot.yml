@@ -4,21 +4,29 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
-      day: 21
       time: "00:05"
       timezone: Europe/Berlin
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 15
     assignees:
       - ssbingo
     versioning-strategy: increase
+    # Reduce supply-chain risk: wait a few days before proposing a freshly published version
+    cooldown:
+      default-days: 7
+    ignore:
+      # Node type definitions must track the supported runtime (Node 22); never bump the major
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: monthly
-      day: 21
       time: "00:05"
       timezone: Europe/Berlin
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 15
     assignees:
       - ssbingo
+    cooldown:
+      default-days: 7

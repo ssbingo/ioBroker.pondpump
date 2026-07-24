@@ -24,5 +24,6 @@
     "Advanced — OAuth client id of the OASE app": "Додатково — OAuth client id застосунку OASE",
     "Cloud scope": "Область (scope) хмари",
     "Advanced — OAuth scope requested for the access token": "Додатково — OAuth scope для access-токена",
-    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Один раз отримайте refresh-токен зі входу в застосунок OASE (grant_type=refresh_token) і вставте його сюди. Пароль вашого облікового запису не потрібен і не зберігається."
+    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Один раз отримайте refresh-токен зі входу в застосунок OASE (grant_type=refresh_token) і вставте його сюди. Пароль вашого облікового запису не потрібен і не зберігається.",
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Виберіть один транспорт: хмара або локальний. Вони взаємовиключні."
 }

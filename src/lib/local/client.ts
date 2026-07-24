@@ -15,7 +15,7 @@ import * as dgram from "node:dgram";
 import * as tls from "node:tls";
 
 import { parseFrameHeader } from "../cloud/onet";
-import type { OnetTransport, TransportLogger } from "../transport";
+import type { AdapterTimers, OnetTransport, TransportLogger } from "../transport";
 import type { TlsCredentials } from "./cert";
 import {
     buildAlive,
@@ -50,6 +50,8 @@ export interface LocalClientOptions {
     credentials: TlsCredentials;
     /** Logger (usually adapter.log). */
     log: TransportLogger;
+    /** Adapter-managed timers (auto-cancelled on unload — see {@link AdapterTimers}). */
+    timers: AdapterTimers;
     /** Controller UDP port for the wake packet (default 5959). */
     udpPort?: number;
     /** Per-request timeout in milliseconds (default 8000). */
@@ -70,7 +72,7 @@ interface Pending {
     packetType: number;
     resolve: (reply: OnetFrame) => void;
     reject: (err: Error) => void;
-    timer: NodeJS.Timeout;
+    timer: ioBroker.Timeout | undefined;
 }
 
 /** {@link LocalClientOptions} with all optional tuning fields resolved to concrete values. */
@@ -89,12 +91,13 @@ interface ResolvedOptions extends LocalClientOptions {
 export class LocalClient implements OnetTransport {
     private readonly opts: ResolvedOptions;
     private readonly log: TransportLogger;
+    private readonly timers: AdapterTimers;
     private server?: tls.Server;
     private socket?: tls.TLSSocket;
     private readonly reader = new FrameReader();
     private readonly pending = new Map<number, Pending>();
-    private aliveTimer?: NodeJS.Timeout;
-    private reconnectTimer?: NodeJS.Timeout;
+    private aliveTimer?: ioBroker.Interval;
+    private reconnectTimer?: ioBroker.Timeout;
     private authed = false;
     private stopping = false;
     private txn = 0;
@@ -108,6 +111,7 @@ export class LocalClient implements OnetTransport {
      */
     public constructor(options: LocalClientOptions) {
         this.log = options.log;
+        this.timers = options.timers;
         this.opts = {
             ...options,
             udpPort: options.udpPort ?? DEFAULT_UDP_PORT,
@@ -238,7 +242,9 @@ export class LocalClient implements OnetTransport {
                 settled = true;
                 resolve();
             };
-            const timer = setTimeout(() => {
+            // Adapter-managed timer: auto-cancelled on unload. On success the guard (settled) makes
+            // this a no-op, so it does not need to be cleared explicitly here.
+            this.timers.setTimeout(() => {
                 if (settled) {
                     return;
                 }
@@ -252,9 +258,6 @@ export class LocalClient implements OnetTransport {
                     ),
                 );
             }, this.opts.connectTimeoutMs);
-            if (typeof timer.unref === "function") {
-                timer.unref();
-            }
             this.onAuth(handleAuth);
             this.sendWake();
         });
@@ -363,16 +366,13 @@ export class LocalClient implements OnetTransport {
     private async authenticate(): Promise<void> {
         const txn = this.nextTxn();
         this.log.debug("[local/auth] sending PASSWORD_CHECK (64-byte password block)");
-        const nudge = setInterval(() => {
+        const nudge = this.timers.setInterval(() => {
             if (this.authed || !this.socket || this.socket.destroyed) {
                 return;
             }
             this.log.debug("[local/auth] nudging controller with ALIVE to flush the password reply");
             this.socket.write(buildAlive(this.nextTxn()));
         }, 600);
-        if (typeof nudge.unref === "function") {
-            nudge.unref();
-        }
         try {
             const reply = await this.sendFrameAwait(buildPasswordCheck(this.opts.password, txn), txn, 0x9f00);
             const ok = reply.payload.length >= 1 && reply.payload[0] === 0x01;
@@ -393,7 +393,7 @@ export class LocalClient implements OnetTransport {
             this.log.error(`[local/auth] password check failed: ${err instanceof Error ? err.message : String(err)}`);
             this.socket?.destroy();
         } finally {
-            clearInterval(nudge);
+            this.timers.clearInterval(nudge);
         }
     }
 
@@ -429,7 +429,7 @@ export class LocalClient implements OnetTransport {
         }
 
         if (pending) {
-            clearTimeout(pending.timer);
+            this.timers.clearTimeout(pending.timer);
             this.pending.delete(pending.txn);
             pending.resolve(frame);
             return;
@@ -461,11 +461,11 @@ export class LocalClient implements OnetTransport {
             // A reused in-flight txn: fail the older one first.
             const stale = this.pending.get(txn);
             if (stale) {
-                clearTimeout(stale.timer);
+                this.timers.clearTimeout(stale.timer);
                 this.pending.delete(txn);
                 stale.reject(new Error("superseded by a new request with the same transaction number"));
             }
-            const timer = setTimeout(() => {
+            const timer = this.timers.setTimeout(() => {
                 this.pending.delete(txn);
                 reject(
                     new Error(`no reply within ${this.opts.requestTimeoutMs} ms (type 0x${packetType.toString(16)})`),
@@ -476,7 +476,7 @@ export class LocalClient implements OnetTransport {
                 if (err) {
                     const p = this.pending.get(txn);
                     if (p) {
-                        clearTimeout(p.timer);
+                        this.timers.clearTimeout(p.timer);
                         this.pending.delete(txn);
                     }
                     reject(err);
@@ -507,7 +507,7 @@ export class LocalClient implements OnetTransport {
     /** Start the periodic ALIVE keep-alive. */
     private startAlive(): void {
         this.stopAlive();
-        this.aliveTimer = setInterval(() => {
+        this.aliveTimer = this.timers.setInterval(() => {
             if (!this.isReady) {
                 return;
             }
@@ -516,14 +516,11 @@ export class LocalClient implements OnetTransport {
                 this.log.warn(`[local/alive] keep-alive failed: ${err instanceof Error ? err.message : String(err)}`);
             });
         }, this.opts.aliveIntervalMs);
-        if (typeof this.aliveTimer.unref === "function") {
-            this.aliveTimer.unref();
-        }
     }
 
     private stopAlive(): void {
         if (this.aliveTimer) {
-            clearInterval(this.aliveTimer);
+            this.timers.clearInterval(this.aliveTimer);
             this.aliveTimer = undefined;
         }
     }
@@ -546,20 +543,17 @@ export class LocalClient implements OnetTransport {
             return;
         }
         this.log.warn(`[local/tls] controller ${peer} disconnected — re-waking in 5 s`);
-        this.reconnectTimer = setTimeout(() => {
+        this.reconnectTimer = this.timers.setTimeout(() => {
             this.reconnectTimer = undefined;
             if (!this.stopping) {
                 this.sendWake();
             }
         }, 5000);
-        if (typeof this.reconnectTimer.unref === "function") {
-            this.reconnectTimer.unref();
-        }
     }
 
     private failAllPending(reason: string): void {
         for (const p of this.pending.values()) {
-            clearTimeout(p.timer);
+            this.timers.clearTimeout(p.timer);
             p.reject(new Error(reason));
         }
         this.pending.clear();
@@ -570,7 +564,7 @@ export class LocalClient implements OnetTransport {
         this.stopping = true;
         this.stopAlive();
         if (this.reconnectTimer) {
-            clearTimeout(this.reconnectTimer);
+            this.timers.clearTimeout(this.reconnectTimer);
             this.reconnectTimer = undefined;
         }
         this.failAllPending("adapter shutting down");

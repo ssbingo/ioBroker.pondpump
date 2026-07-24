@@ -19,6 +19,22 @@ export interface TransportLogger {
     error(message: string): void;
 }
 
+/**
+ * Adapter-managed timer facility. Wraps `adapter.setTimeout/setInterval/clearTimeout/clearInterval`
+ * so transport clients never use the bare global timers: the adapter tracks these handles and
+ * cancels them automatically on `unload`, which keeps compact mode safe (no leaked timers).
+ */
+export interface AdapterTimers {
+    /** Schedule a one-shot timer (auto-cancelled on adapter unload). */
+    setTimeout(cb: () => void, ms: number): ioBroker.Timeout | undefined;
+    /** Cancel a one-shot timer created via {@link setTimeout}. */
+    clearTimeout(handle: ioBroker.Timeout | undefined): void;
+    /** Schedule a repeating timer (auto-cancelled on adapter unload). */
+    setInterval(cb: () => void, ms: number): ioBroker.Interval | undefined;
+    /** Cancel a repeating timer created via {@link setInterval}. */
+    clearInterval(handle: ioBroker.Interval | undefined): void;
+}
+
 /** A channel that can exchange raw ONet packets with the controller. */
 export interface OnetTransport {
     /**

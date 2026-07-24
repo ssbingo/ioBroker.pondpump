@@ -1,0 +1,40 @@
+{
+    "name": "iobroker.pondpump-widgets",
+    "private": true,
+    "version": "0.0.4",
+    "type": "module",
+    "dependencies": {
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.1",
+        "@iobroker/adapter-react-v5": "^8.2.13",
+        "@iobroker/types-vis-2": "^2.14.4",
+        "@mui/material": "^6.5.0",
+        "@module-federation/vite": "^1.16.12",
+        "@vitejs/plugin-react": "^5.2.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "typescript": "^5.9.3",
+        "vite": "7.3.6",
+        "vite-plugin-commonjs": "^0.10.4",
+        "vite-plugin-svgr": "^5.2.0",
+        "vite-tsconfig-paths": "^6.1.1"
+    },
+    "scripts": {
+        "start": "vite --port 4173",
+        "build": "tsc && vite build",
+        "preview": "vite preview",
+        "lint": "eslint -c eslint.config.mjs",
+        "i18n": "node node_modules/@iobroker/vis-2-widgets-react-dev/searchI18n pondpump",
+        "update-browsers": "npx browserslist@latest --update-db"
+    },
+    "eslintConfig": {
+        "extends": "react-app"
+    },
+    "homepage": ".",
+    "browserslist": [
+        ">0.2%",
+        "not dead",
+        "not ie <= 11",
+        "not op_mini all"
+    ]
+}

@@ -24,5 +24,6 @@
     "Advanced — OAuth client id of the OASE app": "Erweitert — OAuth-Client-ID der OASE-App",
     "Cloud scope": "Cloud-Scope",
     "Advanced — OAuth scope requested for the access token": "Erweitert — OAuth-Scope für das Access-Token",
-    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Erfasse einmalig einen Refresh-Token aus einem OASE-App-Login (grant_type=refresh_token) und füge ihn hier ein. Dein Konto-Passwort wird nicht benötigt und nicht gespeichert."
+    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Erfasse einmalig einen Refresh-Token aus einem OASE-App-Login (grant_type=refresh_token) und füge ihn hier ein. Dein Konto-Passwort wird nicht benötigt und nicht gespeichert.",
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Wählen Sie einen Übertragungsweg: Cloud oder lokal. Beide schließen sich gegenseitig aus."
 }

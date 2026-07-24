@@ -24,5 +24,6 @@
     "Advanced — OAuth client id of the OASE app": "高级 — OASE 应用的 OAuth 客户端 ID",
     "Cloud scope": "云作用域（scope）",
     "Advanced — OAuth scope requested for the access token": "高级 — 为访问令牌请求的 OAuth 作用域",
-    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "从一次 OASE 应用登录中获取刷新令牌（grant_type=refresh_token）并粘贴到此处。不需要您的账户密码，且绝不会被存储。"
+    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "从一次 OASE 应用登录中获取刷新令牌（grant_type=refresh_token）并粘贴到此处。不需要您的账户密码，且绝不会被存储。",
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "选择一种传输方式：云端或本地。两者互斥。"
 }

@@ -24,5 +24,6 @@
     "Advanced — OAuth client id of the OASE app": "Avancé — client id OAuth de l'app OASE",
     "Cloud scope": "Portée (scope) cloud",
     "Advanced — OAuth scope requested for the access token": "Avancé — portée OAuth demandée pour le jeton d'accès",
-    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Capturez une fois un jeton d'actualisation depuis une connexion à l'app OASE (grant_type=refresh_token) et collez-le ici. Le mot de passe de votre compte n'est pas nécessaire et n'est jamais stocké."
+    "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Capturez une fois un jeton d'actualisation depuis une connexion à l'app OASE (grant_type=refresh_token) et collez-le ici. Le mot de passe de votre compte n'est pas nécessaire et n'est jamais stocké.",
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Choisissez un transport : cloud ou local. Les deux sont mutuellement exclusifs."
 }

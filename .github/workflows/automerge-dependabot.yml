@@ -1,0 +1,27 @@
+# Automatically merge Dependabot PRs when the update matches the rules configured
+# in .github/auto-merge.yml (production patches, production security-minor, dev-minor).
+
+name: Auto-Merge Dependabot PRs
+
+on:
+  # WARNING: runs in the PR base context — DO NOT build/execute untrusted PR code here.
+  # https://github.blog/changelog/2021-02-19-github-actions-workflows-triggered-by-dependabot-prs-will-run-with-read-only-permissions/
+  pull_request_target:
+
+# Least-privilege token scopes needed to approve and merge the PR
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check and auto-merge Dependabot PR
+        uses: iobroker-bot-orga/action-automerge-dependabot@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          config-file-path: ".github/auto-merge.yml"
+          merge-method: "squash"
+          wait-for-checks: "true"

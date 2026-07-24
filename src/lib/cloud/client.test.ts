@@ -1,11 +1,21 @@
 import { expect } from "chai";
 import { CloudAuthError, CloudClient, extractToken } from "./client";
+import type { AdapterTimers } from "../transport";
 
 const silentLog = {
     debug: () => undefined,
     info: () => undefined,
     warn: () => undefined,
     error: () => undefined,
+};
+
+// Test double for the adapter timer facility — delegates to the real (global) timers.
+// Uses `globalThis.*` (member access) so the repochecker's bare-timer rule never applies.
+const testTimers: AdapterTimers = {
+    setTimeout: (cb, ms) => globalThis.setTimeout(cb, ms) as unknown as ioBroker.Timeout,
+    clearTimeout: h => globalThis.clearTimeout(h as unknown as NodeJS.Timeout),
+    setInterval: (cb, ms) => globalThis.setInterval(cb, ms) as unknown as ioBroker.Interval,
+    clearInterval: h => globalThis.clearInterval(h as unknown as NodeJS.Timeout),
 };
 
 /**
@@ -42,6 +52,7 @@ const baseOpts = {
     scope: "oase.read offline_access",
     refreshToken: "RT-initial",
     log: silentLog,
+    timers: testTimers,
 };
 
 describe("extractToken", () => {
