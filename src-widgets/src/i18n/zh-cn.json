@@ -26,5 +26,6 @@
     "sfc_sub": "随温度变化的季节性流量（最多 −50%）",
     "sfc_activate": "激活",
     "sfc_deactivate": "停用",
-    "sfc_pending": "尚不可用——设备命令仍在分析中。"
+    "sfc_pending": "尚不可用——设备命令仍在分析中。",
+    "show_dropdown": "显示 5% 下拉框"
 }

@@ -26,5 +26,6 @@
     "sfc_sub": "Temperature-dependent seasonal flow (up to −50%)",
     "sfc_activate": "Activate",
     "sfc_deactivate": "Deactivate",
-    "sfc_pending": "Not available yet — the device command is still being analysed."
+    "sfc_pending": "Not available yet — the device command is still being analysed.",
+    "show_dropdown": "Show 5 % dropdown"
 }

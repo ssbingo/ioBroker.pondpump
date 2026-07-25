@@ -13,11 +13,13 @@ const REL_IDS = ["control.on", "control.speed", "control.sfc", "telemetry.speed"
 const SFC_ACTIVATION_SUPPORTED = true;
 
 const QUICK_STEPS = [0, 25, 50, 75, 100];
+const STEP_OPTIONS = Array.from({ length: 21 }, (_, i) => i * 5); // 0,5,…,100 for the dropdown
 
 interface PumpControlRxData extends PumpBaseRxData {
     accent: string;
     showOnoff: boolean;
     quickButtons: boolean;
+    showDropdown: boolean;
     showSfc: boolean;
     noCard: boolean;
 }
@@ -66,6 +68,7 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
                         { name: "accent", type: "color", label: "accent", default: "#38aaff" },
                         { name: "showOnoff", type: "checkbox", label: "show_onoff", default: true },
                         { name: "quickButtons", type: "checkbox", label: "quick_buttons", default: true },
+                        { name: "showDropdown", type: "checkbox", label: "show_dropdown", default: true },
                         { name: "showSfc", type: "checkbox", label: "show_sfc", default: true },
                         { name: "noCard", type: "checkbox", label: "no_card", default: false },
                     ],
@@ -177,6 +180,7 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
         const noCard = this.state.rxData.noCard === true;
         const showOnoff = this.state.rxData.showOnoff !== false;
         const quickButtons = this.state.rxData.quickButtons !== false;
+        const showDropdown = this.state.rxData.showDropdown !== false;
         const showSfc = this.state.rxData.showSfc !== false;
         const styleVars = { ["--pp-accent"]: accent } as React.CSSProperties;
 
@@ -201,6 +205,7 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
         // While SFC is active the device overrides manual power, so show the real output on a
         // disabled slider instead of the (now-inactive) setpoint.
         const sliderVal = sfcShown ? Math.round(this.actualSpeedPct()) : speed;
+        const selectVal = Math.min(100, Math.max(0, Math.round(sliderVal / 5) * 5));
 
         return (
             <div
@@ -239,20 +244,40 @@ export default class PumpControl extends PumpWidgetBase<PumpControlRxData, PumpC
                         {Math.round(sliderVal)} %{sfcShown ? ` · ${t("state_sfc")}` : ""}
                     </span>
                 </div>
-                <input
-                    className="pp-slider"
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={sliderVal}
-                    disabled={sfcShown}
-                    onChange={this.onSliderInput}
-                    onMouseUp={this.commitSlider}
-                    onTouchEnd={this.commitSlider}
-                    onKeyUp={this.commitSlider}
-                    onBlur={this.commitSlider}
-                />
+                <div className="pp-sliderrow">
+                    <input
+                        className="pp-slider"
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={sliderVal}
+                        disabled={sfcShown}
+                        onChange={this.onSliderInput}
+                        onMouseUp={this.commitSlider}
+                        onTouchEnd={this.commitSlider}
+                        onKeyUp={this.commitSlider}
+                        onBlur={this.commitSlider}
+                    />
+                    {showDropdown ? (
+                        <select
+                            className="pp-select"
+                            value={selectVal}
+                            disabled={sfcShown}
+                            aria-label={t("lbl_power")}
+                            onChange={e => this.onQuick(Number(e.target.value))}
+                        >
+                            {STEP_OPTIONS.map(v => (
+                                <option
+                                    key={v}
+                                    value={v}
+                                >
+                                    {v} %
+                                </option>
+                            ))}
+                        </select>
+                    ) : null}
+                </div>
 
                 {quickButtons ? (
                     <div className="pp-quick">

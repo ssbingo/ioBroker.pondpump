@@ -26,5 +26,6 @@
     "sfc_sub": "Flusso stagionale in base alla temperatura (fino a −50%)",
     "sfc_activate": "Attiva",
     "sfc_deactivate": "Disattiva",
-    "sfc_pending": "Non ancora disponibile — il comando del dispositivo è in fase di analisi."
+    "sfc_pending": "Non ancora disponibile — il comando del dispositivo è in fase di analisi.",
+    "show_dropdown": "Mostra menu a tendina 5 %"
 }

@@ -26,5 +26,6 @@
     "sfc_sub": "Fluxo sazonal dependente da temperatura (até −50%)",
     "sfc_activate": "Ativar",
     "sfc_deactivate": "Desativar",
-    "sfc_pending": "Ainda não disponível — o comando do dispositivo está a ser analisado."
+    "sfc_pending": "Ainda não disponível — o comando do dispositivo está a ser analisado.",
+    "show_dropdown": "Mostrar lista suspensa de 5 %"
 }

@@ -26,5 +26,6 @@
     "sfc_sub": "Temperaturabhängige saisonale Durchflussregelung (bis −50 %)",
     "sfc_activate": "Aktivieren",
     "sfc_deactivate": "Deaktivieren",
-    "sfc_pending": "Noch nicht verfügbar – das Gerätekommando wird noch analysiert."
+    "sfc_pending": "Noch nicht verfügbar – das Gerätekommando wird noch analysiert.",
+    "show_dropdown": "5-%-Dropdown anzeigen"
 }

@@ -26,5 +26,6 @@
     "sfc_sub": "Débit saisonnier selon la température (jusqu’à −50 %)",
     "sfc_activate": "Activer",
     "sfc_deactivate": "Désactiver",
-    "sfc_pending": "Pas encore disponible — la commande de l’appareil est en cours d’analyse."
+    "sfc_pending": "Pas encore disponible — la commande de l’appareil est en cours d’analyse.",
+    "show_dropdown": "Afficher la liste déroulante 5 %"
 }

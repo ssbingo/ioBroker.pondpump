@@ -26,5 +26,6 @@
     "sfc_sub": "Temperatuurafhankelijke seizoensstroom (tot −50%)",
     "sfc_activate": "Activeren",
     "sfc_deactivate": "Deactiveren",
-    "sfc_pending": "Nog niet beschikbaar — het apparaatcommando wordt nog geanalyseerd."
+    "sfc_pending": "Nog niet beschikbaar — het apparaatcommando wordt nog geanalyseerd.",
+    "show_dropdown": "5%-dropdown tonen"
 }

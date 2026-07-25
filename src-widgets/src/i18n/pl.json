@@ -26,5 +26,6 @@
     "sfc_sub": "Sezonowy przepływ zależny od temperatury (do −50%)",
     "sfc_activate": "Aktywuj",
     "sfc_deactivate": "Dezaktywuj",
-    "sfc_pending": "Jeszcze niedostępne — polecenie urządzenia jest analizowane."
+    "sfc_pending": "Jeszcze niedostępne — polecenie urządzenia jest analizowane.",
+    "show_dropdown": "Pokaż listę rozwijaną 5 %"
 }
