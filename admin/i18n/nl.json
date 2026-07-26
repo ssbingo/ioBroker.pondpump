@@ -42,5 +42,7 @@
     "off": "uit",
     "No schedules yet — outside all windows the base power applies.": "Nog geen schema’s — buiten alle vensters geldt het basisvermogen.",
     "Add schedule": "Schema toevoegen",
-    "Schedules must not overlap": "Schema’s mogen elkaar niet overlappen"
+    "Schedules must not overlap": "Schema’s mogen elkaar niet overlappen",
+    "Schedules for %s": "Schema’s voor %s",
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Schakel planning in voor de pompen die volgens een schema moeten draaien. Elke ingeschakelde pomp krijgt hierboven een eigen tabblad om de schema’s te configureren."
 }

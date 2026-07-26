@@ -42,5 +42,7 @@
     "off": "apagado",
     "No schedules yet — outside all windows the base power applies.": "Aún no hay horarios — fuera de todas las ventanas se aplica la potencia base.",
     "Add schedule": "Añadir horario",
-    "Schedules must not overlap": "Los horarios no deben superponerse"
+    "Schedules must not overlap": "Los horarios no deben superponerse",
+    "Schedules for %s": "Horarios para %s",
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Active la programación para las bombas que quiera hacer funcionar según un horario. Cada bomba activada obtiene su propia pestaña arriba para configurar sus horarios."
 }

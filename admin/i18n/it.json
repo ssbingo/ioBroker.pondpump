@@ -42,5 +42,7 @@
     "off": "spento",
     "No schedules yet — outside all windows the base power applies.": "Nessuna pianificazione ancora — fuori da tutte le finestre si applica la potenza di base.",
     "Add schedule": "Aggiungi pianificazione",
-    "Schedules must not overlap": "Le pianificazioni non devono sovrapporsi"
+    "Schedules must not overlap": "Le pianificazioni non devono sovrapporsi",
+    "Schedules for %s": "Pianificazioni per %s",
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Abilita la pianificazione per le pompe che vuoi far funzionare a orario. Ogni pompa abilitata ottiene la propria scheda sopra per configurare le sue pianificazioni."
 }

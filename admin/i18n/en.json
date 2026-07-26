@@ -42,5 +42,7 @@
     "off": "off",
     "No schedules yet — outside all windows the base power applies.": "No schedules yet — outside all windows the base power applies.",
     "Add schedule": "Add schedule",
-    "Schedules must not overlap": "Schedules must not overlap"
+    "Schedules must not overlap": "Schedules must not overlap",
+    "Schedules for %s": "Schedules for %s",
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules."
 }

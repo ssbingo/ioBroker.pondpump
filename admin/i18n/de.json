@@ -42,5 +42,7 @@
     "off": "aus",
     "No schedules yet — outside all windows the base power applies.": "Noch keine Zeitpläne — außerhalb aller Fenster gilt die Grund-Power.",
     "Add schedule": "Zeitplan hinzufügen",
-    "Schedules must not overlap": "Zeitpläne dürfen sich nicht überschneiden"
+    "Schedules must not overlap": "Zeitpläne dürfen sich nicht überschneiden",
+    "Schedules for %s": "Zeitpläne für %s",
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Aktivieren Sie die Zeitplanung für die Pumpen, die nach Zeitplan laufen sollen. Jede aktivierte Pumpe erhält oben einen eigenen Tab zur Konfiguration ihrer Zeitpläne."
 }

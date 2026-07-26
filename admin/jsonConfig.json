@@ -1,198 +1,429 @@
 {
     "i18n": true,
-    "type": "panel",
+    "type": "tabs",
     "items": {
-        "_headerConnection": {
-            "type": "header",
-            "text": "Connection",
-            "size": 2
-        },
-        "connectionMode": {
-            "type": "select",
-            "label": "Connection mode",
-            "help": "Choose one transport: cloud or local. The two are mutually exclusive.",
-            "options": [
-                {
-                    "label": "Cloud",
-                    "value": "cloud"
+        "connection": {
+            "type": "panel",
+            "label": "Connection",
+            "items": {
+                "connectionMode": {
+                    "type": "select",
+                    "label": "Connection mode",
+                    "help": "Choose one transport: cloud or local. The two are mutually exclusive.",
+                    "options": [
+                        {
+                            "label": "Cloud",
+                            "value": "cloud"
+                        },
+                        {
+                            "label": "Local",
+                            "value": "local"
+                        }
+                    ],
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4
                 },
-                {
-                    "label": "Local",
-                    "value": "local"
+                "pollInterval": {
+                    "type": "number",
+                    "label": "Poll interval (seconds)",
+                    "help": "How often the adapter polls data from the controller",
+                    "min": 5,
+                    "max": 3600,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4
+                },
+                "_headerCloud": {
+                    "type": "header",
+                    "text": "Cloud account",
+                    "size": 2,
+                    "hidden": "data.connectionMode === 'local'"
+                },
+                "_cloudInfo": {
+                    "type": "staticText",
+                    "text": "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.",
+                    "hidden": "data.connectionMode === 'local'",
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                },
+                "cloudRefreshToken": {
+                    "type": "password",
+                    "repeat": false,
+                    "label": "Cloud refresh token",
+                    "hidden": "data.connectionMode === 'local'",
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 8,
+                    "lg": 8,
+                    "xl": 8
+                },
+                "_cloudAdvanced": {
+                    "type": "header",
+                    "text": "Cloud (advanced)",
+                    "size": 3,
+                    "hidden": "data.connectionMode === 'local'"
+                },
+                "cloudBaseUrl": {
+                    "type": "text",
+                    "label": "Cloud API base URL",
+                    "help": "Advanced — only change if the OASE cloud endpoint moves",
+                    "hidden": "data.connectionMode === 'local'",
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
+                },
+                "cloudTokenUrl": {
+                    "type": "text",
+                    "label": "Cloud token URL",
+                    "help": "Advanced — Azure AD B2C token endpoint",
+                    "hidden": "data.connectionMode === 'local'",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
+                },
+                "cloudClientId": {
+                    "type": "text",
+                    "label": "Cloud client ID",
+                    "help": "Advanced — OAuth client id of the OASE app",
+                    "hidden": "data.connectionMode === 'local'",
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
+                },
+                "cloudScope": {
+                    "type": "text",
+                    "label": "Cloud scope",
+                    "help": "Advanced — OAuth scope requested for the access token",
+                    "hidden": "data.connectionMode === 'local'",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "xl": 6
+                },
+                "_headerLocal": {
+                    "type": "header",
+                    "text": "Local connection",
+                    "size": 2,
+                    "hidden": "data.connectionMode === 'cloud'"
+                },
+                "ip": {
+                    "type": "text",
+                    "label": "Controller IP address",
+                    "help": "IP address of the OASE Garden Controller Cloud gateway",
+                    "hidden": "data.connectionMode === 'cloud'",
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4
+                },
+                "devicePassword": {
+                    "type": "password",
+                    "repeat": false,
+                    "label": "Device password",
+                    "hidden": "data.connectionMode === 'cloud'",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4
+                },
+                "bind": {
+                    "type": "ip",
+                    "label": "Local server bind address",
+                    "listenOnAllPorts": true,
+                    "onlyIp4": true,
+                    "hidden": "data.connectionMode === 'cloud'",
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4
+                },
+                "port": {
+                    "type": "port",
+                    "label": "Local server port",
+                    "min": 1,
+                    "max": 65535,
+                    "hidden": "data.connectionMode === 'cloud'",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 4,
+                    "xl": 4
                 }
-            ],
-            "newLine": true,
-            "xs": 12,
-            "sm": 12,
-            "md": 6,
-            "lg": 4,
-            "xl": 4
+            }
         },
-        "pollInterval": {
-            "type": "number",
-            "label": "Poll interval (seconds)",
-            "help": "How often the adapter polls data from the controller",
-            "min": 5,
-            "max": 3600,
-            "xs": 12,
-            "sm": 12,
-            "md": 6,
-            "lg": 4,
-            "xl": 4
+        "schedules": {
+            "type": "panel",
+            "label": "Schedules",
+            "items": {
+                "_pumpList": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         },
-        "_headerCloud": {
-            "type": "header",
-            "text": "Cloud account",
-            "size": 2,
-            "hidden": "data.connectionMode === 'local'"
+        "pump0": {
+            "type": "panel",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[0];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[0])",
+            "items": {
+                "_pump0": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "custom": {
+                        "pumpSlot": 0
+                    },
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         },
-        "_cloudInfo": {
-            "type": "staticText",
-            "text": "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.",
-            "hidden": "data.connectionMode === 'local'",
-            "newLine": true,
-            "xs": 12,
-            "sm": 12,
-            "md": 12,
-            "lg": 12,
-            "xl": 12
+        "pump1": {
+            "type": "panel",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[1];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[1])",
+            "items": {
+                "_pump1": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "custom": {
+                        "pumpSlot": 1
+                    },
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         },
-        "cloudRefreshToken": {
-            "type": "password",
-            "repeat": false,
-            "label": "Cloud refresh token",
-            "hidden": "data.connectionMode === 'local'",
-            "newLine": true,
-            "xs": 12,
-            "sm": 12,
-            "md": 8,
-            "lg": 8,
-            "xl": 8
+        "pump2": {
+            "type": "panel",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[2];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[2])",
+            "items": {
+                "_pump2": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "custom": {
+                        "pumpSlot": 2
+                    },
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         },
-        "_cloudAdvanced": {
-            "type": "header",
-            "text": "Cloud (advanced)",
-            "size": 3,
-            "hidden": "data.connectionMode === 'local'"
+        "pump3": {
+            "type": "panel",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[3];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[3])",
+            "items": {
+                "_pump3": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "custom": {
+                        "pumpSlot": 3
+                    },
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         },
-        "cloudBaseUrl": {
-            "type": "text",
-            "label": "Cloud API base URL",
-            "help": "Advanced — only change if the OASE cloud endpoint moves",
-            "hidden": "data.connectionMode === 'local'",
-            "newLine": true,
-            "xs": 12,
-            "sm": 12,
-            "md": 6,
-            "lg": 6,
-            "xl": 6
+        "pump4": {
+            "type": "panel",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[4];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[4])",
+            "items": {
+                "_pump4": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "custom": {
+                        "pumpSlot": 4
+                    },
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         },
-        "cloudTokenUrl": {
-            "type": "text",
-            "label": "Cloud token URL",
-            "help": "Advanced — Azure AD B2C token endpoint",
-            "hidden": "data.connectionMode === 'local'",
-            "xs": 12,
-            "sm": 12,
-            "md": 6,
-            "lg": 6,
-            "xl": 6
+        "pump5": {
+            "type": "panel",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[5];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[5])",
+            "items": {
+                "_pump5": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "custom": {
+                        "pumpSlot": 5
+                    },
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         },
-        "cloudClientId": {
-            "type": "text",
-            "label": "Cloud client ID",
-            "help": "Advanced — OAuth client id of the OASE app",
-            "hidden": "data.connectionMode === 'local'",
-            "newLine": true,
-            "xs": 12,
-            "sm": 12,
-            "md": 6,
-            "lg": 6,
-            "xl": 6
+        "pump6": {
+            "type": "panel",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[6];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[6])",
+            "items": {
+                "_pump6": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "custom": {
+                        "pumpSlot": 6
+                    },
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         },
-        "cloudScope": {
-            "type": "text",
-            "label": "Cloud scope",
-            "help": "Advanced — OAuth scope requested for the access token",
-            "hidden": "data.connectionMode === 'local'",
-            "xs": 12,
-            "sm": 12,
-            "md": 6,
-            "lg": 6,
-            "xl": 6
+        "pump7": {
+            "type": "panel",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[7];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[7])",
+            "items": {
+                "_pump7": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "custom": {
+                        "pumpSlot": 7
+                    },
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         },
-        "_headerLocal": {
-            "type": "header",
-            "text": "Local connection",
-            "size": 2,
-            "hidden": "data.connectionMode === 'cloud'"
+        "pump8": {
+            "type": "panel",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[8];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[8])",
+            "items": {
+                "_pump8": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "custom": {
+                        "pumpSlot": 8
+                    },
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         },
-        "ip": {
-            "type": "text",
-            "label": "Controller IP address",
-            "help": "IP address of the OASE Garden Controller Cloud gateway",
-            "hidden": "data.connectionMode === 'cloud'",
-            "newLine": true,
-            "xs": 12,
-            "sm": 12,
-            "md": 6,
-            "lg": 4,
-            "xl": 4
-        },
-        "devicePassword": {
-            "type": "password",
-            "repeat": false,
-            "label": "Device password",
-            "hidden": "data.connectionMode === 'cloud'",
-            "xs": 12,
-            "sm": 12,
-            "md": 6,
-            "lg": 4,
-            "xl": 4
-        },
-        "bind": {
-            "type": "ip",
-            "label": "Local server bind address",
-            "listenOnAllPorts": true,
-            "onlyIp4": true,
-            "hidden": "data.connectionMode === 'cloud'",
-            "newLine": true,
-            "xs": 12,
-            "sm": 12,
-            "md": 6,
-            "lg": 4,
-            "xl": 4
-        },
-        "port": {
-            "type": "port",
-            "label": "Local server port",
-            "min": 1,
-            "max": 65535,
-            "hidden": "data.connectionMode === 'cloud'",
-            "xs": 12,
-            "sm": 12,
-            "md": 6,
-            "lg": 4,
-            "xl": 4
-        },
-        "_headerSchedules": {
-            "type": "header",
-            "text": "Schedules",
-            "size": 2,
-            "newLine": true
-        },
-        "_scheduler": {
-            "type": "custom",
-            "url": "custom/customComponents.js",
-            "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-            "bundlerType": "module",
-            "i18n": true,
-            "newLine": true,
-            "xs": 12,
-            "sm": 12,
-            "md": 12,
-            "lg": 12,
-            "xl": 12
+        "pump9": {
+            "type": "panel",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[9];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[9])",
+            "items": {
+                "_pump9": {
+                    "type": "custom",
+                    "url": "custom/customComponents.js",
+                    "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+                    "bundlerType": "module",
+                    "i18n": true,
+                    "custom": {
+                        "pumpSlot": 9
+                    },
+                    "newLine": true,
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "xl": 12
+                }
+            }
         }
     }
 }

@@ -42,5 +42,7 @@
     "off": "выкл",
     "No schedules yet — outside all windows the base power applies.": "Расписаний пока нет — вне всех окон применяется базовая мощность.",
     "Add schedule": "Добавить расписание",
-    "Schedules must not overlap": "Расписания не должны перекрываться"
+    "Schedules must not overlap": "Расписания не должны перекрываться",
+    "Schedules for %s": "Расписания для %s",
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Включите планирование для насосов, которые должны работать по расписанию. Каждый включённый насос получает собственную вкладку выше для настройки его расписаний."
 }

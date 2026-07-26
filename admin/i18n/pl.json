@@ -42,5 +42,7 @@
     "off": "wył.",
     "No schedules yet — outside all windows the base power applies.": "Brak harmonogramów — poza wszystkimi oknami obowiązuje moc bazowa.",
     "Add schedule": "Dodaj harmonogram",
-    "Schedules must not overlap": "Harmonogramy nie mogą się nakładać"
+    "Schedules must not overlap": "Harmonogramy nie mogą się nakładać",
+    "Schedules for %s": "Harmonogramy dla %s",
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Włącz harmonogramowanie dla pomp, które mają działać według harmonogramu. Każda włączona pompa otrzymuje własną kartę powyżej do konfiguracji swoich harmonogramów."
 }

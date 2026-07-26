@@ -42,5 +42,7 @@
     "off": "вимк",
     "No schedules yet — outside all windows the base power applies.": "Розкладів поки немає — поза всіма вікнами застосовується базова потужність.",
     "Add schedule": "Додати розклад",
-    "Schedules must not overlap": "Розклади не повинні перекриватися"
+    "Schedules must not overlap": "Розклади не повинні перекриватися",
+    "Schedules for %s": "Розклади для %s",
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Увімкніть планування для насосів, які мають працювати за розкладом. Кожен увімкнений насос отримує власну вкладку вище для налаштування його розкладів."
 }

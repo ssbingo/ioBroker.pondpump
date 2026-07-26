@@ -42,5 +42,7 @@
     "off": "关",
     "No schedules yet — outside all windows the base power applies.": "暂无计划 — 在所有时间窗口之外应用基础功率。",
     "Add schedule": "添加计划",
-    "Schedules must not overlap": "计划不得重叠"
+    "Schedules must not overlap": "计划不得重叠",
+    "Schedules for %s": "%s 的计划",
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "为需要按时间表运行的水泵启用计划。每台启用的水泵会在上方获得自己的选项卡以配置其计划。"
 }

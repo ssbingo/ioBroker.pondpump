@@ -1,5 +1,5 @@
 /*
- * Per-pump scheduling core (Phase 9) — FRONTEND COPY of src/lib/schedule.ts (keep in sync).
+ * Per-pump scheduling core (Phase 9).
  *
  * Pure, side-effect-free logic shared by the backend scheduler (main.ts) and the admin scheduler
  * component. A pump has an ordered set of non-overlapping daily time windows; each window sets either
@@ -34,6 +34,11 @@ export interface PumpScheduleConfig {
     basePower: number;
     /** The (non-overlapping) time windows, in any order. */
     plans: PumpSchedule[];
+    /**
+     * Display name of the pump, cached from the object tree so the admin can label the pump's tab
+     * without re-reading objects. Pure UI metadata — the backend scheduler ignores it.
+     */
+    name?: string;
 }
 
 /** Per-pump scheduling config, keyed by the pump's device number (as a string). */

@@ -10,13 +10,11 @@ import {
     Paper,
     Select,
     Switch,
-    Tab,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableRow,
-    Tabs,
     TextField,
     Typography,
 } from "@mui/material";
@@ -44,28 +42,46 @@ interface PumpEntry {
 interface PondpumpSchedulerState extends ConfigGenericState {
     pumps: PumpEntry[];
     loaded: boolean;
-    /** Currently selected pump id (tab). */
-    tab: string;
 }
 
 const DEFAULT_CFG: PumpScheduleConfig = { enabled: false, basePower: 50, plans: [] };
 const NEW_PLAN: PumpSchedule = { start: "08:00", end: "20:00", mode: "power", power: 60 };
 
 /**
- * Admin custom component (Phase 9): per-pump time schedules. Shows the detected pumps with an
- * enable switch, a tab per enabled pump, and — per pump — a base power plus a sorted, live-validated
- * (non-overlapping) list of time windows that each set a power % or switch SFC. The whole structure
- * is stored in the adapter's `native.schedules`, keyed by pump device number.
+ * Admin custom component (Phase 9): per-pump time schedules.
+ *
+ * The same component serves two roles, selected by `schema.custom.pumpSlot`:
+ *  - **List mode** (no `pumpSlot`): shown on the "Schedules" tab. Lists the detected pumps with an
+ *    enable switch. Enabling a pump reveals its own admin tab (a `hidden`-gated panel in jsonConfig
+ *    whose visibility is derived live from `native.schedules`).
+ *  - **Tab mode** (`pumpSlot` = 0..N): shown on a per-pump tab. Renders that pump's base power plus a
+ *    sorted, live-validated (non-overlapping) list of time windows that each set a power % or switch
+ *    SFC. `pumpSlot` indexes the sorted list of enabled pumps, so tab N always maps to the same pump
+ *    as its `hidden`/`label` expressions in jsonConfig.
+ *
+ * Everything is stored in the adapter's `native.schedules`, keyed by pump device number.
  */
 class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedulerState> {
     constructor(props: ConfigGenericProps) {
         super(props);
-        this.state = { ...this.state, pumps: [], loaded: false, tab: "" };
+        this.state = { ...this.state, pumps: [], loaded: false };
     }
 
     async componentDidMount(): Promise<void> {
         await super.componentDidMount();
-        await this.loadPumps();
+        if (this.pumpSlot === undefined) {
+            // List mode needs the full set of detected pumps (with names) for the enable switches.
+            await this.loadPumps();
+        } else {
+            // Tab mode renders straight from the config data — nothing to load.
+            this.setState({ loaded: true });
+        }
+    }
+
+    /** The pump slot this instance edits (tab mode), or undefined for the pump list. */
+    private get pumpSlot(): number | undefined {
+        const raw = (this.props.schema as { custom?: { pumpSlot?: number } }).custom?.pumpSlot;
+        return typeof raw === "number" ? raw : undefined;
     }
 
     /** Read the detected pumps (device objects below `<instance>.pumps.`). */
@@ -74,7 +90,7 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
         const root = `pondpump.${instance}.pumps.`;
         const pumps: PumpEntry[] = [];
         try {
-            const objects = (await this.props.oContext.socket.getObjectViewSystem("device", root, `${root}香`)) || {};
+            const objects = (await this.props.oContext.socket.getObjectViewSystem("device", root, `${root}￿`)) || {};
             for (const [id, obj] of Object.entries(objects)) {
                 if (!id.startsWith(root)) {
                     continue;
@@ -96,15 +112,22 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
         } catch {
             /* ignore — the pump list stays empty until the adapter has run once */
         }
-        pumps.sort((a, b) => a.name.localeCompare(b.name));
-        const firstEnabled = pumps.find(p => this.schedules[p.id]?.enabled)?.id;
-        this.setState({ pumps, loaded: true, tab: firstEnabled || pumps[0]?.id || "" });
+        pumps.sort((a, b) => Number(a.id) - Number(b.id));
+        this.setState({ pumps, loaded: true });
     }
 
     /** The current schedules map from the config data. */
     get schedules(): SchedulesConfig {
         const value = (this.props.data as { schedules?: SchedulesConfig }).schedules;
         return value && typeof value === "object" ? value : {};
+    }
+
+    /** The enabled pump ids, sorted by device number — this is the slot order used by the tabs. */
+    private enabledIds(): string[] {
+        const s = this.schedules;
+        return Object.keys(s)
+            .filter(id => s[id]?.enabled)
+            .sort((a, b) => Number(a) - Number(b));
     }
 
     /** The config for one pump, with defaults filled in. */
@@ -118,11 +141,9 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
         void this.onChange("schedules", next);
     }
 
-    private toggleEnabled(id: string, enabled: boolean): void {
-        this.setCfg(id, { ...this.cfgOf(id), enabled });
-        if (enabled) {
-            this.setState({ tab: id });
-        }
+    private toggleEnabled(pump: PumpEntry, enabled: boolean): void {
+        // Cache the display name so the pump's tab can be labelled without re-reading objects.
+        this.setCfg(pump.id, { ...this.cfgOf(pump.id), enabled, name: pump.name });
     }
 
     private updatePlan(id: string, index: number, patch: Partial<PumpSchedule>): void {
@@ -208,6 +229,7 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
         );
     }
 
+    /** Tab mode: the editor for one pump (base power + schedule table + live validation). */
     private renderPumpEditor(id: string): React.JSX.Element {
         const cfg = this.cfgOf(id);
         // Present the windows sorted by start time so the list reads chronologically.
@@ -216,7 +238,13 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
             .sort((a, b) => (a.plan.start || "").localeCompare(b.plan.start || ""));
         const validation = validatePlans(cfg.plans);
         return (
-            <Box sx={{ mt: 2 }}>
+            <Box sx={{ mt: 1 }}>
+                <Typography
+                    variant="h6"
+                    sx={{ mb: 1 }}
+                >
+                    {I18n.t("Schedules for %s", cfg.name || id)}
+                </Typography>
                 <TextField
                     type="number"
                     size="small"
@@ -272,10 +300,8 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
         );
     }
 
-    renderItem(): React.JSX.Element {
-        if (!this.state.loaded) {
-            return <Typography sx={{ p: 2 }}>{I18n.t("Loading pumps…")}</Typography>;
-        }
+    /** List mode: the pump enable list shown on the "Schedules" tab. */
+    private renderPumpList(): React.JSX.Element {
         if (!this.state.pumps.length) {
             return (
                 <Alert
@@ -286,19 +312,16 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                 </Alert>
             );
         }
-        const enabled = this.state.pumps.filter(p => this.cfgOf(p.id).enabled);
-        const tab = enabled.some(p => p.id === this.state.tab) ? this.state.tab : enabled[0]?.id || "";
         return (
             <Box sx={{ mt: 1 }}>
-                <Typography
-                    variant="h6"
-                    sx={{ mb: 1 }}
-                >
-                    {I18n.t("Pump schedules")}
+                <Typography sx={{ mb: 1, color: "text.secondary" }}>
+                    {I18n.t(
+                        "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.",
+                    )}
                 </Typography>
                 <Paper
                     variant="outlined"
-                    sx={{ p: 1.5, mb: 2, display: "flex", flexWrap: "wrap", gap: 2 }}
+                    sx={{ p: 1.5, display: "flex", flexWrap: "wrap", gap: 2 }}
                 >
                     {this.state.pumps.map(p => (
                         <FormControlLabel
@@ -306,38 +329,32 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                             control={
                                 <Switch
                                     checked={this.cfgOf(p.id).enabled}
-                                    onChange={e => this.toggleEnabled(p.id, e.target.checked)}
+                                    onChange={e => this.toggleEnabled(p, e.target.checked)}
                                 />
                             }
                             label={p.name}
                         />
                     ))}
                 </Paper>
-                {enabled.length ? (
-                    <>
-                        <Tabs
-                            value={tab}
-                            onChange={(_e, v) => this.setState({ tab: v as string })}
-                            variant="scrollable"
-                            scrollButtons="auto"
-                        >
-                            {enabled.map(p => (
-                                <Tab
-                                    key={p.id}
-                                    value={p.id}
-                                    label={p.name}
-                                />
-                            ))}
-                        </Tabs>
-                        {tab ? this.renderPumpEditor(tab) : null}
-                    </>
-                ) : (
-                    <Typography sx={{ color: "text.secondary" }}>
-                        {I18n.t("Enable a pump above to define its schedules.")}
-                    </Typography>
-                )}
             </Box>
         );
+    }
+
+    renderItem(): React.JSX.Element | null {
+        if (!this.state.loaded) {
+            return <Typography sx={{ p: 2 }}>{I18n.t("Loading pumps…")}</Typography>;
+        }
+        const slot = this.pumpSlot;
+        if (slot === undefined) {
+            return this.renderPumpList();
+        }
+        // Tab mode: resolve the slot to a pump id via the same sorted-enabled order the tab's
+        // hidden/label expressions use. The tab is hidden when the slot is empty, so this is defensive.
+        const id = this.enabledIds()[slot];
+        if (!id) {
+            return null;
+        }
+        return this.renderPumpEditor(id);
     }
 }
 
