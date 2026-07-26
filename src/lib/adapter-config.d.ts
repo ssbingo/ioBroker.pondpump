@@ -1,5 +1,7 @@
 // This file extends the AdapterConfig type from "@iobroker/types"
 
+import type { SchedulesConfig } from "./schedule";
+
 // Augment the globally declared type ioBroker.AdapterConfig
 declare global {
     namespace ioBroker {
@@ -26,6 +28,8 @@ declare global {
             cloudScope: string;
             /** Poll interval in seconds */
             pollInterval: number;
+            /** Per-pump time schedules (Phase 9), keyed by pump device number; managed in the admin UI */
+            schedules?: SchedulesConfig;
         }
     }
 }

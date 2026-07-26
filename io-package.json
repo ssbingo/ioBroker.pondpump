@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.0.8",
+        "version": "0.0.9",
         "news": {
-            "0.0.8": {
-                "en": "The control widget gains a dropdown next to the power slider to set the power in precise 5 % steps.",
-                "de": "Das Steuer-Widget erhält neben dem Power-Slider ein Auswahlfeld, um die Power in präzisen 5-%-Schritten einzustellen.",
-                "ru": "В виджете управления рядом с ползунком мощности появился выпадающий список для установки мощности с точным шагом 5 %.",
-                "pt": "O widget de controlo ganha uma lista suspensa ao lado do cursor de potência para definir a potência em passos precisos de 5 %.",
-                "nl": "Het bedieningswidget krijgt naast de vermogensschuif een dropdown om het vermogen in nauwkeurige stappen van 5 % in te stellen.",
-                "fr": "Le widget de commande gagne une liste déroulante à côté du curseur de puissance pour régler la puissance par pas précis de 5 %.",
-                "it": "Il widget di controllo ottiene un menu a tendina accanto al cursore di potenza per impostare la potenza con precisi passi del 5 %.",
-                "es": "El widget de control incorpora un desplegable junto al control deslizante de potencia para ajustar la potencia en pasos precisos de 5 %.",
-                "pl": "Widżet sterowania zyskuje listę rozwijaną obok suwaka mocy do ustawiania mocy w precyzyjnych krokach co 5 %.",
-                "uk": "Віджет керування отримує випадаючий список поруч із повзунком потужності для встановлення потужності з точним кроком 5 %.",
-                "zh-cn": "控制小部件在功率滑块旁新增下拉框，可按精确的 5% 步进设置功率。"
+            "0.0.9": {
+                "en": "New: per-pump time schedules. In the adapter settings, enable a pump and define time windows (each setting a power % or SFC on/off) plus a base power for outside the windows; the adapter runs the schedule. Overlapping windows are rejected.",
+                "de": "Neu: Zeitpläne pro Pumpe. In den Adapter-Einstellungen eine Pumpe aktivieren und Zeitfenster definieren (je Power % oder SFC an/aus) plus eine Grund-Power außerhalb der Fenster; der Adapter führt den Zeitplan aus. Überschneidende Fenster werden abgelehnt.",
+                "ru": "Новое: расписания для каждого насоса. В настройках адаптера включите насос и задайте временные окна (мощность % или SFC вкл/выкл) плюс базовую мощность вне окон; адаптер выполняет расписание. Перекрывающиеся окна отклоняются.",
+                "pt": "Novo: horários por bomba. Nas definições do adaptador, ative uma bomba e defina janelas de tempo (potência % ou SFC ligado/desligado) mais uma potência base fora das janelas; o adaptador executa o horário. Janelas sobrepostas são rejeitadas.",
+                "nl": "Nieuw: schema’s per pomp. Schakel in de adapterinstellingen een pomp in en definieer tijdvensters (vermogen % of SFC aan/uit) plus een basisvermogen buiten de vensters; de adapter voert het schema uit. Overlappende vensters worden geweigerd.",
+                "fr": "Nouveau : horaires par pompe. Dans les paramètres de l’adaptateur, activez une pompe et définissez des fenêtres horaires (puissance % ou SFC marche/arrêt) plus une puissance de base hors fenêtres ; l’adaptateur exécute l’horaire. Les fenêtres qui se chevauchent sont rejetées.",
+                "it": "Novità: pianificazioni per pompa. Nelle impostazioni dell’adattatore, abilita una pompa e definisci finestre temporali (potenza % o SFC on/off) più una potenza di base fuori dalle finestre; l’adattatore esegue la pianificazione. Le finestre sovrapposte vengono rifiutate.",
+                "es": "Nuevo: horarios por bomba. En los ajustes del adaptador, active una bomba y defina ventanas de tiempo (potencia % o SFC encendido/apagado) más una potencia base fuera de las ventanas; el adaptador ejecuta el horario. Las ventanas superpuestas se rechazan.",
+                "pl": "Nowość: harmonogramy dla każdej pompy. W ustawieniach adaptera włącz pompę i zdefiniuj okna czasowe (moc % lub SFC wł/wył) oraz moc bazową poza oknami; adapter realizuje harmonogram. Nakładające się okna są odrzucane.",
+                "uk": "Нове: розклади для кожного насоса. У налаштуваннях адаптера увімкніть насос і задайте часові вікна (потужність % або SFC увімк/вимк) плюс базову потужність поза вікнами; адаптер виконує розклад. Вікна, що перекриваються, відхиляються.",
+                "zh-cn": "新增：每台水泵的时间计划。在适配器设置中启用某台水泵并定义时间窗口（功率%或SFC开/关）以及窗口之外的基础功率；适配器会执行计划。重叠的窗口会被拒绝。"
             }
         },
         "titleLang": {
@@ -120,7 +120,8 @@
         "cloudTokenUrl": "https://account.oase.com/tfp/oasecustomersprod.onmicrosoft.com/B2C_1A_SignUp_SignIn/oauth2/v2.0/token",
         "cloudClientId": "8dfe4495-b83f-4e4f-861c-83b6b3cbaa3b",
         "cloudScope": "https://oasecustomersprod.onmicrosoft.com/api/oase.read https://oasecustomersprod.onmicrosoft.com/api/oase.readwrite offline_access openid profile",
-        "pollInterval": 30
+        "pollInterval": 30,
+        "schedules": {}
     },
     "objects": [],
     "instanceObjects": [

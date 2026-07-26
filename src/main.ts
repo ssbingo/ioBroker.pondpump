@@ -42,6 +42,13 @@ import { generateSelfSignedCert } from "./lib/local/cert";
 import { LocalClient } from "./lib/local/client";
 import { fetchLocalInventory, toDomainInventory } from "./lib/local/inventory";
 import { DEFAULT_TLS_PORT } from "./lib/local/protocol";
+import {
+    minutesUntilNextChange,
+    type ScheduleTarget,
+    type SchedulesConfig,
+    targetForConfig,
+    validatePlans,
+} from "./lib/schedule";
 
 /** Minimum poll interval enforced regardless of configuration (seconds). */
 const MIN_POLL_INTERVAL_S = 5;
@@ -126,6 +133,14 @@ class Pondpump extends utils.Adapter {
     private txn = 0;
     /** Live sensor ids discovered per pump device number (RDM sensors that answer a 0x5500 read). */
     private readonly liveSensorIds = new Map<number, number[]>();
+    /** Per-pump time schedules (Phase 9), loaded from the config on start. */
+    private schedules: SchedulesConfig = {};
+    /** The scheduler tick timer (chained; re-evaluated at each window boundary). */
+    private scheduleTimer?: ioBroker.Timeout;
+    /** Whether the scheduler has been started (after the first successful poll). */
+    private scheduleStarted = false;
+    /** Last target the scheduler applied per pump device number, to only send commands on change. */
+    private readonly lastScheduleTarget = new Map<number, string>();
 
     public constructor(options: Partial<utils.AdapterOptions> = {}) {
         super({
@@ -170,6 +185,7 @@ class Pondpump extends utils.Adapter {
         await this.applyConnectionType(mode);
 
         this.pollIntervalMs = Math.max(MIN_POLL_INTERVAL_S, this.config.pollInterval || 30) * 1000;
+        this.loadSchedules();
         const baseUrl = this.config.cloudBaseUrl || DEFAULT_BASE_URL;
         const tokenUrl = this.config.cloudTokenUrl || DEFAULT_TOKEN_URL;
         const clientId = this.config.cloudClientId || DEFAULT_CLIENT_ID;
@@ -619,6 +635,7 @@ class Pondpump extends utils.Adapter {
         }
 
         await this.setConnected(true);
+        this.maybeStartScheduler();
         const took = Date.now() - startedAt;
         const summary = `gateway ${gateway.serialNumber} "${gateway.name}" online=${online}, ${pumps.length} pump(s), ${took} ms`;
         if (id === 1) {
@@ -813,6 +830,97 @@ class Pondpump extends utils.Adapter {
         }
     }
 
+    /** Load the per-pump schedules from the config and log any invalid (which are then skipped). */
+    private loadSchedules(): void {
+        const raw = this.config.schedules;
+        this.schedules = raw && typeof raw === "object" ? raw : {};
+        let enabled = 0;
+        for (const [dn, cfg] of Object.entries(this.schedules)) {
+            if (!cfg?.enabled) {
+                continue;
+            }
+            const result = validatePlans(cfg.plans || []);
+            if (result.valid) {
+                enabled++;
+            } else {
+                this.log.error(`[schedule] pump ${dn}: schedule ignored — ${result.error}`);
+            }
+        }
+        this.log.info(enabled > 0 ? `[schedule] active for ${enabled} pump(s)` : "[schedule] no pump schedules");
+    }
+
+    /** Start the scheduler once (after the first successful poll) if any pump has a valid schedule. */
+    private maybeStartScheduler(): void {
+        if (this.scheduleStarted || this.stopping) {
+            return;
+        }
+        const anyValid = Object.values(this.schedules).some(
+            cfg => cfg?.enabled && validatePlans(cfg.plans || []).valid,
+        );
+        if (!anyValid) {
+            return;
+        }
+        this.scheduleStarted = true;
+        this.log.info("[schedule] starting the pump scheduler");
+        void this.runScheduler();
+    }
+
+    /**
+     * Evaluate every scheduled pump for the current wall-clock time, apply any changed target via the
+     * command path, then re-arm the tick for the next window boundary (capped at 60 min so the loop
+     * self-corrects against clock drift / DST; a re-evaluation without a target change sends nothing).
+     */
+    private async runScheduler(): Promise<void> {
+        if (this.stopping) {
+            return;
+        }
+        const now = new Date();
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        let nextChange = 60;
+
+        for (const [dnStr, cfg] of Object.entries(this.schedules)) {
+            if (!cfg?.enabled || !validatePlans(cfg.plans || []).valid) {
+                continue;
+            }
+            const deviceNumber = Number(dnStr);
+            if (!this.pumpControl.has(deviceNumber)) {
+                continue; // pump not discovered yet — will be picked up on a later tick
+            }
+            await this.applyScheduleTarget(deviceNumber, targetForConfig(cfg, nowMin));
+            nextChange = Math.min(nextChange, minutesUntilNextChange(cfg.plans || [], nowMin));
+        }
+
+        // +2 s so the tick lands just inside the new window, never a hair before the boundary.
+        const delayMs = Math.max(1, nextChange) * 60_000 + 2_000;
+        this.scheduleTimer = this.setTimeout(() => {
+            this.scheduleTimer = undefined;
+            void this.runScheduler();
+        }, delayMs);
+    }
+
+    /**
+     * Apply a scheduled target to a pump, but only when it differs from the last applied target, by
+     * writing the control states as commands (ack:false) so the normal command path sends them.
+     *
+     * @param deviceNumber - the pump device number
+     * @param target - the desired SFC/power state for now
+     */
+    private async applyScheduleTarget(deviceNumber: number, target: ScheduleTarget): Promise<void> {
+        const key = `sfc=${target.sfc};power=${target.power}`;
+        if (this.lastScheduleTarget.get(deviceNumber) === key) {
+            return;
+        }
+        this.lastScheduleTarget.set(deviceNumber, key);
+        this.log.info(`[schedule] pump ${deviceNumber}: applying ${key}`);
+        if (target.sfc) {
+            // SFC on overrides the flow; leave the power setpoint untouched.
+            await this.setState(`pumps.${deviceNumber}.control.sfc`, { val: true, ack: false });
+        } else {
+            await this.setState(`pumps.${deviceNumber}.control.sfc`, { val: false, ack: false });
+            await this.setState(`pumps.${deviceNumber}.control.speed`, { val: target.power, ack: false });
+        }
+    }
+
     /**
      * Is called when adapter shuts down - callback has to be called under any circumstances!
      *
@@ -825,6 +933,10 @@ class Pondpump extends utils.Adapter {
             if (this.pollTimer) {
                 this.clearTimeout(this.pollTimer);
                 this.pollTimer = undefined;
+            }
+            if (this.scheduleTimer) {
+                this.clearTimeout(this.scheduleTimer);
+                this.scheduleTimer = undefined;
             }
             this.cloud?.reset();
             this.cloud = undefined;

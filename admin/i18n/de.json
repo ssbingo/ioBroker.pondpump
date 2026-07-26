@@ -25,5 +25,22 @@
     "Cloud scope": "Cloud-Scope",
     "Advanced — OAuth scope requested for the access token": "Erweitert — OAuth-Scope für das Access-Token",
     "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Erfasse einmalig einen Refresh-Token aus einem OASE-App-Login (grant_type=refresh_token) und füge ihn hier ein. Dein Konto-Passwort wird nicht benötigt und nicht gespeichert.",
-    "Choose one transport: cloud or local. The two are mutually exclusive.": "Wählen Sie einen Übertragungsweg: Cloud oder lokal. Beide schließen sich gegenseitig aus."
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Wählen Sie einen Übertragungsweg: Cloud oder lokal. Beide schließen sich gegenseitig aus.",
+    "Schedules": "Zeitpläne",
+    "Pump schedules": "Pumpen-Zeitpläne",
+    "Loading pumps…": "Pumpen werden geladen…",
+    "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.": "Noch keine Pumpen erkannt. Starten Sie den Adapter einmal, damit er die Pumpen findet, und laden Sie dann neu.",
+    "Enable a pump above to define its schedules.": "Aktivieren Sie oben eine Pumpe, um ihre Zeitpläne zu definieren.",
+    "Base power % (outside all windows)": "Grund-Power % (außerhalb aller Fenster)",
+    "Start": "Start",
+    "End": "Ende",
+    "Mode": "Modus",
+    "Value": "Wert",
+    "Power %": "Power %",
+    "SFC": "SFC",
+    "on": "an",
+    "off": "aus",
+    "No schedules yet — outside all windows the base power applies.": "Noch keine Zeitpläne — außerhalb aller Fenster gilt die Grund-Power.",
+    "Add schedule": "Zeitplan hinzufügen",
+    "Schedules must not overlap": "Zeitpläne dürfen sich nicht überschneiden"
 }

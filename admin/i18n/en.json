@@ -25,5 +25,22 @@
     "Cloud scope": "Cloud scope",
     "Advanced — OAuth scope requested for the access token": "Advanced — OAuth scope requested for the access token",
     "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.",
-    "Choose one transport: cloud or local. The two are mutually exclusive.": "Choose one transport: cloud or local. The two are mutually exclusive."
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Choose one transport: cloud or local. The two are mutually exclusive.",
+    "Schedules": "Schedules",
+    "Pump schedules": "Pump schedules",
+    "Loading pumps…": "Loading pumps…",
+    "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.": "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.",
+    "Enable a pump above to define its schedules.": "Enable a pump above to define its schedules.",
+    "Base power % (outside all windows)": "Base power % (outside all windows)",
+    "Start": "Start",
+    "End": "End",
+    "Mode": "Mode",
+    "Value": "Value",
+    "Power %": "Power %",
+    "SFC": "SFC",
+    "on": "on",
+    "off": "off",
+    "No schedules yet — outside all windows the base power applies.": "No schedules yet — outside all windows the base power applies.",
+    "Add schedule": "Add schedule",
+    "Schedules must not overlap": "Schedules must not overlap"
 }

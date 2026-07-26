@@ -1,0 +1,37 @@
+{
+    "name": "iobroker.pondpump-admin",
+    "private": true,
+    "version": "0.0.9",
+    "type": "module",
+    "dependencies": {
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.1",
+        "@iobroker/adapter-react-v5": "^8.3.2",
+        "@iobroker/json-config": "^8.4.15",
+        "@module-federation/vite": "^1.16.12",
+        "@mui/icons-material": "^6.5.0",
+        "@mui/material": "^6.5.0",
+        "@types/react": "^18.3.28",
+        "@types/react-dom": "^18.3.7",
+        "@vitejs/plugin-react": "^5.2.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "typescript": "^5.9.3",
+        "vite": "7.3.6",
+        "vite-plugin-commonjs": "^0.10.4",
+        "vite-tsconfig-paths": "^6.1.1"
+    },
+    "scripts": {
+        "start": "vite --port 4173",
+        "build": "tsc && vite build",
+        "preview": "vite preview",
+        "lint": "eslint -c eslint.config.mjs"
+    },
+    "homepage": ".",
+    "browserslist": [
+        ">0.2%",
+        "not dead",
+        "not ie <= 11",
+        "not op_mini all"
+    ]
+}

@@ -174,6 +174,24 @@
             "md": 6,
             "lg": 4,
             "xl": 4
+        },
+        "_headerSchedules": {
+            "type": "header",
+            "text": "Schedules",
+            "size": 2,
+            "newLine": true
+        },
+        "_scheduler": {
+            "type": "custom",
+            "url": "custom/customComponents.js",
+            "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+            "i18n": true,
+            "newLine": true,
+            "xs": 12,
+            "sm": 12,
+            "md": 12,
+            "lg": 12,
+            "xl": 12
         }
     }
 }
