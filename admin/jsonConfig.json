@@ -173,13 +173,13 @@
                     "md": 6,
                     "lg": 4,
                     "xl": 4
-                }
-            }
-        },
-        "schedules": {
-            "type": "panel",
-            "label": "Schedules",
-            "items": {
+                },
+                "_headerSchedules": {
+                    "type": "header",
+                    "text": "Schedules",
+                    "size": 2,
+                    "newLine": true
+                },
                 "_pumpList": {
                     "type": "custom",
                     "url": "custom/customComponents.js",
