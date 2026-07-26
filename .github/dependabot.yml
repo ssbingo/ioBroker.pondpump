@@ -6,9 +6,10 @@ updates:
       - "/src-widgets"
       - "/src-admin"
     schedule:
-      interval: monthly
-      time: "00:05"
+      # Randomised ~monthly slot (spreads Dependabot load across adapters — repochecker S8906)
+      interval: cron
       timezone: Europe/Berlin
+      cronjob: '34 4 9 * *'
     open-pull-requests-limit: 15
     assignees:
       - ssbingo
@@ -56,9 +57,9 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: monthly
-      time: "00:05"
+      interval: cron
       timezone: Europe/Berlin
+      cronjob: '52 5 23 * *'
     open-pull-requests-limit: 15
     assignees:
       - ssbingo
