@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.0.9",
+        "version": "0.1.0",
         "news": {
-            "0.0.9": {
-                "en": "New: per-pump time schedules. In the adapter settings, enable a pump and define time windows (each setting a power % or SFC on/off) plus a base power for outside the windows; the adapter runs the schedule. Overlapping windows are rejected.",
-                "de": "Neu: Zeitpläne pro Pumpe. In den Adapter-Einstellungen eine Pumpe aktivieren und Zeitfenster definieren (je Power % oder SFC an/aus) plus eine Grund-Power außerhalb der Fenster; der Adapter führt den Zeitplan aus. Überschneidende Fenster werden abgelehnt.",
-                "ru": "Новое: расписания для каждого насоса. В настройках адаптера включите насос и задайте временные окна (мощность % или SFC вкл/выкл) плюс базовую мощность вне окон; адаптер выполняет расписание. Перекрывающиеся окна отклоняются.",
-                "pt": "Novo: horários por bomba. Nas definições do adaptador, ative uma bomba e defina janelas de tempo (potência % ou SFC ligado/desligado) mais uma potência base fora das janelas; o adaptador executa o horário. Janelas sobrepostas são rejeitadas.",
-                "nl": "Nieuw: schema’s per pomp. Schakel in de adapterinstellingen een pomp in en definieer tijdvensters (vermogen % of SFC aan/uit) plus een basisvermogen buiten de vensters; de adapter voert het schema uit. Overlappende vensters worden geweigerd.",
-                "fr": "Nouveau : horaires par pompe. Dans les paramètres de l’adaptateur, activez une pompe et définissez des fenêtres horaires (puissance % ou SFC marche/arrêt) plus une puissance de base hors fenêtres ; l’adaptateur exécute l’horaire. Les fenêtres qui se chevauchent sont rejetées.",
-                "it": "Novità: pianificazioni per pompa. Nelle impostazioni dell’adattatore, abilita una pompa e definisci finestre temporali (potenza % o SFC on/off) più una potenza di base fuori dalle finestre; l’adattatore esegue la pianificazione. Le finestre sovrapposte vengono rifiutate.",
-                "es": "Nuevo: horarios por bomba. En los ajustes del adaptador, active una bomba y defina ventanas de tiempo (potencia % o SFC encendido/apagado) más una potencia base fuera de las ventanas; el adaptador ejecuta el horario. Las ventanas superpuestas se rechazan.",
-                "pl": "Nowość: harmonogramy dla każdej pompy. W ustawieniach adaptera włącz pompę i zdefiniuj okna czasowe (moc % lub SFC wł/wył) oraz moc bazową poza oknami; adapter realizuje harmonogram. Nakładające się okna są odrzucane.",
-                "uk": "Нове: розклади для кожного насоса. У налаштуваннях адаптера увімкніть насос і задайте часові вікна (потужність % або SFC увімк/вимк) плюс базову потужність поза вікнами; адаптер виконує розклад. Вікна, що перекриваються, відхиляються.",
-                "zh-cn": "新增：每台水泵的时间计划。在适配器设置中启用某台水泵并定义时间窗口（功率%或SFC开/关）以及窗口之外的基础功率；适配器会执行计划。重叠的窗口会被拒绝。"
+            "0.1.0": {
+                "en": "Milestone 0.1.0 — consolidates the full feature set (cloud & local control with live telemetry, SFC, two vis-2 widgets, and per-pump time schedules) into the first 0.1.x release, plus repository/CI maintenance.",
+                "de": "Meilenstein 0.1.0 — bündelt den kompletten Funktionsumfang (Cloud- & lokale Steuerung samt Live-Telemetrie, SFC, zwei vis-2-Widgets und Zeitpläne pro Pumpe) im ersten 0.1.x-Release, plus Repository-/CI-Wartung.",
+                "ru": "Веха 0.1.0 — объединяет весь функционал (облачное и локальное управление с телеметрией в реальном времени, SFC, два виджета vis-2 и расписания для каждого насоса) в первом релизе 0.1.x, плюс обслуживание репозитория/CI.",
+                "pt": "Marco 0.1.0 — consolida todo o conjunto de funcionalidades (controlo cloud e local com telemetria em tempo real, SFC, dois widgets vis-2 e horários por bomba) no primeiro lançamento 0.1.x, além de manutenção de repositório/CI.",
+                "nl": "Mijlpaal 0.1.0 — bundelt de volledige functionaliteit (cloud- en lokale besturing met live-telemetrie, SFC, twee vis-2-widgets en schema’s per pomp) in de eerste 0.1.x-release, plus repository-/CI-onderhoud.",
+                "fr": "Jalon 0.1.0 — regroupe l’ensemble des fonctionnalités (contrôle cloud et local avec télémétrie en direct, SFC, deux widgets vis-2 et horaires par pompe) dans la première version 0.1.x, ainsi que la maintenance du dépôt/CI.",
+                "it": "Traguardo 0.1.0 — consolida l’intero set di funzionalità (controllo cloud e locale con telemetria in tempo reale, SFC, due widget vis-2 e pianificazioni per pompa) nella prima release 0.1.x, oltre alla manutenzione di repository/CI.",
+                "es": "Hito 0.1.0 — consolida todo el conjunto de funciones (control en la nube y local con telemetría en vivo, SFC, dos widgets vis-2 y horarios por bomba) en la primera versión 0.1.x, además de mantenimiento del repositorio/CI.",
+                "pl": "Kamień milowy 0.1.0 — łączy pełny zestaw funkcji (sterowanie w chmurze i lokalne z telemetrią na żywo, SFC, dwa widżety vis-2 i harmonogramy dla każdej pompy) w pierwszym wydaniu 0.1.x, plus konserwacja repozytorium/CI.",
+                "uk": "Віха 0.1.0 — обʼєднує весь функціонал (хмарне та локальне керування з телеметрією в реальному часі, SFC, два віджети vis-2 і розклади для кожного насоса) у першому релізі 0.1.x, а також обслуговування репозиторію/CI.",
+                "zh-cn": "里程碑 0.1.0 — 将完整功能集（云端与本地控制及实时遥测、SFC、两个 vis-2 小部件、每台水泵的时间计划）整合到首个 0.1.x 版本，并进行仓库/CI 维护。"
             }
         },
         "titleLang": {
