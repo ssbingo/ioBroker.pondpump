@@ -197,7 +197,7 @@
         },
         "pump0": {
             "type": "panel",
-            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[0];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[0];return id?('Scheduler - '+(s[id].name||('Pump '+id))):'';})()}",
             "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[0])",
             "items": {
                 "_pump0": {
@@ -220,7 +220,7 @@
         },
         "pump1": {
             "type": "panel",
-            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[1];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[1];return id?('Scheduler - '+(s[id].name||('Pump '+id))):'';})()}",
             "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[1])",
             "items": {
                 "_pump1": {
@@ -243,7 +243,7 @@
         },
         "pump2": {
             "type": "panel",
-            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[2];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[2];return id?('Scheduler - '+(s[id].name||('Pump '+id))):'';})()}",
             "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[2])",
             "items": {
                 "_pump2": {
@@ -266,7 +266,7 @@
         },
         "pump3": {
             "type": "panel",
-            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[3];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[3];return id?('Scheduler - '+(s[id].name||('Pump '+id))):'';})()}",
             "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[3])",
             "items": {
                 "_pump3": {
@@ -289,7 +289,7 @@
         },
         "pump4": {
             "type": "panel",
-            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[4];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[4];return id?('Scheduler - '+(s[id].name||('Pump '+id))):'';})()}",
             "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[4])",
             "items": {
                 "_pump4": {
@@ -312,7 +312,7 @@
         },
         "pump5": {
             "type": "panel",
-            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[5];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[5];return id?('Scheduler - '+(s[id].name||('Pump '+id))):'';})()}",
             "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[5])",
             "items": {
                 "_pump5": {
@@ -335,7 +335,7 @@
         },
         "pump6": {
             "type": "panel",
-            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[6];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[6];return id?('Scheduler - '+(s[id].name||('Pump '+id))):'';})()}",
             "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[6])",
             "items": {
                 "_pump6": {
@@ -358,7 +358,7 @@
         },
         "pump7": {
             "type": "panel",
-            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[7];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[7];return id?('Scheduler - '+(s[id].name||('Pump '+id))):'';})()}",
             "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[7])",
             "items": {
                 "_pump7": {
@@ -381,7 +381,7 @@
         },
         "pump8": {
             "type": "panel",
-            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[8];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[8];return id?('Scheduler - '+(s[id].name||('Pump '+id))):'';})()}",
             "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[8])",
             "items": {
                 "_pump8": {
@@ -404,7 +404,7 @@
         },
         "pump9": {
             "type": "panel",
-            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[9];return id?(s[id].name||('Pump '+id)):'';})()}",
+            "label": "${(()=>{const s=data.schedules||{};const i=Object.keys(s).filter(k=>s[k]&&s[k].enabled).sort((a,b)=>Number(a)-Number(b));const id=i[9];return id?('Scheduler - '+(s[id].name||('Pump '+id))):'';})()}",
             "hidden": "!(Object.keys(data.schedules||{}).filter(k=>data.schedules[k]&&data.schedules[k].enabled).sort((a,b)=>Number(a)-Number(b))[9])",
             "items": {
                 "_pump9": {
