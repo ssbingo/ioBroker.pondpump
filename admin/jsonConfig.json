@@ -185,6 +185,7 @@
             "type": "custom",
             "url": "custom/customComponents.js",
             "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
+            "bundlerType": "module",
             "i18n": true,
             "newLine": true,
             "xs": 12,
