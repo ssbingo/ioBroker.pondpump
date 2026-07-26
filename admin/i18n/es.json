@@ -25,5 +25,22 @@
     "Cloud scope": "Ámbito (scope) de la nube",
     "Advanced — OAuth scope requested for the access token": "Avanzado — ámbito OAuth solicitado para el token de acceso",
     "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Captura una vez un refresh token de un inicio de sesión en la app OASE (grant_type=refresh_token) y pégalo aquí. La contraseña de tu cuenta no es necesaria y nunca se almacena.",
-    "Choose one transport: cloud or local. The two are mutually exclusive.": "Elija un transporte: nube o local. Los dos son mutuamente excluyentes."
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Elija un transporte: nube o local. Los dos son mutuamente excluyentes.",
+    "Schedules": "Horarios",
+    "Pump schedules": "Horarios de la bomba",
+    "Loading pumps…": "Cargando bombas…",
+    "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.": "Aún no se detectan bombas. Inicie el adaptador una vez para que descubra las bombas y luego vuelva a cargar.",
+    "Enable a pump above to define its schedules.": "Active una bomba arriba para definir sus horarios.",
+    "Base power % (outside all windows)": "Potencia base % (fuera de todas las ventanas)",
+    "Start": "Inicio",
+    "End": "Fin",
+    "Mode": "Modo",
+    "Value": "Valor",
+    "Power %": "Potencia %",
+    "SFC": "SFC",
+    "on": "encendido",
+    "off": "apagado",
+    "No schedules yet — outside all windows the base power applies.": "Aún no hay horarios — fuera de todas las ventanas se aplica la potencia base.",
+    "Add schedule": "Añadir horario",
+    "Schedules must not overlap": "Los horarios no deben superponerse"
 }

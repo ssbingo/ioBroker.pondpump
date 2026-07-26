@@ -25,5 +25,22 @@
     "Cloud scope": "Cloud-scope",
     "Advanced — OAuth scope requested for the access token": "Geavanceerd — OAuth-scope voor het accesstoken",
     "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Leg eenmalig een refreshtoken vast uit een OASE-app-login (grant_type=refresh_token) en plak het hier. Je accountwachtwoord is niet nodig en wordt nooit opgeslagen.",
-    "Choose one transport: cloud or local. The two are mutually exclusive.": "Kies één transport: cloud of lokaal. De twee sluiten elkaar uit."
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Kies één transport: cloud of lokaal. De twee sluiten elkaar uit.",
+    "Schedules": "Schema’s",
+    "Pump schedules": "Pompschema’s",
+    "Loading pumps…": "Pompen laden…",
+    "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.": "Nog geen pompen gedetecteerd. Start de adapter één keer zodat hij de pompen ontdekt en laad daarna opnieuw.",
+    "Enable a pump above to define its schedules.": "Schakel hierboven een pomp in om de schema’s te definiëren.",
+    "Base power % (outside all windows)": "Basisvermogen % (buiten alle vensters)",
+    "Start": "Start",
+    "End": "Einde",
+    "Mode": "Modus",
+    "Value": "Waarde",
+    "Power %": "Vermogen %",
+    "SFC": "SFC",
+    "on": "aan",
+    "off": "uit",
+    "No schedules yet — outside all windows the base power applies.": "Nog geen schema’s — buiten alle vensters geldt het basisvermogen.",
+    "Add schedule": "Schema toevoegen",
+    "Schedules must not overlap": "Schema’s mogen elkaar niet overlappen"
 }

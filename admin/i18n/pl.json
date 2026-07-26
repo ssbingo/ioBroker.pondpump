@@ -25,5 +25,22 @@
     "Cloud scope": "Zakres (scope) chmury",
     "Advanced — OAuth scope requested for the access token": "Zaawansowane — zakres OAuth żądany dla tokenu dostępu",
     "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Przechwyć jednorazowo token odświeżający z logowania w aplikacji OASE (grant_type=refresh_token) i wklej go tutaj. Hasło Twojego konta nie jest potrzebne i nigdy nie jest przechowywane.",
-    "Choose one transport: cloud or local. The two are mutually exclusive.": "Wybierz jeden transport: chmura lub lokalny. Wzajemnie się wykluczają."
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Wybierz jeden transport: chmura lub lokalny. Wzajemnie się wykluczają.",
+    "Schedules": "Harmonogramy",
+    "Pump schedules": "Harmonogramy pompy",
+    "Loading pumps…": "Ładowanie pomp…",
+    "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.": "Nie wykryto jeszcze pomp. Uruchom adapter raz, aby wykrył pompy, a następnie odśwież.",
+    "Enable a pump above to define its schedules.": "Włącz pompę powyżej, aby zdefiniować jej harmonogramy.",
+    "Base power % (outside all windows)": "Moc bazowa % (poza wszystkimi oknami)",
+    "Start": "Początek",
+    "End": "Koniec",
+    "Mode": "Tryb",
+    "Value": "Wartość",
+    "Power %": "Moc %",
+    "SFC": "SFC",
+    "on": "wł.",
+    "off": "wył.",
+    "No schedules yet — outside all windows the base power applies.": "Brak harmonogramów — poza wszystkimi oknami obowiązuje moc bazowa.",
+    "Add schedule": "Dodaj harmonogram",
+    "Schedules must not overlap": "Harmonogramy nie mogą się nakładać"
 }

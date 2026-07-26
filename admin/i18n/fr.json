@@ -25,5 +25,22 @@
     "Cloud scope": "Portée (scope) cloud",
     "Advanced — OAuth scope requested for the access token": "Avancé — portée OAuth demandée pour le jeton d'accès",
     "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Capturez une fois un jeton d'actualisation depuis une connexion à l'app OASE (grant_type=refresh_token) et collez-le ici. Le mot de passe de votre compte n'est pas nécessaire et n'est jamais stocké.",
-    "Choose one transport: cloud or local. The two are mutually exclusive.": "Choisissez un transport : cloud ou local. Les deux sont mutuellement exclusifs."
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Choisissez un transport : cloud ou local. Les deux sont mutuellement exclusifs.",
+    "Schedules": "Horaires",
+    "Pump schedules": "Horaires de la pompe",
+    "Loading pumps…": "Chargement des pompes…",
+    "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.": "Aucune pompe détectée pour l’instant. Démarrez l’adaptateur une fois pour qu’il découvre les pompes, puis rechargez.",
+    "Enable a pump above to define its schedules.": "Activez une pompe ci-dessus pour définir ses horaires.",
+    "Base power % (outside all windows)": "Puissance de base % (hors de toutes les fenêtres)",
+    "Start": "Début",
+    "End": "Fin",
+    "Mode": "Mode",
+    "Value": "Valeur",
+    "Power %": "Puissance %",
+    "SFC": "SFC",
+    "on": "activé",
+    "off": "désactivé",
+    "No schedules yet — outside all windows the base power applies.": "Aucun horaire pour l’instant — hors de toutes les fenêtres, la puissance de base s’applique.",
+    "Add schedule": "Ajouter un horaire",
+    "Schedules must not overlap": "Les horaires ne doivent pas se chevaucher"
 }

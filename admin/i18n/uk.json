@@ -25,5 +25,22 @@
     "Cloud scope": "Область (scope) хмари",
     "Advanced — OAuth scope requested for the access token": "Додатково — OAuth scope для access-токена",
     "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Один раз отримайте refresh-токен зі входу в застосунок OASE (grant_type=refresh_token) і вставте його сюди. Пароль вашого облікового запису не потрібен і не зберігається.",
-    "Choose one transport: cloud or local. The two are mutually exclusive.": "Виберіть один транспорт: хмара або локальний. Вони взаємовиключні."
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Виберіть один транспорт: хмара або локальний. Вони взаємовиключні.",
+    "Schedules": "Розклади",
+    "Pump schedules": "Розклади насоса",
+    "Loading pumps…": "Завантаження насосів…",
+    "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.": "Насоси ще не виявлено. Запустіть адаптер один раз, щоб він виявив насоси, потім перезавантажте.",
+    "Enable a pump above to define its schedules.": "Увімкніть насос вище, щоб задати його розклади.",
+    "Base power % (outside all windows)": "Базова потужність % (поза всіма вікнами)",
+    "Start": "Початок",
+    "End": "Кінець",
+    "Mode": "Режим",
+    "Value": "Значення",
+    "Power %": "Потужність %",
+    "SFC": "SFC",
+    "on": "увімк",
+    "off": "вимк",
+    "No schedules yet — outside all windows the base power applies.": "Розкладів поки немає — поза всіма вікнами застосовується базова потужність.",
+    "Add schedule": "Додати розклад",
+    "Schedules must not overlap": "Розклади не повинні перекриватися"
 }

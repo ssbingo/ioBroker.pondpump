@@ -25,5 +25,22 @@
     "Cloud scope": "云作用域（scope）",
     "Advanced — OAuth scope requested for the access token": "高级 — 为访问令牌请求的 OAuth 作用域",
     "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "从一次 OASE 应用登录中获取刷新令牌（grant_type=refresh_token）并粘贴到此处。不需要您的账户密码，且绝不会被存储。",
-    "Choose one transport: cloud or local. The two are mutually exclusive.": "选择一种传输方式：云端或本地。两者互斥。"
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "选择一种传输方式：云端或本地。两者互斥。",
+    "Schedules": "计划",
+    "Pump schedules": "水泵计划",
+    "Loading pumps…": "正在加载水泵…",
+    "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.": "尚未检测到水泵。请先启动适配器一次以发现水泵，然后重新加载。",
+    "Enable a pump above to define its schedules.": "在上方启用某台水泵以定义其计划。",
+    "Base power % (outside all windows)": "基础功率 %（所有时间窗口之外）",
+    "Start": "开始",
+    "End": "结束",
+    "Mode": "模式",
+    "Value": "值",
+    "Power %": "功率 %",
+    "SFC": "SFC",
+    "on": "开",
+    "off": "关",
+    "No schedules yet — outside all windows the base power applies.": "暂无计划 — 在所有时间窗口之外应用基础功率。",
+    "Add schedule": "添加计划",
+    "Schedules must not overlap": "计划不得重叠"
 }

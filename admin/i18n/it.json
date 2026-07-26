@@ -25,5 +25,22 @@
     "Cloud scope": "Scope cloud",
     "Advanced — OAuth scope requested for the access token": "Avanzato — scope OAuth richiesto per il token di accesso",
     "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Cattura una volta un refresh token da un login all'app OASE (grant_type=refresh_token) e incollalo qui. La password del tuo account non è necessaria e non viene mai memorizzata.",
-    "Choose one transport: cloud or local. The two are mutually exclusive.": "Scegli un trasporto: cloud o locale. I due si escludono a vicenda."
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Scegli un trasporto: cloud o locale. I due si escludono a vicenda.",
+    "Schedules": "Pianificazioni",
+    "Pump schedules": "Pianificazioni della pompa",
+    "Loading pumps…": "Caricamento pompe…",
+    "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.": "Nessuna pompa rilevata finora. Avvia l’adattatore una volta affinché rilevi le pompe, quindi ricarica.",
+    "Enable a pump above to define its schedules.": "Abilita una pompa sopra per definire le sue pianificazioni.",
+    "Base power % (outside all windows)": "Potenza di base % (fuori da tutte le finestre)",
+    "Start": "Inizio",
+    "End": "Fine",
+    "Mode": "Modalità",
+    "Value": "Valore",
+    "Power %": "Potenza %",
+    "SFC": "SFC",
+    "on": "acceso",
+    "off": "spento",
+    "No schedules yet — outside all windows the base power applies.": "Nessuna pianificazione ancora — fuori da tutte le finestre si applica la potenza di base.",
+    "Add schedule": "Aggiungi pianificazione",
+    "Schedules must not overlap": "Le pianificazioni non devono sovrapporsi"
 }

@@ -4,6 +4,7 @@ updates:
     directories:
       - "/"
       - "/src-widgets"
+      - "/src-admin"
     schedule:
       interval: monthly
       time: "00:05"
@@ -31,6 +32,14 @@ updates:
         update-types:
           - version-update:semver-major
       - dependency-name: "@mui/material"
+        update-types:
+          - version-update:semver-major
+      # Admin custom component shares the same host singletons: @mui/icons-material tracks
+      # @mui/material (MUI 6), and @iobroker/json-config 9.x moves to React 19 — pin both by major.
+      - dependency-name: "@mui/icons-material"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@iobroker/json-config"
         update-types:
           - version-update:semver-major
       - dependency-name: "vite"

@@ -25,5 +25,22 @@
     "Cloud scope": "Область (scope) облака",
     "Advanced — OAuth scope requested for the access token": "Дополнительно — OAuth scope для access-токена",
     "Capture a refresh token once from an OASE app login (grant_type=refresh_token) and paste it here. Your account password is not needed and is never stored.": "Один раз получите refresh-токен из входа в приложение OASE (grant_type=refresh_token) и вставьте его сюда. Пароль вашей учётной записи не нужен и не сохраняется.",
-    "Choose one transport: cloud or local. The two are mutually exclusive.": "Выберите один транспорт: облако или локальный. Они взаимоисключающие."
+    "Choose one transport: cloud or local. The two are mutually exclusive.": "Выберите один транспорт: облако или локальный. Они взаимоисключающие.",
+    "Schedules": "Расписания",
+    "Pump schedules": "Расписания насоса",
+    "Loading pumps…": "Загрузка насосов…",
+    "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.": "Насосы ещё не обнаружены. Запустите адаптер один раз, чтобы он обнаружил насосы, затем перезагрузите.",
+    "Enable a pump above to define its schedules.": "Включите насос выше, чтобы задать его расписания.",
+    "Base power % (outside all windows)": "Базовая мощность % (вне всех окон)",
+    "Start": "Начало",
+    "End": "Конец",
+    "Mode": "Режим",
+    "Value": "Значение",
+    "Power %": "Мощность %",
+    "SFC": "SFC",
+    "on": "вкл",
+    "off": "выкл",
+    "No schedules yet — outside all windows the base power applies.": "Расписаний пока нет — вне всех окон применяется базовая мощность.",
+    "Add schedule": "Добавить расписание",
+    "Schedules must not overlap": "Расписания не должны перекрываться"
 }
