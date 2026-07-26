@@ -362,7 +362,52 @@ In den Widget-Einstellungen unter **Darstellung** kannst du u. a. die **Akzentfa
 **Kartenhintergrund** ausblenden, die **Animation** abschalten oder einzelne Bereiche (Werte,
 Ein/Aus-Tasten, Schnellwahl, SFC) ein- und ausblenden.
 
-## 10. Fehlerbehebung
+## 10. Zeitpläne (Pumpen nach Zeitplan betreiben)
+
+Der Adapter kann jede Pumpe nach einem **Tagesplan** betreiben statt mit einer festen Einstellung. Du
+definierst Zeitfenster, die je eine **Power %** setzen oder **SFC** ein-/ausschalten; außerhalb jedes
+Fensters fällt die Pumpe auf eine einstellbare **Grund-Power** zurück.
+
+### 10.1 Zeitplanbetrieb für eine Pumpe einschalten
+
+1. Öffne die Instanz-Einstellungen und bleibe auf dem Tab **Verbindung**.
+2. Scrolle ganz nach unten zum Abschnitt **Zeitpläne**. Dort sind alle vom Adapter erkannten Pumpen
+   aufgelistet. (Ist die Liste leer, lass den Adapter einmal laufen, damit er die Pumpen findet, und
+   lade die Seite neu.)
+3. Schalte die Pumpe(n) ein, die nach Zeitplan laufen sollen. Jede aktivierte Pumpe erhält oben einen
+   eigenen Tab **„Scheduler – &lt;Pumpenname&gt;"**.
+
+### 10.2 Zeitfenster definieren
+
+Öffne den **Scheduler**-Tab der Pumpe:
+
+- **Grund-Power %** — gilt immer dann, wenn kein Fenster aktiv ist (z. B. ein ruhiges Nacht-Niveau).
+- Die Tabelle enthält die **Zeitfenster**. Füge mit **Zeitplan hinzufügen** eine Zeile hinzu und setze:
+  - **Start** / **Ende** — Tageszeiten (HH:MM). Ein Fenster darf nicht über Mitternacht gehen — teile es
+    in zwei auf.
+  - **Modus** — **Power %** (das Fenster setzt eine feste Leistung) oder **SFC** (das Fenster schaltet die
+    Seasonal Flow Control ein oder aus).
+  - **Wert** — der Leistungsprozentwert bzw. an/aus für SFC.
+- Fenster **dürfen sich nicht überschneiden.** Der Editor prüft live und zeigt eine rote Meldung, wenn
+  sich zwei Fenster überlappen; der Adapter prüft zusätzlich vor dem Anwenden — ein ungültiger Zeitplan
+  wird nie ausgeführt.
+
+Nicht vergessen zu **speichern**.
+
+### 10.3 Wie der Zeitplan ausgeführt wird
+
+Der Adapter wertet den Zeitplan aus und wendet das Ziel **an jeder Fenstergrenze** an (und einmal beim
+Start):
+
+- In einem **Power**-Fenster setzt er diese Leistung und schaltet SFC aus.
+- In einem **SFC**-Fenster schaltet er SFC in den gewählten Zustand und behält die Grund-Power (die nur
+  zählt, solange SFC aus ist).
+- Außerhalb jedes Fensters wendet er die **Grund-Power** mit SFC aus an.
+
+Er schreibt nur, wenn sich das Ziel tatsächlich ändert — so verträgt sich der Zeitplan mit der manuellen
+Steuerung: Deine letzte manuelle Änderung bleibt, bis die nächste Fenstergrenze die Pumpe erneut setzt.
+
+## 11. Fehlerbehebung
 
 | Symptom | Was zu prüfen ist |
 | --- | --- |
@@ -377,7 +422,7 @@ Füge bei einer Fehlermeldung das Debug-Log rund um den Fehler bei.
 
 ---
 
-## 11. Datenschutz & Sicherheit
+## 12. Datenschutz & Sicherheit
 
 - Dein **OASE-Kontopasswort** wird nie in den Adapter eingegeben oder gespeichert.
 - Der **Refresh-Token** und das **Gerätepasswort** werden in ioBroker **verschlüsselt** gespeichert.

@@ -350,7 +350,49 @@ In the widget settings under **Appearance** you can, among other things, choose 
 hide the **card background**, turn off the **animation**, or show/hide individual parts (values,
 on/off buttons, quick buttons, SFC).
 
-## 10. Troubleshooting
+## 10. Schedules (running pumps on a timetable)
+
+The adapter can run each pump on a **daily schedule** instead of a fixed setting. You define time
+windows that each set a **power %** or switch **SFC** on/off; outside every window the pump falls back
+to a configurable **base power**.
+
+### 10.1 Turn on scheduling for a pump
+
+1. Open the instance settings and stay on the **Connection** tab.
+2. Scroll to the **Schedules** section at the bottom. It lists every pump the adapter has discovered.
+   (If it is empty, let the adapter run once so it finds the pumps, then reload the page.)
+3. Switch on the pump(s) you want to run on a timetable. Each enabled pump gets its own
+   **“Scheduler – &lt;pump name&gt;”** tab at the top.
+
+### 10.2 Define the time windows
+
+Open the pump's **Scheduler** tab:
+
+- **Base power %** — applied whenever no window is active (e.g. a quiet night level).
+- The table holds the **time windows**. Add a row with **Add schedule** and set:
+  - **Start** / **End** — daily times (HH:MM). A window may not cross midnight — split it into two.
+  - **Mode** — **Power %** (the window sets a fixed power) or **SFC** (the window switches Seasonal
+    Flow Control on or off).
+  - **Value** — the power percentage, or on/off for SFC.
+- Windows **must not overlap.** The editor validates live and shows a red message if two windows
+  collide; the adapter also re-checks before applying, so an invalid schedule is never run.
+
+Remember to **Save**.
+
+### 10.3 How it runs
+
+The adapter evaluates the schedule and applies the target **at each window boundary** (and once at
+start-up):
+
+- Inside a **Power** window it sets that power and switches SFC off.
+- Inside an **SFC** window it switches SFC to the chosen state and keeps the base power (which only
+  matters while SFC is off).
+- Outside every window it applies the **base power** with SFC off.
+
+It only writes when the target actually changes, so scheduling coexists with manual control: your last
+manual change stays until the next window boundary moves the pump again.
+
+## 11. Troubleshooting
 
 | Symptom | What to check |
 | --- | --- |
@@ -365,7 +407,7 @@ include the debug log around the failure.
 
 ---
 
-## 11. Privacy & safety
+## 12. Privacy & safety
 
 - Your **OASE account password** is never entered into or stored by the adapter.
 - The **refresh token** and **device password** are stored **encrypted** in ioBroker.

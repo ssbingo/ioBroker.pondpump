@@ -79,7 +79,7 @@ All settings are available in the Admin UI (JSON config):
 
 ### 0.0.9 (2026-07-26)
 
-- (ssbingo) **Phase 9 — per-pump time schedules.** A new scheduler in the adapter settings lists the detected pumps; enable a pump and it gets its own tab where you define a **base power** (applied outside all windows) and a sorted list of **time windows**, each setting a power % or switching **SFC** on/off. The adapter runs the schedule and applies the target at the window boundaries. **Overlapping windows are rejected** — the editor validates live and the backend re-checks before applying
+- (ssbingo) **Phase 9 — per-pump time schedules.** The adapter settings gain a **Schedules** section (bottom of the Connection tab) that lists the detected pumps; enable a pump and it gets its own **“Scheduler – &lt;pump&gt;” tab** where you set a **base power** (applied outside all windows) and a sorted list of **time windows**, each setting a power % or switching **SFC** on/off. The adapter runs the schedule and applies the target at the window boundaries. **Overlapping windows are rejected** — the editor validates live and the backend re-checks before applying
 
 ### 0.0.8 (2026-07-25)
 
