@@ -38,6 +38,10 @@ function buildAdmin() {
         .then(() => buildReact(src, { rootDir: __dirname, vite: true }))
         .then(() => {
             copyFiles([`${SRC}build/customComponents.js`], 'admin/custom');
+            // Serve the module-federation manifest next to the entry: admin >=8 reads it to
+            // determine the GUI API generation the component was built against (gui-components =
+            // generation 2). Without it the component is rejected as "generation 1".
+            copyFiles([`${SRC}build/mf-manifest.json`], 'admin/custom');
             copyFiles([`${SRC}build/assets/*.*`], 'admin/custom/assets');
         });
 }

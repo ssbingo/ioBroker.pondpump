@@ -184,14 +184,14 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "newLine": true,
                     "xs": 12,
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             }
         },
@@ -204,7 +204,6 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "custom": {
                         "pumpSlot": 0
@@ -214,7 +213,8 @@
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             },
             "noTranslation": true
@@ -228,7 +228,6 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "custom": {
                         "pumpSlot": 1
@@ -238,7 +237,8 @@
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             },
             "noTranslation": true
@@ -252,7 +252,6 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "custom": {
                         "pumpSlot": 2
@@ -262,7 +261,8 @@
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             },
             "noTranslation": true
@@ -276,7 +276,6 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "custom": {
                         "pumpSlot": 3
@@ -286,7 +285,8 @@
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             },
             "noTranslation": true
@@ -300,7 +300,6 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "custom": {
                         "pumpSlot": 4
@@ -310,7 +309,8 @@
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             },
             "noTranslation": true
@@ -324,7 +324,6 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "custom": {
                         "pumpSlot": 5
@@ -334,7 +333,8 @@
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             },
             "noTranslation": true
@@ -348,7 +348,6 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "custom": {
                         "pumpSlot": 6
@@ -358,7 +357,8 @@
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             },
             "noTranslation": true
@@ -372,7 +372,6 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "custom": {
                         "pumpSlot": 7
@@ -382,7 +381,8 @@
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             },
             "noTranslation": true
@@ -396,7 +396,6 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "custom": {
                         "pumpSlot": 8
@@ -406,7 +405,8 @@
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             },
             "noTranslation": true
@@ -420,7 +420,6 @@
                     "type": "custom",
                     "url": "custom/customComponents.js",
                     "name": "ConfigCustomPondpumpSet/Components/PondpumpScheduler",
-                    "bundlerType": "module",
                     "i18n": true,
                     "custom": {
                         "pumpSlot": 9
@@ -430,7 +429,8 @@
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
-                    "xl": 12
+                    "xl": 12,
+                    "guiApi": 2
                 }
             },
             "noTranslation": true
