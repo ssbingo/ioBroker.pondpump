@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "news": {
-            "0.1.0": {
-                "en": "Milestone 0.1.0 — consolidates the full feature set (cloud & local control with live telemetry, SFC, two vis-2 widgets, and per-pump time schedules) into the first 0.1.x release, plus repository/CI maintenance.",
-                "de": "Meilenstein 0.1.0 — bündelt den kompletten Funktionsumfang (Cloud- & lokale Steuerung samt Live-Telemetrie, SFC, zwei vis-2-Widgets und Zeitpläne pro Pumpe) im ersten 0.1.x-Release, plus Repository-/CI-Wartung.",
-                "ru": "Веха 0.1.0 — объединяет весь функционал (облачное и локальное управление с телеметрией в реальном времени, SFC, два виджета vis-2 и расписания для каждого насоса) в первом релизе 0.1.x, плюс обслуживание репозитория/CI.",
-                "pt": "Marco 0.1.0 — consolida todo o conjunto de funcionalidades (controlo cloud e local com telemetria em tempo real, SFC, dois widgets vis-2 e horários por bomba) no primeiro lançamento 0.1.x, além de manutenção de repositório/CI.",
-                "nl": "Mijlpaal 0.1.0 — bundelt de volledige functionaliteit (cloud- en lokale besturing met live-telemetrie, SFC, twee vis-2-widgets en schema’s per pomp) in de eerste 0.1.x-release, plus repository-/CI-onderhoud.",
-                "fr": "Jalon 0.1.0 — regroupe l’ensemble des fonctionnalités (contrôle cloud et local avec télémétrie en direct, SFC, deux widgets vis-2 et horaires par pompe) dans la première version 0.1.x, ainsi que la maintenance du dépôt/CI.",
-                "it": "Traguardo 0.1.0 — consolida l’intero set di funzionalità (controllo cloud e locale con telemetria in tempo reale, SFC, due widget vis-2 e pianificazioni per pompa) nella prima release 0.1.x, oltre alla manutenzione di repository/CI.",
-                "es": "Hito 0.1.0 — consolida todo el conjunto de funciones (control en la nube y local con telemetría en vivo, SFC, dos widgets vis-2 y horarios por bomba) en la primera versión 0.1.x, además de mantenimiento del repositorio/CI.",
-                "pl": "Kamień milowy 0.1.0 — łączy pełny zestaw funkcji (sterowanie w chmurze i lokalne z telemetrią na żywo, SFC, dwa widżety vis-2 i harmonogramy dla każdej pompy) w pierwszym wydaniu 0.1.x, plus konserwacja repozytorium/CI.",
-                "uk": "Віха 0.1.0 — обʼєднує весь функціонал (хмарне та локальне керування з телеметрією в реальному часі, SFC, два віджети vis-2 і розклади для кожного насоса) у першому релізі 0.1.x, а також обслуговування репозиторію/CI.",
-                "zh-cn": "里程碑 0.1.0 — 将完整功能集（云端与本地控制及实时遥测、SFC、两个 vis-2 小部件、每台水泵的时间计划）整合到首个 0.1.x 版本，并进行仓库/CI 维护。"
+            "0.2.0": {
+                "en": "Requires ioBroker admin >= 8.0.0. The admin scheduler is migrated to the admin-8 UI stack: React 19 + MUI 9 via @iobroker/gui-components and @iobroker/json-config 9. Minimum versions: js-controller >= 6.0.11, admin >= 8.0.0, Node.js >= 22.",
+                "de": "Erfordert ioBroker admin >= 8.0.0. Der Admin-Scheduler wurde auf den admin-8-UI-Stack migriert: React 19 + MUI 9 über @iobroker/gui-components und @iobroker/json-config 9. Mindestversionen: js-controller >= 6.0.11, admin >= 8.0.0, Node.js >= 22.",
+                "ru": "Требуется ioBroker admin >= 8.0.0. Планировщик в admin переведён на UI-стек admin 8: React 19 + MUI 9 через @iobroker/gui-components и @iobroker/json-config 9. Минимальные версии: js-controller >= 6.0.11, admin >= 8.0.0, Node.js >= 22.",
+                "pt": "Requer ioBroker admin >= 8.0.0. O agendador no admin foi migrado para a stack de UI do admin 8: React 19 + MUI 9 via @iobroker/gui-components e @iobroker/json-config 9. Versões mínimas: js-controller >= 6.0.11, admin >= 8.0.0, Node.js >= 22.",
+                "nl": "Vereist ioBroker admin >= 8.0.0. De admin-scheduler is gemigreerd naar de admin-8 UI-stack: React 19 + MUI 9 via @iobroker/gui-components en @iobroker/json-config 9. Minimumversies: js-controller >= 6.0.11, admin >= 8.0.0, Node.js >= 22.",
+                "fr": "Nécessite ioBroker admin >= 8.0.0. Le planificateur admin est migré vers la pile UI admin 8 : React 19 + MUI 9 via @iobroker/gui-components et @iobroker/json-config 9. Versions minimales : js-controller >= 6.0.11, admin >= 8.0.0, Node.js >= 22.",
+                "it": "Richiede ioBroker admin >= 8.0.0. Lo scheduler in admin è migrato allo stack UI di admin 8: React 19 + MUI 9 tramite @iobroker/gui-components e @iobroker/json-config 9. Versioni minime: js-controller >= 6.0.11, admin >= 8.0.0, Node.js >= 22.",
+                "es": "Requiere ioBroker admin >= 8.0.0. El planificador del admin se ha migrado a la pila de UI de admin 8: React 19 + MUI 9 mediante @iobroker/gui-components y @iobroker/json-config 9. Versiones mínimas: js-controller >= 6.0.11, admin >= 8.0.0, Node.js >= 22.",
+                "pl": "Wymaga ioBroker admin >= 8.0.0. Harmonogram w admin został przeniesiony na stos UI admin 8: React 19 + MUI 9 przez @iobroker/gui-components i @iobroker/json-config 9. Wersje minimalne: js-controller >= 6.0.11, admin >= 8.0.0, Node.js >= 22.",
+                "uk": "Потребує ioBroker admin >= 8.0.0. Планувальник в admin перенесено на UI-стек admin 8: React 19 + MUI 9 через @iobroker/gui-components та @iobroker/json-config 9. Мінімальні версії: js-controller >= 6.0.11, admin >= 8.0.0, Node.js >= 22.",
+                "zh-cn": "需要 ioBroker admin >= 8.0.0。管理界面的计划器已迁移到 admin 8 的 UI 技术栈：通过 @iobroker/gui-components 和 @iobroker/json-config 9 使用 React 19 + MUI 9。最低版本：js-controller >= 6.0.11、admin >= 8.0.0、Node.js >= 22。"
             }
         },
         "titleLang": {
@@ -93,11 +93,14 @@
         "dependencies": [
             {
                 "js-controller": ">=6.0.11"
+            },
+            {
+                "node": ">=22"
             }
         ],
         "globalDependencies": [
             {
-                "admin": ">=7.6.20"
+                "admin": ">=8.0.0"
             }
         ]
     },

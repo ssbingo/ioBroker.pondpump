@@ -19,14 +19,13 @@ import {
     Typography,
 } from "@mui/material";
 import { Add as IconAdd, Delete as IconDelete } from "@mui/icons-material";
-import { I18n } from "@iobroker/adapter-react-v5";
+import { I18n } from "@iobroker/gui-components";
 import { ConfigGeneric, type ConfigGenericProps, type ConfigGenericState } from "@iobroker/json-config";
 
 import {
     clampPercent,
     type PumpSchedule,
     type PumpScheduleConfig,
-    type ScheduleMode,
     type SchedulesConfig,
     validatePlans,
 } from "./schedule";
@@ -188,7 +187,7 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                         size="small"
                         variant="standard"
                         value={plan.mode}
-                        onChange={e => this.updatePlan(id, index, { mode: e.target.value as ScheduleMode })}
+                        onChange={e => this.updatePlan(id, index, { mode: e.target.value })}
                     >
                         <MenuItem value="power">{I18n.t("Power %")}</MenuItem>
                         <MenuItem value="sfc">{I18n.t("SFC")}</MenuItem>

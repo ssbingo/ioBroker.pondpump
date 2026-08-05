@@ -22,10 +22,12 @@ updates:
       - dependency-name: "@types/node"
         update-types:
           - version-update:semver-major
-      # vis-2 widget toolchain: the vis-2 host shares React 18 and MUI 6 as module-federation
-      # singletons, and the latest @iobroker/adapter-react-v5 (8.3.x) + the flagship
-      # ioBroker.vis-2-widgets-material both stay on React 18 / MUI 6 / Vite 7 / plugin-react 5.
-      # Bumping these majors would break singleton compatibility with the host — pinned by major.
+      # Two module-federation hosts with DIFFERENT React/MUI majors — freeze each where it is,
+      # since a major bump would break singleton compatibility with its host:
+      #   - src-admin  → iobroker.admin >=8 host = React 19 + MUI 9 + @iobroker/json-config 9
+      #     (@iobroker/gui-components replaces adapter-react-v5 there; no React-19 adapter-react-v5).
+      #   - src-widgets → vis-2 host = React 18 + MUI 6 + @iobroker/adapter-react-v5 8.3.x.
+      # One npm entry covers both dirs, so the per-major ignores pin admin at 19/9 and widgets at 18/6.
       - dependency-name: "react"
         update-types:
           - version-update:semver-major
@@ -35,8 +37,6 @@ updates:
       - dependency-name: "@mui/material"
         update-types:
           - version-update:semver-major
-      # Admin custom component shares the same host singletons: @mui/icons-material tracks
-      # @mui/material (MUI 6), and @iobroker/json-config 9.x moves to React 19 — pin both by major.
       - dependency-name: "@mui/icons-material"
         update-types:
           - version-update:semver-major
