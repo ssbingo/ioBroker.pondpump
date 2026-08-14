@@ -127,6 +127,8 @@ All settings are available in the Admin UI (JSON config):
 - (ssbingo) Pumps are named after their controller name; new stylized adapter icon (own illustration, not the product photo)
 - (ssbingo) Extensive, component-tagged logging so any failure can be pinpointed from the logs, with secrets never logged
 
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## Documentation
 
 📖 **Beginner's handbook:** [English](doc/handbook/en/manual.md) ([PDF](doc/handbook/en/manual.pdf)) ·
