@@ -8,6 +8,11 @@
         // the compilation is configured in tsconfig.build.json
         "noEmit": true,
 
+        // @tsconfig/node22 >=22.0.6 pins "types" to ["node"], which drops the ambient mocha
+        // globals (describe/it) used by the *.test.ts files that this config type-checks.
+        // Re-add mocha so the full type-check (npm run check / CI) passes.
+        "types": ["node", "mocha"],
+
         // check JS files, but do not compile them => tsconfig.build.json
         "allowJs": true,
         "checkJs": true,
