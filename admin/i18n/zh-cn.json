@@ -129,5 +129,8 @@
     "Only above water temperature (°C)": "仅在水温以上（°C）",
     "Below this, no protection (cold water needs no night flow). Suggested 18.": "低于此值不保护（冷水夜间无需流量）。建议 18。",
     "Night floor power %": "夜间最低功率 %",
-    "The flow is not reduced below this at night. Default 100 %.": "夜间流量不会低于此值。默认 100 %。"
+    "The flow is not reduced below this at night. Default 100 %.": "夜间流量不会低于此值。默认 100 %。",
+    "Actuator": "执行器",
+    "On value": "开启值",
+    "Off value (blank = leave)": "关闭值（留空=保持）"
 }

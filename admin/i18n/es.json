@@ -129,5 +129,8 @@
     "Only above water temperature (°C)": "Solo por encima de la temperatura del agua (°C)",
     "Below this, no protection (cold water needs no night flow). Suggested 18.": "Por debajo, sin protección (el agua fría no necesita caudal nocturno). Sugerido 18.",
     "Night floor power %": "Potencia mínima nocturna %",
-    "The flow is not reduced below this at night. Default 100 %.": "El caudal no se reduce por debajo de esto de noche. Predeterminado 100 %."
+    "The flow is not reduced below this at night. Default 100 %.": "El caudal no se reduce por debajo de esto de noche. Predeterminado 100 %.",
+    "Actuator": "Actuador",
+    "On value": "Valor encendido",
+    "Off value (blank = leave)": "Valor apagado (vacío = dejar)"
 }

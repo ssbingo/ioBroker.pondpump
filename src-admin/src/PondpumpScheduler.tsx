@@ -495,6 +495,66 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
         );
     }
 
+    /** Value cell for one window: a power %, an SFC on/off, or an actuator target + on/off values. */
+    private renderPlanValue(id: string, index: number, plan: PumpSchedule): React.JSX.Element {
+        if (plan.mode === "power") {
+            return (
+                <TextField
+                    type="number"
+                    size="small"
+                    variant="standard"
+                    slotProps={{ htmlInput: { min: 0, max: 100, step: 5 } }}
+                    value={plan.power ?? 0}
+                    onChange={e => this.updatePlan(id, index, { power: clampPercent(Number(e.target.value)) })}
+                    sx={{ width: 80 }}
+                />
+            );
+        }
+        if (plan.mode === "sfc") {
+            return (
+                <Select
+                    size="small"
+                    variant="standard"
+                    value={plan.sfc ? "on" : "off"}
+                    onChange={e => this.updatePlan(id, index, { sfc: e.target.value === "on" })}
+                >
+                    <MenuItem value="on">{I18n.t("on")}</MenuItem>
+                    <MenuItem value="off">{I18n.t("off")}</MenuItem>
+                </Select>
+            );
+        }
+        // actuator: an external state driven on/off by the window
+        return (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, minWidth: 240 }}>
+                {this.renderOidField(plan.target ?? "", v => this.updatePlan(id, index, { target: v }), {
+                    label: I18n.t("Target state id"),
+                })}
+                <Box sx={{ display: "flex", gap: 1 }}>
+                    <TextField
+                        size="small"
+                        variant="standard"
+                        label={I18n.t("On value")}
+                        value={actuatorValueText(plan.onValue)}
+                        onChange={e => this.updatePlan(id, index, { onValue: parseActuatorValue(e.target.value) })}
+                        sx={{ width: 110 }}
+                    />
+                    <TextField
+                        size="small"
+                        variant="standard"
+                        label={I18n.t("Off value (blank = leave)")}
+                        value={plan.offValue === undefined ? "" : actuatorValueText(plan.offValue)}
+                        onChange={e =>
+                            this.updatePlan(id, index, {
+                                offValue: e.target.value === "" ? undefined : parseActuatorValue(e.target.value),
+                            })
+                        }
+                        sx={{ width: 150 }}
+                    />
+                </Box>
+            </Box>
+        );
+    }
+
     private renderPlanRow(id: string, plan: PumpSchedule, index: number): React.JSX.Element {
         return (
             <TableRow key={index}>
@@ -509,31 +569,10 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                     >
                         <MenuItem value="power">{I18n.t("Power %")}</MenuItem>
                         <MenuItem value="sfc">{I18n.t("SFC")}</MenuItem>
+                        <MenuItem value="actuator">{I18n.t("Actuator")}</MenuItem>
                     </Select>
                 </TableCell>
-                <TableCell>
-                    {plan.mode === "power" ? (
-                        <TextField
-                            type="number"
-                            size="small"
-                            variant="standard"
-                            slotProps={{ htmlInput: { min: 0, max: 100, step: 5 } }}
-                            value={plan.power ?? 0}
-                            onChange={e => this.updatePlan(id, index, { power: clampPercent(Number(e.target.value)) })}
-                            sx={{ width: 80 }}
-                        />
-                    ) : (
-                        <Select
-                            size="small"
-                            variant="standard"
-                            value={plan.sfc ? "on" : "off"}
-                            onChange={e => this.updatePlan(id, index, { sfc: e.target.value === "on" })}
-                        >
-                            <MenuItem value="on">{I18n.t("on")}</MenuItem>
-                            <MenuItem value="off">{I18n.t("off")}</MenuItem>
-                        </Select>
-                    )}
-                </TableCell>
+                <TableCell>{this.renderPlanValue(id, index, plan)}</TableCell>
                 <TableCell padding="none">
                     <IconButton
                         size="small"

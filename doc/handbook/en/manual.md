@@ -371,9 +371,11 @@ Open the pump's **Scheduler** tab:
 - **Base power %** — applied whenever no window is active (e.g. a quiet night level).
 - The table holds the **time windows**. Add a row with **Add schedule** and set:
   - **Start** / **End** — daily times (HH:MM). A window may not cross midnight — split it into two.
-  - **Mode** — **Power %** (the window sets a fixed power) or **SFC** (the window switches Seasonal
-    Flow Control on or off).
-  - **Value** — the power percentage, or on/off for SFC.
+  - **Mode** — **Power %** (the window sets a fixed power), **SFC** (the window switches Seasonal Flow
+    Control on or off), or **Actuator** (the window drives an **external state**, e.g. a waterfall/UVC —
+    combine it with astro bounds, see 10.4).
+  - **Value** — the power percentage, or on/off for SFC; for an **Actuator**, the **target object id**
+    plus an on-value (active) and an optional off-value (inactive; blank = leave it untouched outside).
 - Windows **must not overlap.** The editor validates live and shows a red message if two windows
   collide; the adapter also re-checks before applying, so an invalid schedule is never run.
 

@@ -385,9 +385,11 @@ Fensters fällt die Pumpe auf eine einstellbare **Grund-Power** zurück.
 - Die Tabelle enthält die **Zeitfenster**. Füge mit **Zeitplan hinzufügen** eine Zeile hinzu und setze:
   - **Start** / **Ende** — Tageszeiten (HH:MM). Ein Fenster darf nicht über Mitternacht gehen — teile es
     in zwei auf.
-  - **Modus** — **Power %** (das Fenster setzt eine feste Leistung) oder **SFC** (das Fenster schaltet die
-    Seasonal Flow Control ein oder aus).
-  - **Wert** — der Leistungsprozentwert bzw. an/aus für SFC.
+  - **Modus** — **Power %** (das Fenster setzt eine feste Leistung), **SFC** (das Fenster schaltet die
+    Seasonal Flow Control ein oder aus) oder **Aktor** (das Fenster schaltet einen **externen State**, z. B.
+    Bachlauf/Wasserfall/UVC — kombinierbar mit Astro-Grenzen, siehe 10.4).
+  - **Wert** — der Leistungsprozentwert bzw. an/aus für SFC; beim **Aktor** die **Ziel-Objekt-ID** plus
+    An-Wert (aktiv) und optionalem Aus-Wert (inaktiv; leer = außerhalb unverändert lassen).
 - Fenster **dürfen sich nicht überschneiden.** Der Editor prüft live und zeigt eine rote Meldung, wenn
   sich zwei Fenster überlappen; der Adapter prüft zusätzlich vor dem Anwenden — ein ungültiger Zeitplan
   wird nie ausgeführt.

@@ -10,8 +10,11 @@
  * use minutes-of-day (0..1439).
  */
 
-/** Whether a schedule window sets a power % or switches Seasonal Flow Control. */
-export type ScheduleMode = "power" | "sfc";
+/**
+ * What a schedule window does: set a power %, switch Seasonal Flow Control, or drive an external
+ * actuator state (Phase 13 — e.g. a waterfall/UVC on during the window, off outside it).
+ */
+export type ScheduleMode = "power" | "sfc" | "actuator";
 
 /**
  * How a window boundary is defined (Phase 13):
@@ -42,12 +45,18 @@ export interface PumpSchedule {
     endMode?: WindowBoundMode;
     /** Phase 13 — offset in minutes (may be negative) applied when `endMode` is sunrise/sunset. */
     endOffset?: number;
-    /** Whether the window sets a power % ("power") or switches SFC ("sfc"). */
+    /** What the window does: set a power %, switch SFC, or drive an actuator. */
     mode: ScheduleMode;
     /** Target power in % (0..100) when `mode` is "power". */
     power?: number;
     /** Target SFC state when `mode` is "sfc". */
     sfc?: boolean;
+    /** Foreign state id to drive when `mode` is "actuator". */
+    target?: string;
+    /** Value written to `target` while the window is active (default true). */
+    onValue?: number | boolean;
+    /** Value written to `target` while the window is inactive (omit to leave it untouched outside). */
+    offValue?: number | boolean;
 }
 
 /** Comparison operator for a condition rule (source value vs. threshold). */
@@ -263,6 +272,14 @@ export function validatePlans(plans: PumpSchedule[]): ValidationResult {
     const windows: Array<{ start: number; end: number; index: number }> = [];
     for (let i = 0; i < plans.length; i++) {
         const plan = plans[i];
+        if (plan.mode === "actuator") {
+            // Actuator windows drive an external state and are independent — they need a target, but
+            // are not power-checked and may overlap (with each other and with power/sfc windows).
+            if (!plan.target) {
+                return { valid: false, error: `Schedule ${i + 1}: actuator target missing` };
+            }
+            continue;
+        }
         if (plan.mode === "power") {
             const v = Number(plan.power);
             if (!Number.isFinite(v) || v < 0 || v > 100) {
@@ -363,6 +380,51 @@ export function isAstroDay(astro: AstroTimes, nowMin: number): boolean | null {
 }
 
 /**
+ * Whether a single plan's resolved window contains `nowMin` (astro bounds resolved, midnight wrap OK).
+ *
+ * @param plan - the schedule window
+ * @param nowMin - current minute-of-day
+ * @param astro - resolved astro times for the day
+ */
+function planActive(plan: PumpSchedule, nowMin: number, astro: AstroTimes): boolean {
+    const start = resolveBound(plan.startMode, plan.start, plan.startOffset, astro);
+    const end = resolveBound(plan.endMode, plan.end, plan.endOffset, astro);
+    return start !== null && end !== null && windowActive(start, end, nowMin);
+}
+
+/**
+ * External actuator writes from "actuator" windows (Phase 13): for each distinct target, write its
+ * on-value while any of its windows is active, else its off-value (omit off-value → leave untouched).
+ *
+ * @param plans - the pump's schedule windows
+ * @param nowMin - current minute-of-day
+ * @param astro - resolved astro times for the day
+ */
+function actuatorWrites(plans: PumpSchedule[], nowMin: number, astro: AstroTimes): ActuatorWrite[] {
+    const byTarget = new Map<string, { active: boolean; on: number | boolean; off?: number | boolean }>();
+    for (const plan of plans) {
+        if (plan.mode !== "actuator" || !plan.target) {
+            continue;
+        }
+        const e = byTarget.get(plan.target) ?? { active: false, on: true };
+        e.on = plan.onValue ?? true;
+        e.off = plan.offValue;
+        if (planActive(plan, nowMin, astro)) {
+            e.active = true;
+        }
+        byTarget.set(plan.target, e);
+    }
+    const writes: ActuatorWrite[] = [];
+    for (const [target, e] of byTarget) {
+        const value = e.active ? e.on : e.off;
+        if (value !== undefined) {
+            writes.push({ target, value });
+        }
+    }
+    return writes;
+}
+
+/**
  * The window active at `nowMin`, or undefined if none. Boundaries are resolved against `astro` (so
  * sunrise/sunset windows work and may wrap past midnight); malformed/unavailable windows are ignored.
  *
@@ -453,7 +515,12 @@ export function interpolateCurve(points: CurvePoint[], temp: number): number | n
  */
 function windowTarget(config: PumpScheduleConfig, nowMin: number, astro: AstroTimes): ScheduleTarget {
     const basePower = clampPercent(config.basePower);
-    const window = activeWindow(config.plans, nowMin, astro);
+    // Only power/sfc windows drive the pump; "actuator" windows drive external states (see decideTarget).
+    const window = activeWindow(
+        config.plans.filter(p => p.mode !== "actuator"),
+        nowMin,
+        astro,
+    );
     if (!window) {
         return { sfc: false, power: basePower };
     }
@@ -527,7 +594,11 @@ export function decideTarget(
     sources: Record<string, number> = {},
     astro: AstroTimes = NO_ASTRO,
 ): ScheduleDecision {
-    const window = activeWindow(config.plans, nowMin, astro);
+    const window = activeWindow(
+        config.plans.filter(p => p.mode !== "actuator"),
+        nowMin,
+        astro,
+    );
     const priority = config.conditionPriority ?? "override";
     const curve = curveTarget(config, sources);
 
@@ -591,6 +662,9 @@ export function decideTarget(
                 break;
         }
     }
+
+    // "actuator" windows drive external states independently of the pump power/SFC decision.
+    actuators.push(...actuatorWrites(config.plans, nowMin, astro));
 
     // maxPower is a hard ceiling applied last — it caps the curve, every raise/boost and the fail-safe.
     const maxPower = config.maxPower === undefined ? 100 : clampPercent(config.maxPower);

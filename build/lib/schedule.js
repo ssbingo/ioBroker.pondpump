@@ -67,6 +67,12 @@ function validatePlans(plans) {
   const windows = [];
   for (let i = 0; i < plans.length; i++) {
     const plan = plans[i];
+    if (plan.mode === "actuator") {
+      if (!plan.target) {
+        return { valid: false, error: `Schedule ${i + 1}: actuator target missing` };
+      }
+      continue;
+    }
     if (plan.mode === "power") {
       const v = Number(plan.power);
       if (!Number.isFinite(v) || v < 0 || v > 100) {
@@ -123,6 +129,35 @@ function isAstroDay(astro, nowMin) {
   }
   return windowActive(astro.sunriseMin, astro.sunsetMin, nowMin);
 }
+function planActive(plan, nowMin, astro) {
+  const start = resolveBound(plan.startMode, plan.start, plan.startOffset, astro);
+  const end = resolveBound(plan.endMode, plan.end, plan.endOffset, astro);
+  return start !== null && end !== null && windowActive(start, end, nowMin);
+}
+function actuatorWrites(plans, nowMin, astro) {
+  var _a, _b;
+  const byTarget = /* @__PURE__ */ new Map();
+  for (const plan of plans) {
+    if (plan.mode !== "actuator" || !plan.target) {
+      continue;
+    }
+    const e = (_a = byTarget.get(plan.target)) != null ? _a : { active: false, on: true };
+    e.on = (_b = plan.onValue) != null ? _b : true;
+    e.off = plan.offValue;
+    if (planActive(plan, nowMin, astro)) {
+      e.active = true;
+    }
+    byTarget.set(plan.target, e);
+  }
+  const writes = [];
+  for (const [target, e] of byTarget) {
+    const value = e.active ? e.on : e.off;
+    if (value !== void 0) {
+      writes.push({ target, value });
+    }
+  }
+  return writes;
+}
 function activeWindow(plans, nowMin, astro = NO_ASTRO) {
   for (const plan of plans) {
     const start = resolveBound(plan.startMode, plan.start, plan.startOffset, astro);
@@ -176,7 +211,11 @@ function interpolateCurve(points, temp) {
 function windowTarget(config, nowMin, astro) {
   var _a;
   const basePower = clampPercent(config.basePower);
-  const window = activeWindow(config.plans, nowMin, astro);
+  const window = activeWindow(
+    config.plans.filter((p) => p.mode !== "actuator"),
+    nowMin,
+    astro
+  );
   if (!window) {
     return { sfc: false, power: basePower };
   }
@@ -216,7 +255,11 @@ function collectSourceOids(config) {
 }
 function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO) {
   var _a, _b, _c, _d, _e, _f, _g, _h;
-  const window = activeWindow(config.plans, nowMin, astro);
+  const window = activeWindow(
+    config.plans.filter((p) => p.mode !== "actuator"),
+    nowMin,
+    astro
+  );
   const priority = (_a = config.conditionPriority) != null ? _a : "override";
   const curve = curveTarget(config, sources);
   let base;
@@ -272,6 +315,7 @@ function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO) {
         break;
     }
   }
+  actuators.push(...actuatorWrites(config.plans, nowMin, astro));
   const maxPower = config.maxPower === void 0 ? 100 : clampPercent(config.maxPower);
   power = Math.min(power, maxPower);
   return { sfc, power: hold && !raised ? "hold" : power, actuators, failSafe };

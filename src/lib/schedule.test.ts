@@ -359,6 +359,51 @@ describe("schedule conditions (Phase 11)", () => {
         });
     });
 
+    describe("decideTarget — actuator windows (Phase 13)", () => {
+        const AER = "sonoff.0.waterfall";
+        it("writes on/off values by window state and does not touch the pump power", () => {
+            const c = cfg({
+                basePower: 40,
+                plans: [
+                    { start: "09:00", end: "20:00", mode: "actuator", target: AER, onValue: true, offValue: false },
+                ],
+            });
+            const day = decideTarget(c, at(12));
+            expect(day.actuators).to.deep.equal([{ target: AER, value: true }]); // inside window → on
+            expect(day.power).to.equal(40); // actuator window leaves the pump at base power
+            expect(decideTarget(c, at(22)).actuators).to.deep.equal([{ target: AER, value: false }]); // outside → off
+        });
+        it("leaves the target untouched outside when no off-value is set; supports astro bounds", () => {
+            const astroDay: AstroTimes = { sunriseMin: at(6), sunsetMin: at(20) };
+            const c = cfg({
+                plans: [
+                    {
+                        start: "",
+                        startMode: "sunset",
+                        end: "",
+                        endMode: "sunrise",
+                        mode: "actuator",
+                        target: AER,
+                        onValue: 1,
+                    },
+                ],
+            });
+            expect(decideTarget(c, at(23), {}, astroDay).actuators).to.deep.equal([{ target: AER, value: 1 }]); // night → on
+            expect(decideTarget(c, at(12), {}, astroDay).actuators).to.deep.equal([]); // day, no off-value → nothing
+        });
+        it("validatePlans requires an actuator target but allows overlap with power windows", () => {
+            expect(validatePlans([{ start: "09:00", end: "20:00", mode: "actuator", onValue: true }]).valid).to.equal(
+                false,
+            );
+            expect(
+                validatePlans([
+                    { start: "06:00", end: "22:00", mode: "power", power: 60 },
+                    { start: "09:00", end: "20:00", mode: "actuator", target: AER, onValue: true }, // overlaps → allowed
+                ]).valid,
+            ).to.equal(true);
+        });
+    });
+
     describe("decideTarget — weather rules only raise / hold / act", () => {
         const curve = {
             enabled: true,

@@ -129,5 +129,8 @@
     "Only above water temperature (°C)": "Only above water temperature (°C)",
     "Below this, no protection (cold water needs no night flow). Suggested 18.": "Below this, no protection (cold water needs no night flow). Suggested 18.",
     "Night floor power %": "Night floor power %",
-    "The flow is not reduced below this at night. Default 100 %.": "The flow is not reduced below this at night. Default 100 %."
+    "The flow is not reduced below this at night. Default 100 %.": "The flow is not reduced below this at night. Default 100 %.",
+    "Actuator": "Actuator",
+    "On value": "On value",
+    "Off value (blank = leave)": "Off value (blank = leave)"
 }

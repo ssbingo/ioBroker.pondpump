@@ -129,5 +129,8 @@
     "Only above water temperature (°C)": "Alleen boven watertemperatuur (°C)",
     "Below this, no protection (cold water needs no night flow). Suggested 18.": "Daaronder geen bescherming (koud water heeft 's nachts geen doorstroming nodig). Aanbevolen 18.",
     "Night floor power %": "Nacht-minimumvermogen %",
-    "The flow is not reduced below this at night. Default 100 %.": "De doorstroming komt 's nachts niet onder deze waarde. Standaard 100 %."
+    "The flow is not reduced below this at night. Default 100 %.": "De doorstroming komt 's nachts niet onder deze waarde. Standaard 100 %.",
+    "Actuator": "Actuator",
+    "On value": "Aan-waarde",
+    "Off value (blank = leave)": "Uit-waarde (leeg = laten)"
 }
