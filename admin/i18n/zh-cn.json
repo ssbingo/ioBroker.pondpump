@@ -123,5 +123,11 @@
     "Use system location": "使用系统位置",
     "Latitude": "纬度",
     "Longitude": "经度",
-    "Click the map or drag the marker to set the location.": "点击地图或拖动标记以设置位置。"
+    "Click the map or drag the marker to set the location.": "点击地图或拖动标记以设置位置。",
+    "Night protection (no reduction at night)": "夜间保护（夜间不降低）",
+    "Research: the oxygen minimum is at night, so a warm-night flow reduction is harmful. Needs a location (for sunrise/sunset).": "研究：氧气最低值出现在夜间，因此在温暖夜晚降低流量是有害的。需要位置（用于日出/日落）。",
+    "Only above water temperature (°C)": "仅在水温以上（°C）",
+    "Below this, no protection (cold water needs no night flow). Suggested 18.": "低于此值不保护（冷水夜间无需流量）。建议 18。",
+    "Night floor power %": "夜间最低功率 %",
+    "The flow is not reduced below this at night. Default 100 %.": "夜间流量不会低于此值。默认 100 %。"
 }

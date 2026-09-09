@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.7.1",
+        "version": "0.8.0",
         "news": {
-            "0.7.1": {
-                "en": "UI: the location map is now capped at 50% of the panel width (with a sensible minimum) instead of full width.",
-                "de": "UI: Die Standort-Karte ist jetzt auf 50 % der Panel-Breite begrenzt (mit sinnvollem Minimum) statt volle Breite.",
-                "ru": "Интерфейс: карта местоположения теперь ограничена 50 % ширины панели (с разумным минимумом) вместо полной ширины.",
-                "pt": "UI: o mapa de localização está agora limitado a 50 % da largura do painel (com um mínimo sensato) em vez da largura total.",
-                "nl": "UI: de locatiekaart is nu beperkt tot 50 % van de panelbreedte (met een zinnig minimum) in plaats van volledige breedte.",
-                "fr": "UI : la carte d'emplacement est désormais limitée à 50 % de la largeur du panneau (avec un minimum raisonnable) au lieu de toute la largeur.",
-                "it": "UI: la mappa della posizione è ora limitata al 50 % della larghezza del pannello (con un minimo ragionevole) invece dell'intera larghezza.",
-                "es": "UI: el mapa de ubicación ahora se limita al 50 % del ancho del panel (con un mínimo razonable) en lugar del ancho completo.",
-                "pl": "UI: mapa lokalizacji jest teraz ograniczona do 50 % szerokości panelu (z rozsądnym minimum) zamiast pełnej szerokości.",
-                "uk": "Інтерфейс: карта розташування тепер обмежена 50 % ширини панелі (з розумним мінімумом) замість повної ширини.",
-                "zh-cn": "界面：位置地图现在限制为面板宽度的 50%（并设有合理的最小值），不再占满整行。"
+            "0.8.0": {
+                "en": "Phase 13 — night protection (Baustein 2). Per pump: during the astronomical night, if the water is at/above a threshold, the flow is not reduced below a floor (default 100 %). This implements the research finding that the oxygen minimum is at night, so a warm-night reduction is harmful. Needs a location (for sunrise/sunset).",
+                "de": "Phase 13 — Nachtschutz (Baustein 2). Je Pumpe: Während der astronomischen Nacht wird der Durchfluss, sofern die Wassertemperatur ≥ Schwelle ist, nicht unter einen Boden gesenkt (Standard 100 %). Damit ist die Forschungs-Erkenntnis umgesetzt, dass das Sauerstoff-Minimum nachts liegt und eine Absenkung in warmen Nächten schädlich ist. Benötigt einen Standort (für Sonnenauf-/untergang).",
+                "ru": "Фаза 13 — ночная защита. Для каждого насоса: во время астрономической ночи, если температура воды ≥ порога, поток не снижается ниже уровня (по умолчанию 100 %). Это реализует вывод исследования: минимум кислорода приходится на ночь, поэтому снижение в тёплые ночи вредно. Требуется местоположение.",
+                "pt": "Fase 13 — proteção noturna. Por bomba: durante a noite astronómica, se a água estiver ≥ limiar, o caudal não é reduzido abaixo de um piso (predefinição 100 %). Implementa a conclusão da investigação de que o mínimo de oxigénio é à noite. Precisa de uma localização.",
+                "nl": "Fase 13 — nachtbescherming. Per pomp: tijdens de astronomische nacht wordt de doorstroming, als het water ≥ drempel is, niet onder een bodem verlaagd (standaard 100 %). Dit implementeert de onderzoeksbevinding dat het zuurstofminimum 's nachts is. Vereist een locatie.",
+                "fr": "Phase 13 — protection nocturne. Par pompe : pendant la nuit astronomique, si l'eau est ≥ seuil, le débit n'est pas réduit sous un plancher (par défaut 100 %). Cela met en œuvre le résultat de recherche selon lequel le minimum d'oxygène est la nuit. Nécessite un emplacement.",
+                "it": "Fase 13 — protezione notturna. Per pompa: durante la notte astronomica, se l'acqua è ≥ soglia, la portata non scende sotto un minimo (predefinito 100 %). Attua la scoperta della ricerca che il minimo di ossigeno è di notte. Richiede una posizione.",
+                "es": "Fase 13 — protección nocturna. Por bomba: durante la noche astronómica, si el agua está ≥ umbral, el caudal no se reduce por debajo de un mínimo (predeterminado 100 %). Implementa el hallazgo de que el mínimo de oxígeno es de noche. Necesita una ubicación.",
+                "pl": "Faza 13 — ochrona nocna. Dla każdej pompy: podczas nocy astronomicznej, jeśli woda ≥ próg, przepływ nie jest obniżany poniżej poziomu (domyślnie 100 %). Realizuje wniosek badań, że minimum tlenu jest nocą. Wymaga lokalizacji.",
+                "uk": "Фаза 13 — нічний захист. Для кожного насоса: під час астрономічної ночі, якщо вода ≥ порогу, потік не знижується нижче межі (за замовчуванням 100 %). Реалізує висновок дослідження, що мінімум кисню — вночі. Потрібне розташування.",
+                "zh-cn": "阶段 13 — 夜间保护。每台水泵：在天文夜间，若水温 ≥ 阈值，流量不会降至下限以下（默认 100%）。这实现了研究结论——氧气最低值出现在夜间，温暖夜晚降低流量有害。需要位置。"
             }
         },
         "titleLang": {

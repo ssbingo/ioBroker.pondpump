@@ -160,6 +160,13 @@ export interface PumpScheduleConfig {
      * falls back to the ioBroker system location.
      */
     location?: { coordinateSource?: "system" | "specific"; latitude?: string; longitude?: string };
+    /**
+     * Phase 13 — night protection (research-recommended). During the astronomical night, if the curve's
+     * water temperature is at/above `minWaterTemp`, the flow is not reduced below `floorPower` (default
+     * 100 %) — because the oxygen minimum is at night and a warm-night reduction is counter-productive.
+     * Needs a location (for sunrise/sunset); with no curve source configured it protects unconditionally.
+     */
+    nightProtection?: { enabled: boolean; minWaterTemp?: number; floorPower?: number };
 }
 
 /** A write the scheduler wants to make to an external actuator state (aeration, waterfall, …). */
@@ -339,6 +346,20 @@ function windowActive(start: number, end: number, nowMin: number): boolean {
         return false;
     }
     return start < end ? nowMin >= start && nowMin < end : nowMin >= start || nowMin < end;
+}
+
+/**
+ * Whether `nowMin` is daytime (between sunrise and sunset). Returns null when astro is unavailable
+ * (no location / polar day-night), so callers can tell "night" from "unknown".
+ *
+ * @param astro - resolved astro times for the day
+ * @param nowMin - current minute-of-day
+ */
+export function isAstroDay(astro: AstroTimes, nowMin: number): boolean | null {
+    if (astro.sunriseMin === null || astro.sunsetMin === null) {
+        return null;
+    }
+    return windowActive(astro.sunriseMin, astro.sunsetMin, nowMin);
 }
 
 /**
@@ -523,6 +544,17 @@ export function decideTarget(
 
     let sfc = base.sfc;
     let power = Math.max(base.power, clampPercent(config.minPower));
+
+    // Night protection (research): during the astronomical night, if the water is warm enough, do not
+    // let the flow drop below the floor — the oxygen minimum is at night.
+    const np = config.nightProtection;
+    if (np?.enabled && isAstroDay(astro, nowMin) === false) {
+        const temp = config.curve?.source ? sources[config.curve.source] : undefined;
+        const warmEnough = temp === undefined || !Number.isFinite(temp) || temp >= (np.minWaterTemp ?? 18);
+        if (warmEnough) {
+            power = Math.max(power, np.floorPower === undefined ? 100 : clampPercent(np.floorPower));
+        }
+    }
 
     // Weather rules: only raise / hold / toggle SFC / write actuators. All matching rules combine.
     let hold = false;

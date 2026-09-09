@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.8.0 (2026-09-09)
+
+- (ssbingo) **Phase 13 — night protection.** New per-pump option: during the **astronomical night**, if the curve's water temperature is at/above a threshold, the flow is **not reduced below a floor** (default 100 %). Implements the research finding that the oxygen minimum is at night, so a warm-night flow reduction is harmful. Needs a location (for sunrise/sunset); with no curve source it protects unconditionally. Applied before the weather rules and still capped by `maxPower`
+
 ### 0.7.1 (2026-09-09)
 
 - (ssbingo) UI: the **location map** is now capped at **50 % of the panel width** (with a sensible minimum) instead of spanning the full width

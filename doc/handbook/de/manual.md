@@ -427,6 +427,13 @@ Abschnitt **Zeitpläne** wählst du den **Standort-Modus**:
   Marker ziehen), per **Adress-Suche** oder in den Feldern Breite/Länge.
 - **Ein Standort pro Pumpe** — jede Pumpe legt ihre Position auf ihrem eigenen Tab fest.
 
+**Nachtschutz:** Im Abschnitt **Temperatur-/Wettersteuerung** kannst du je Pumpe den **Nachtschutz**
+aktivieren. Dann wird der Durchfluss **während der astronomischen Nacht nicht unter einen Boden**
+(Standard 100 %) gesenkt, sofern die Wassertemperatur ≥ einer Schwelle (Standard 18 °C) liegt — genau
+das, was die Forschung empfiehlt (das Sauerstoff-Minimum liegt nachts; eine Absenkung im Warmen ist
+schädlich). Der Nachtschutz braucht einen Standort und wird durch die **Maximalleistung** weiterhin
+gedeckelt.
+
 ## 11. Temperatur- und wetterabhängige Steuerung
 
 Zusätzlich zu festen Zeitfenstern kann jede Pumpe **nach Wassertemperatur und Wetter** geregelt werden.

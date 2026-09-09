@@ -1048,6 +1048,73 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                 >
                     {I18n.t("Add rule")}
                 </Button>
+                {this.renderNightProtection(id)}
+            </Box>
+        );
+    }
+
+    /** Merge a patch into the pump's night-protection config (Phase 13). */
+    private setNightProtection(id: string, patch: Partial<NonNullable<PumpScheduleConfig["nightProtection"]>>): void {
+        const cfg = this.cfgOf(id);
+        this.setCfg(id, { ...cfg, nightProtection: { enabled: false, ...cfg.nightProtection, ...patch } });
+    }
+
+    /** Night protection: no flow reduction during the astronomical night when the water is warm. */
+    private renderNightProtection(id: string): React.JSX.Element {
+        const np = this.cfgOf(id).nightProtection ?? { enabled: false };
+        return (
+            <Box sx={{ mt: 3 }}>
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={!!np.enabled}
+                            onChange={e => this.setNightProtection(id, { enabled: e.target.checked })}
+                        />
+                    }
+                    label={I18n.t("Night protection (no reduction at night)")}
+                />
+                <FormHelperText sx={{ mt: -0.5, mb: 1 }}>
+                    {I18n.t(
+                        "Research: the oxygen minimum is at night, so a warm-night flow reduction is harmful. Needs a location (for sunrise/sunset).",
+                    )}
+                </FormHelperText>
+                {np.enabled ? (
+                    <Box sx={{ display: "flex", gap: 3, rowGap: 2, flexWrap: "wrap" }}>
+                        <TextField
+                            type="number"
+                            size="small"
+                            label={I18n.t("Only above water temperature (°C)")}
+                            placeholder="18"
+                            value={np.minWaterTemp ?? ""}
+                            slotProps={{ inputLabel: { shrink: true } }}
+                            onChange={e =>
+                                this.setNightProtection(id, {
+                                    minWaterTemp: e.target.value === "" ? undefined : Number(e.target.value),
+                                })
+                            }
+                            helperText={I18n.t(
+                                "Below this, no protection (cold water needs no night flow). Suggested 18.",
+                            )}
+                            sx={{ width: 250 }}
+                        />
+                        <TextField
+                            type="number"
+                            size="small"
+                            label={I18n.t("Night floor power %")}
+                            placeholder="100"
+                            value={np.floorPower ?? ""}
+                            slotProps={{ htmlInput: { min: 0, max: 100, step: 5 }, inputLabel: { shrink: true } }}
+                            onChange={e =>
+                                this.setNightProtection(id, {
+                                    floorPower:
+                                        e.target.value === "" ? undefined : clampPercent(Number(e.target.value)),
+                                })
+                            }
+                            helperText={I18n.t("The flow is not reduced below this at night. Default 100 %.")}
+                            sx={{ width: 250 }}
+                        />
+                    </Box>
+                ) : null}
             </Box>
         );
     }

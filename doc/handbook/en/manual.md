@@ -411,6 +411,12 @@ an hour before sunrise. The sun times are recomputed daily.
   **address search**, or in the latitude/longitude fields.
 - **A location per pump** — each pump sets its own position on its own tab.
 
+**Night protection:** in the **Temperature / weather control** section you can enable **night protection**
+per pump. The flow is then **not reduced below a floor** (default 100 %) **during the astronomical night**,
+as long as the water temperature is at/above a threshold (default 18 °C) — exactly what the research
+recommends (the oxygen minimum is at night; a warm-night reduction is harmful). It needs a location and is
+still capped by the **maximum power**.
+
 ## 11. Temperature- and weather-based control
 
 On top of fixed time windows, each pump can be driven by **water temperature and weather**. The idea comes

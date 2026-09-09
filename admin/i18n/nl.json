@@ -123,5 +123,11 @@
     "Use system location": "Systeemlocatie gebruiken",
     "Latitude": "Breedtegraad",
     "Longitude": "Lengtegraad",
-    "Click the map or drag the marker to set the location.": "Klik op de kaart of sleep de markering om de locatie in te stellen."
+    "Click the map or drag the marker to set the location.": "Klik op de kaart of sleep de markering om de locatie in te stellen.",
+    "Night protection (no reduction at night)": "Nachtbescherming (geen verlaging 's nachts)",
+    "Research: the oxygen minimum is at night, so a warm-night flow reduction is harmful. Needs a location (for sunrise/sunset).": "Onderzoek: het zuurstofminimum is 's nachts, dus doorstroming verlagen in warme nachten is schadelijk. Vereist een locatie (voor zonsopgang/-ondergang).",
+    "Only above water temperature (°C)": "Alleen boven watertemperatuur (°C)",
+    "Below this, no protection (cold water needs no night flow). Suggested 18.": "Daaronder geen bescherming (koud water heeft 's nachts geen doorstroming nodig). Aanbevolen 18.",
+    "Night floor power %": "Nacht-minimumvermogen %",
+    "The flow is not reduced below this at night. Default 100 %.": "De doorstroming komt 's nachts niet onder deze waarde. Standaard 100 %."
 }

@@ -27,6 +27,7 @@ __export(schedule_exports, {
   compareValue: () => compareValue,
   decideTarget: () => decideTarget,
   interpolateCurve: () => interpolateCurve,
+  isAstroDay: () => isAstroDay,
   minutesUntilNextChange: () => minutesUntilNextChange,
   parseHhmm: () => parseHhmm,
   rampTowards: () => rampTowards,
@@ -115,6 +116,12 @@ function windowActive(start, end, nowMin) {
     return false;
   }
   return start < end ? nowMin >= start && nowMin < end : nowMin >= start || nowMin < end;
+}
+function isAstroDay(astro, nowMin) {
+  if (astro.sunriseMin === null || astro.sunsetMin === null) {
+    return null;
+  }
+  return windowActive(astro.sunriseMin, astro.sunsetMin, nowMin);
 }
 function activeWindow(plans, nowMin, astro = NO_ASTRO) {
   for (const plan of plans) {
@@ -208,7 +215,7 @@ function collectSourceOids(config) {
   return [...ids];
 }
 function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO) {
-  var _a, _b, _c, _d, _e, _f;
+  var _a, _b, _c, _d, _e, _f, _g, _h;
   const window = activeWindow(config.plans, nowMin, astro);
   const priority = (_a = config.conditionPriority) != null ? _a : "override";
   const curve = curveTarget(config, sources);
@@ -223,17 +230,25 @@ function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO) {
   }
   let sfc = base.sfc;
   let power = Math.max(base.power, clampPercent(config.minPower));
+  const np = config.nightProtection;
+  if ((np == null ? void 0 : np.enabled) && isAstroDay(astro, nowMin) === false) {
+    const temp = ((_d = config.curve) == null ? void 0 : _d.source) ? sources[config.curve.source] : void 0;
+    const warmEnough = temp === void 0 || !Number.isFinite(temp) || temp >= ((_e = np.minWaterTemp) != null ? _e : 18);
+    if (warmEnough) {
+      power = Math.max(power, np.floorPower === void 0 ? 100 : clampPercent(np.floorPower));
+    }
+  }
   let hold = false;
   let raised = false;
   const actuators = [];
-  for (const rule of (_d = config.rules) != null ? _d : []) {
+  for (const rule of (_f = config.rules) != null ? _f : []) {
     const value = sources[rule.source];
     if (value === void 0 || !Number.isFinite(value) || !compareValue(value, rule.cmp, rule.threshold)) {
       continue;
     }
     switch (rule.effect) {
       case "raisePower": {
-        const raisedTo = clampPercent((_e = rule.power) != null ? _e : 100);
+        const raisedTo = clampPercent((_g = rule.power) != null ? _g : 100);
         if (raisedTo > power) {
           power = raisedTo;
           raised = true;
@@ -252,7 +267,7 @@ function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO) {
         break;
       case "setState":
         if (rule.target) {
-          actuators.push({ target: rule.target, value: (_f = rule.value) != null ? _f : true });
+          actuators.push({ target: rule.target, value: (_h = rule.value) != null ? _h : true });
         }
         break;
     }
@@ -311,6 +326,7 @@ function minutesUntilNextChange(plans, nowMin, astro = NO_ASTRO) {
   compareValue,
   decideTarget,
   interpolateCurve,
+  isAstroDay,
   minutesUntilNextChange,
   parseHhmm,
   rampTowards,

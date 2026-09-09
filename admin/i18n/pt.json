@@ -123,5 +123,11 @@
     "Use system location": "Usar localização do sistema",
     "Latitude": "Latitude",
     "Longitude": "Longitude",
-    "Click the map or drag the marker to set the location.": "Clique no mapa ou arraste o marcador para definir a localização."
+    "Click the map or drag the marker to set the location.": "Clique no mapa ou arraste o marcador para definir a localização.",
+    "Night protection (no reduction at night)": "Proteção noturna (sem redução à noite)",
+    "Research: the oxygen minimum is at night, so a warm-night flow reduction is harmful. Needs a location (for sunrise/sunset).": "Investigação: o mínimo de oxigénio é à noite, por isso reduzir o caudal em noites quentes é prejudicial. Precisa de uma localização (para nascer/pôr do sol).",
+    "Only above water temperature (°C)": "Apenas acima da temperatura da água (°C)",
+    "Below this, no protection (cold water needs no night flow). Suggested 18.": "Abaixo, sem proteção (água fria não precisa de caudal noturno). Sugerido 18.",
+    "Night floor power %": "Potência mínima noturna %",
+    "The flow is not reduced below this at night. Default 100 %.": "O caudal não é reduzido abaixo disto à noite. Predefinição 100 %."
 }

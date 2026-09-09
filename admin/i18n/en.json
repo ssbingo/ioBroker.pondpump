@@ -123,5 +123,11 @@
     "Use system location": "Use system location",
     "Latitude": "Latitude",
     "Longitude": "Longitude",
-    "Click the map or drag the marker to set the location.": "Click the map or drag the marker to set the location."
+    "Click the map or drag the marker to set the location.": "Click the map or drag the marker to set the location.",
+    "Night protection (no reduction at night)": "Night protection (no reduction at night)",
+    "Research: the oxygen minimum is at night, so a warm-night flow reduction is harmful. Needs a location (for sunrise/sunset).": "Research: the oxygen minimum is at night, so a warm-night flow reduction is harmful. Needs a location (for sunrise/sunset).",
+    "Only above water temperature (°C)": "Only above water temperature (°C)",
+    "Below this, no protection (cold water needs no night flow). Suggested 18.": "Below this, no protection (cold water needs no night flow). Suggested 18.",
+    "Night floor power %": "Night floor power %",
+    "The flow is not reduced below this at night. Default 100 %.": "The flow is not reduced below this at night. Default 100 %."
 }

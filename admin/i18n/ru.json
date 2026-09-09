@@ -123,5 +123,11 @@
     "Use system location": "Использовать системное местоположение",
     "Latitude": "Широта",
     "Longitude": "Долгота",
-    "Click the map or drag the marker to set the location.": "Щёлкните по карте или перетащите маркер, чтобы задать местоположение."
+    "Click the map or drag the marker to set the location.": "Щёлкните по карте или перетащите маркер, чтобы задать местоположение.",
+    "Night protection (no reduction at night)": "Ночная защита (без снижения ночью)",
+    "Research: the oxygen minimum is at night, so a warm-night flow reduction is harmful. Needs a location (for sunrise/sunset).": "Исследование: минимум кислорода приходится на ночь, поэтому снижение потока в тёплые ночи вредно. Требуется местоположение (для восхода/заката).",
+    "Only above water temperature (°C)": "Только выше температуры воды (°C)",
+    "Below this, no protection (cold water needs no night flow). Suggested 18.": "Ниже — без защиты (холодной воде ночью поток не нужен). Рекомендуется 18.",
+    "Night floor power %": "Ночная мин. мощность %",
+    "The flow is not reduced below this at night. Default 100 %.": "Ночью поток не опускается ниже этого. По умолчанию 100 %."
 }

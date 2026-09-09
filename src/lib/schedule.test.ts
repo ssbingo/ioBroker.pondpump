@@ -7,6 +7,7 @@ import {
     decideTarget,
     DEFAULT_CURVE_POINTS,
     interpolateCurve,
+    isAstroDay,
     minutesUntilNextChange,
     parseHhmm,
     type PumpSchedule,
@@ -140,6 +141,13 @@ describe("schedule core", () => {
                 { start: "", startMode: "sunrise", end: "", endMode: "sunset", mode: "power", power: 90 },
             ];
             expect(activeWindow(day, at(12))).to.equal(undefined); // default NO_ASTRO → unresolved → skipped
+        });
+
+        it("isAstroDay is true between sunrise and sunset, false at night, null when unavailable", () => {
+            expect(isAstroDay(astro, at(12))).to.equal(true);
+            expect(isAstroDay(astro, at(23))).to.equal(false);
+            expect(isAstroDay(astro, at(3))).to.equal(false);
+            expect(isAstroDay({ sunriseMin: null, sunsetMin: null }, at(12))).to.equal(null);
         });
     });
 
@@ -322,6 +330,32 @@ describe("schedule conditions (Phase 11)", () => {
         it("wins over a higher minPower, and defaults to 100 when unset", () => {
             expect(decideTarget(cfg({ minPower: 80, maxPower: 60 }), at(12)).power).to.equal(60);
             expect(decideTarget(cfg({}), at(12)).power).to.equal(50); // no maxPower → base 50 unaffected
+        });
+    });
+
+    describe("decideTarget — night protection (Phase 13)", () => {
+        const astroDay: AstroTimes = { sunriseMin: at(6), sunsetMin: at(20) }; // day 06:00–20:00
+        const flatCurve = {
+            enabled: true,
+            source: TEMP,
+            points: [
+                { temp: 0, power: 30 },
+                { temp: 30, power: 30 },
+            ],
+        }; // curve → always 30
+        it("floors the flow at night when warm, but not when cold or during the day", () => {
+            const c = cfg({ basePower: 40, nightProtection: { enabled: true, minWaterTemp: 18 }, curve: flatCurve });
+            expect(decideTarget(c, at(22), { [TEMP]: 20 }, astroDay).power).to.equal(100); // warm night → 100
+            expect(decideTarget(c, at(22), { [TEMP]: 10 }, astroDay).power).to.equal(30); // cold night → curve 30
+            expect(decideTarget(c, at(12), { [TEMP]: 20 }, astroDay).power).to.equal(30); // day → curve 30
+        });
+        it("uses a custom floor, is capped by maxPower, and protects when the temp is unknown", () => {
+            const c = cfg({ basePower: 40, maxPower: 90, nightProtection: { enabled: true, floorPower: 100 } });
+            expect(decideTarget(c, at(23), {}, astroDay).power).to.equal(90); // no curve → protect → 100 → cap 90
+        });
+        it("does nothing without a location (astro unavailable)", () => {
+            const c = cfg({ basePower: 40, nightProtection: { enabled: true } });
+            expect(decideTarget(c, at(23), {}).power).to.equal(40); // NO_ASTRO → skip
         });
     });
 
