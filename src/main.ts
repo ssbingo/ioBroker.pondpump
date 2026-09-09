@@ -918,8 +918,17 @@ class Pondpump extends utils.Adapter {
         }
         this.scheduleStarted = true;
         this.log.info("[schedule] starting the pump scheduler");
-        void this.subscribeScheduleSources();
-        void this.runScheduler();
+        // Subscribe FIRST (this fills scheduleSourceOids), then evaluate — otherwise the first
+        // runScheduler reads an empty source set and the curve wrongly hits the missing-source
+        // fail-safe (100 %) even though the water sensor is available.
+        void (async () => {
+            try {
+                await this.subscribeScheduleSources();
+                await this.runScheduler();
+            } catch (e) {
+                this.log.error(`[schedule] failed to start: ${e instanceof Error ? e.message : String(e)}`);
+            }
+        })();
     }
 
     /**

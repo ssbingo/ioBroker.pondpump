@@ -729,8 +729,14 @@ class Pondpump extends utils.Adapter {
     }
     this.scheduleStarted = true;
     this.log.info("[schedule] starting the pump scheduler");
-    void this.subscribeScheduleSources();
-    void this.runScheduler();
+    void (async () => {
+      try {
+        await this.subscribeScheduleSources();
+        await this.runScheduler();
+      } catch (e) {
+        this.log.error(`[schedule] failed to start: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    })();
   }
   /**
    * Subscribe to every state id the schedules read for their temperature/weather conditions

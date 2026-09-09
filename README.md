@@ -80,6 +80,7 @@ All settings are available in the Admin UI (JSON config):
 ### 0.5.1 (2026-09-09)
 
 - (ssbingo) Fix: the new **water temperature sensor** dropdown rendered as an empty, flat field (empty value, no visible control) — rebuilt as a proper labelled `Select` (with `displayEmpty`/notched label) so the field, its value and the dropdown show correctly
+- (ssbingo) Fix: on startup the scheduler evaluated the temperature curve **before** subscribing to its source states, so the curve briefly hit the missing-source **fail-safe (100 %)** even though the water sensor had a value — it now subscribes to the sources first, then evaluates
 
 ### 0.5.0 (2026-09-09)
 
