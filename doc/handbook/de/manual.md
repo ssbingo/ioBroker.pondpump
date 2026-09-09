@@ -407,6 +407,26 @@ Start):
 Er schreibt nur, wenn sich das Ziel tatsächlich ändert — so verträgt sich der Zeitplan mit der manuellen
 Steuerung: Deine letzte manuelle Änderung bleibt, bis die nächste Fenstergrenze die Pumpe erneut setzt.
 
+### 10.4 Astronomische Zeitfenster (Sonnenauf-/untergang)
+
+Start und Ende eines Fensters müssen keine feste Uhrzeit sein. Bei jeder Grenze kannst du statt **Uhrzeit**
+auch **Sonnenaufgang** oder **Sonnenuntergang** wählen und einen **Versatz in Minuten** angeben (auch
+negativ). Beispiele: Start = „Sonnenuntergang + 0", Ende = „Sonnenaufgang + 120" ergibt ein **Nachtfenster**,
+das über Mitternacht läuft; „Sonnenaufgang − 30" beginnt eine halbe Stunde vor Sonnenaufgang. Die
+Sonnenzeiten werden täglich neu berechnet.
+
+> **Hinweis (Forschung):** Eine **Nacht-Absenkung des Durchflusses ist im Sommer kontraproduktiv** (das
+> Sauerstoff-Minimum liegt nachts). Astro-Fenster eignen sich vor allem als **Schutzfenster** (nicht
+> reduzieren) und für Nebenaktoren (Bachlauf/Wasserfall). Siehe `doc/research/`.
+
+**Standort:** Für die Sonnenzeiten braucht der Adapter einen Standort. Auf dem Tab **Verbindung** im
+Abschnitt **Zeitpläne** wählst du den **Standort-Modus**:
+
+- **ioBroker-Systemstandort verwenden** (Standard) — nimmt Breite/Länge aus den ioBroker-Systemeinstellungen.
+- **Ein Standort für alle Pumpen** — eine gemeinsame Position; setze sie auf der **Karte** (klicken oder
+  Marker ziehen), per **Adress-Suche** oder in den Feldern Breite/Länge.
+- **Ein Standort pro Pumpe** — jede Pumpe legt ihre Position auf ihrem eigenen Tab fest.
+
 ## 11. Temperatur- und wetterabhängige Steuerung
 
 Zusätzlich zu festen Zeitfenstern kann jede Pumpe **nach Wassertemperatur und Wetter** geregelt werden.

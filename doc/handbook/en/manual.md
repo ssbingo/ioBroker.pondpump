@@ -392,6 +392,25 @@ start-up):
 It only writes when the target actually changes, so scheduling coexists with manual control: your last
 manual change stays until the next window boundary moves the pump again.
 
+### 10.4 Astronomical windows (sunrise/sunset)
+
+A window's start and end need not be a fixed clock time. For each boundary you can choose **Sunrise** or
+**Sunset** instead of **Clock time** and give an **offset in minutes** (may be negative). Examples: start =
+"Sunset + 0", end = "Sunrise + 120" is a **night window** that wraps past midnight; "Sunrise − 30" starts half
+an hour before sunrise. The sun times are recomputed daily.
+
+> **Note (research):** a night-time **reduction of the flow is counter-productive in summer** (the oxygen
+> minimum is at night). Astro windows are best used as a **protection window** (don't reduce) and for side
+> actuators (waterfall). See `doc/research/`.
+
+**Location:** the sun times need a location. On the **Connection** tab, in the **Schedules** section, pick the
+**location mode**:
+
+- **Use the ioBroker system location** (default) — takes latitude/longitude from the ioBroker system settings.
+- **One location for all pumps** — a shared position; set it on the **map** (click or drag the marker), by
+  **address search**, or in the latitude/longitude fields.
+- **A location per pump** — each pump sets its own position on its own tab.
+
 ## 11. Temperature- and weather-based control
 
 On top of fixed time windows, each pump can be driven by **water temperature and weather**. The idea comes

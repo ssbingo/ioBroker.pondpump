@@ -77,6 +77,12 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.7.0 (2026-09-09)
+
+- (ssbingo) **Phase 13 — astronomical schedule windows + location.** A schedule window's start and end can now be a fixed clock time **or** **sunrise/sunset ± an offset** in minutes; a `sunset → sunrise` night window correctly wraps past midnight. New per-pump **astro states** (`astro.sunrise/sunset/sunriseTs/sunsetTs/isDay`), recomputed daily
+- (ssbingo) **Location is configurable** (`suncalc`): use the **ioBroker system location** (default), **one shared location**, or **one per pump** — set it on an **interactive map** (Leaflet/OpenStreetMap, click or drag the marker), by **address search** (geocoded in the backend), or by latitude/longitude. Backend `messagebox` enabled for the geocoder
+- (ssbingo) Based on the extended research (`doc/research/…`, now with chapter 7): a **summer night-time flow reduction is counter-productive** (the oxygen minimum is at night) — astro fits best as a protection window and for side actuators. Handbook chapter 10.4 (DE + EN) added; PDFs regenerated
+
 ### 0.6.0 (2026-09-09)
 
 - (ssbingo) **Maximum power % per pump.** A new hard ceiling in the scheduler's fine-tuning: the applied power never exceeds it — it is capped **last**, so it also limits the temperature curve, weather-rule raises/`boostMax` and the missing-source fail-safe. For pumps that only run up to e.g. 90 %
