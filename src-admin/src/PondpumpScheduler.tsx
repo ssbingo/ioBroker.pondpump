@@ -25,6 +25,8 @@ import { Add as IconAdd, Delete as IconDelete, Search as IconSearch } from "@mui
 import { I18n, SelectID } from "@iobroker/gui-components";
 import { ConfigGeneric, type ConfigGenericProps, type ConfigGenericState } from "@iobroker/json-config";
 
+import LocationPicker, { type GeocodeFn } from "./LocationPicker";
+
 import {
     clampPercent,
     type Comparison,
@@ -56,6 +58,8 @@ interface PondpumpSchedulerState extends ConfigGenericState {
     picker: null | { selected: string; onPick: (id: string) => void };
     /** Live values of the pump's device temperature sensors (tab mode), for the sensor picker. */
     sensorValues: Record<string, number | null>;
+    /** ioBroker system coordinates (for the "use system location" button and the system-mode hint). */
+    systemCoords: { lat: number; lon: number } | null;
 }
 
 const DEFAULT_CFG: PumpScheduleConfig = { enabled: false, basePower: 50, plans: [] };
@@ -113,6 +117,25 @@ function actuatorValueText(value: number | boolean | undefined): string {
 }
 
 /**
+ * Coerce an unknown coordinate value (string/number) to a finite number, or null.
+ *
+ * @param v - the raw coordinate value
+ */
+function coordNumber(v: unknown): number | null {
+    const n = typeof v === "number" ? v : typeof v === "string" ? parseFloat(v) : NaN;
+    return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Coerce an unknown coordinate value to a display string ("" when absent).
+ *
+ * @param v - the raw coordinate value
+ */
+function coordString(v: unknown): string {
+    return typeof v === "number" ? String(v) : typeof v === "string" ? v : "";
+}
+
+/**
  * Admin custom component (Phase 9 + 11/12): per-pump time schedules and temperature/weather control.
  *
  * The same component serves two roles, selected by `schema.custom.pumpSlot`:
@@ -129,11 +152,12 @@ function actuatorValueText(value: number | boolean | undefined): string {
 class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedulerState> {
     constructor(props: ConfigGenericProps) {
         super(props);
-        this.state = { ...this.state, pumps: [], loaded: false, picker: null, sensorValues: {} };
+        this.state = { ...this.state, pumps: [], loaded: false, picker: null, sensorValues: {}, systemCoords: null };
     }
 
     async componentDidMount(): Promise<void> {
         await super.componentDidMount();
+        await this.loadSystemCoords();
         if (this.pumpSlot === undefined) {
             // List mode needs the full set of detected pumps (with names) for the enable switches.
             await this.loadPumps();
@@ -205,6 +229,144 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
     get schedules(): SchedulesConfig {
         const value = (this.props.data as { schedules?: SchedulesConfig }).schedules;
         return value && typeof value === "object" ? value : {};
+    }
+
+    /** Read the ioBroker system coordinates for the "use system location" button (Phase 13). */
+    private async loadSystemCoords(): Promise<void> {
+        try {
+            const sys = await this.props.oContext.socket.getObject("system.config");
+            const c = (sys?.common ?? {}) as { latitude?: unknown; longitude?: unknown };
+            const lat = coordNumber(c.latitude);
+            const lon = coordNumber(c.longitude);
+            this.setState({ systemCoords: lat !== null && lon !== null ? { lat, lon } : null });
+        } catch {
+            this.setState({ systemCoords: null });
+        }
+    }
+
+    /** The instance location mode from the config (Phase 13). */
+    private get locationMode(): "system" | "shared" | "individual" {
+        const m = String((this.props.data as { locationMode?: string }).locationMode || "system");
+        return m === "shared" || m === "individual" ? m : "system";
+    }
+
+    private setLocationMode(mode: "system" | "shared" | "individual"): void {
+        void this.onChange("locationMode", mode);
+    }
+
+    /** The instance latitude/longitude strings (shared mode). */
+    private get instanceLat(): string {
+        return coordString((this.props.data as { latitude?: unknown }).latitude);
+    }
+    private get instanceLon(): string {
+        return coordString((this.props.data as { longitude?: unknown }).longitude);
+    }
+
+    /** Resolve an address to coordinates via the backend geocode message (Nominatim). */
+    private geocode: GeocodeFn = async query => {
+        const res = await this.props.oContext.socket.sendTo(`pondpump.${this.props.oContext.instance}`, "geocode", {
+            query,
+        });
+        if (res && typeof res.lat === "number" && typeof res.lon === "number") {
+            return { lat: res.lat, lon: res.lon, displayName: res.displayName };
+        }
+        return null;
+    };
+
+    /** Instance-level location section (list mode): mode select + map for the shared location. */
+    private renderLocation(): React.JSX.Element {
+        const mode = this.locationMode;
+        const sys = this.state.systemCoords;
+        return (
+            <Box sx={{ mb: 3 }}>
+                <Typography sx={{ mb: 1, fontWeight: 500 }}>{I18n.t("Location (for sunrise/sunset)")}</Typography>
+                <FormControl
+                    size="small"
+                    sx={{ minWidth: 360, maxWidth: "100%", mb: 1, display: "block" }}
+                >
+                    <InputLabel id="loc-mode">{I18n.t("Location mode")}</InputLabel>
+                    <Select
+                        labelId="loc-mode"
+                        label={I18n.t("Location mode")}
+                        value={mode}
+                        onChange={e => this.setLocationMode(e.target.value)}
+                        sx={{ minWidth: 360, maxWidth: "100%" }}
+                    >
+                        <MenuItem value="system">{I18n.t("Use the ioBroker system location")}</MenuItem>
+                        <MenuItem value="shared">{I18n.t("One location for all pumps")}</MenuItem>
+                        <MenuItem value="individual">{I18n.t("A location per pump")}</MenuItem>
+                    </Select>
+                </FormControl>
+                {mode === "system" ? (
+                    <Alert severity={sys ? "info" : "warning"}>
+                        {sys
+                            ? `${I18n.t("Using the ioBroker system location")}: ${sys.lat.toFixed(4)}, ${sys.lon.toFixed(4)}`
+                            : I18n.t(
+                                  "No coordinates in the ioBroker system settings — set them there, or pick another mode.",
+                              )}
+                    </Alert>
+                ) : mode === "shared" ? (
+                    <LocationPicker
+                        latitude={this.instanceLat}
+                        longitude={this.instanceLon}
+                        systemCoords={sys}
+                        onGeocode={this.geocode}
+                        onChange={(lat, lon) =>
+                            void this.onChange("latitude", lat, () => void this.onChange("longitude", lon))
+                        }
+                    />
+                ) : (
+                    <Alert severity="info">{I18n.t("Each pump sets its own location on its tab.")}</Alert>
+                )}
+            </Box>
+        );
+    }
+
+    /** Per-pump location section (pump tab, only shown in "individual" mode). */
+    private renderPumpLocation(id: string): React.JSX.Element {
+        const cfg = this.cfgOf(id);
+        const loc = cfg.location ?? {};
+        const source = loc.coordinateSource ?? "system";
+        return (
+            <Box sx={{ mt: 3 }}>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>{I18n.t("Location for this pump")}</Typography>
+                <FormControl
+                    size="small"
+                    sx={{ minWidth: 300, maxWidth: "100%", mb: 1, display: "block" }}
+                >
+                    <InputLabel id={`loc-src-${id}`}>{I18n.t("Location mode")}</InputLabel>
+                    <Select
+                        labelId={`loc-src-${id}`}
+                        label={I18n.t("Location mode")}
+                        value={source}
+                        onChange={e =>
+                            this.setCfg(id, {
+                                ...cfg,
+                                location: { ...loc, coordinateSource: e.target.value },
+                            })
+                        }
+                        sx={{ minWidth: 300, maxWidth: "100%" }}
+                    >
+                        <MenuItem value="system">{I18n.t("Use the ioBroker system location")}</MenuItem>
+                        <MenuItem value="specific">{I18n.t("This pump's own location")}</MenuItem>
+                    </Select>
+                </FormControl>
+                {source === "specific" ? (
+                    <LocationPicker
+                        latitude={String(loc.latitude ?? "")}
+                        longitude={String(loc.longitude ?? "")}
+                        systemCoords={this.state.systemCoords}
+                        onGeocode={this.geocode}
+                        onChange={(lat, lon) =>
+                            this.setCfg(id, {
+                                ...cfg,
+                                location: { ...loc, coordinateSource: "specific", latitude: lat, longitude: lon },
+                            })
+                        }
+                    />
+                ) : null}
+            </Box>
+        );
     }
 
     /** The enabled pump ids, sorted by device number — this is the slot order used by the tabs. */
@@ -451,6 +613,7 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                         {I18n.t("Schedules must not overlap")}: {validation.error}
                     </Alert>
                 ) : null}
+                {this.locationMode === "individual" ? this.renderPumpLocation(id) : null}
                 {this.renderConditions(id)}
             </Box>
         );
@@ -988,40 +1151,41 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
 
     /** List mode: the pump enable list shown on the "Schedules" tab. */
     private renderPumpList(): React.JSX.Element {
-        if (!this.state.pumps.length) {
-            return (
-                <Alert
-                    severity="info"
-                    sx={{ mt: 1 }}
-                >
-                    {I18n.t("No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.")}
-                </Alert>
-            );
-        }
         return (
             <Box sx={{ mt: 1 }}>
-                <Typography sx={{ mb: 1, color: "text.secondary" }}>
-                    {I18n.t(
-                        "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.",
-                    )}
-                </Typography>
-                <Paper
-                    variant="outlined"
-                    sx={{ p: 1.5, display: "flex", flexWrap: "wrap", gap: 2 }}
-                >
-                    {this.state.pumps.map(p => (
-                        <FormControlLabel
-                            key={p.id}
-                            control={
-                                <Switch
-                                    checked={this.cfgOf(p.id).enabled}
-                                    onChange={e => this.toggleEnabled(p, e.target.checked)}
+                {this.renderLocation()}
+                {this.state.pumps.length ? (
+                    <>
+                        <Typography sx={{ mb: 1, color: "text.secondary" }}>
+                            {I18n.t(
+                                "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.",
+                            )}
+                        </Typography>
+                        <Paper
+                            variant="outlined"
+                            sx={{ p: 1.5, display: "flex", flexWrap: "wrap", gap: 2 }}
+                        >
+                            {this.state.pumps.map(p => (
+                                <FormControlLabel
+                                    key={p.id}
+                                    control={
+                                        <Switch
+                                            checked={this.cfgOf(p.id).enabled}
+                                            onChange={e => this.toggleEnabled(p, e.target.checked)}
+                                        />
+                                    }
+                                    label={p.name}
                                 />
-                            }
-                            label={p.name}
-                        />
-                    ))}
-                </Paper>
+                            ))}
+                        </Paper>
+                    </>
+                ) : (
+                    <Alert severity="info">
+                        {I18n.t(
+                            "No pumps detected yet. Start the adapter once so it discovers the pumps, then reload.",
+                        )}
+                    </Alert>
+                )}
             </Box>
         );
     }
