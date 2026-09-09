@@ -101,5 +101,9 @@
     "Max. change (% per hour)": "Макс. изменение (% в час)",
     "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Ограничивает скорость изменения мощности (плавный разгон). Рекомендуется 10–20 · 0 = мгновенно.",
     "Maximum power %": "Максимальная мощность %",
-    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Верхний предел — поток никогда не превышает это, даже при бусте или аварийном режиме. Напр., 90 % для насоса, работающего только до этого."
+    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Верхний предел — поток никогда не превышает это, даже при бусте или аварийном режиме. Напр., 90 % для насоса, работающего только до этого.",
+    "Clock time": "Время",
+    "Sunrise": "Восход",
+    "Sunset": "Закат",
+    "Offset (min)": "Смещение (мин)"
 }

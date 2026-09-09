@@ -38,6 +38,7 @@ import {
     type SchedulesConfig,
     type TempCurve,
     validatePlans,
+    type WindowBoundMode,
 } from "./schedule";
 
 /** A pump detected in the object tree. */
@@ -286,27 +287,57 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
         );
     }
 
+    /** One window boundary cell: clock time, or sunrise/sunset ± an offset in minutes (Phase 13). */
+    private renderBoundCell(id: string, index: number, plan: PumpSchedule, which: "start" | "end"): React.JSX.Element {
+        const mode = (which === "start" ? plan.startMode : plan.endMode) ?? "clock";
+        const clock = which === "start" ? plan.start : plan.end;
+        const offset = (which === "start" ? plan.startOffset : plan.endOffset) ?? 0;
+        const setMode = (m: WindowBoundMode): void =>
+            this.updatePlan(id, index, which === "start" ? { startMode: m } : { endMode: m });
+        const setClock = (v: string): void => this.updatePlan(id, index, which === "start" ? { start: v } : { end: v });
+        const setOffset = (n: number): void =>
+            this.updatePlan(id, index, which === "start" ? { startOffset: n } : { endOffset: n });
+        return (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, minWidth: 120 }}>
+                <Select
+                    size="small"
+                    variant="standard"
+                    value={mode}
+                    onChange={e => setMode(e.target.value)}
+                >
+                    <MenuItem value="clock">{I18n.t("Clock time")}</MenuItem>
+                    <MenuItem value="sunrise">{I18n.t("Sunrise")}</MenuItem>
+                    <MenuItem value="sunset">{I18n.t("Sunset")}</MenuItem>
+                </Select>
+                {mode === "clock" ? (
+                    <TextField
+                        type="time"
+                        size="small"
+                        variant="standard"
+                        value={clock}
+                        onChange={e => setClock(e.target.value)}
+                    />
+                ) : (
+                    <TextField
+                        type="number"
+                        size="small"
+                        variant="standard"
+                        label={I18n.t("Offset (min)")}
+                        value={offset}
+                        onChange={e => setOffset(Number(e.target.value))}
+                        slotProps={{ htmlInput: { step: 15 } }}
+                        sx={{ width: 110 }}
+                    />
+                )}
+            </Box>
+        );
+    }
+
     private renderPlanRow(id: string, plan: PumpSchedule, index: number): React.JSX.Element {
         return (
             <TableRow key={index}>
-                <TableCell>
-                    <TextField
-                        type="time"
-                        size="small"
-                        variant="standard"
-                        value={plan.start}
-                        onChange={e => this.updatePlan(id, index, { start: e.target.value })}
-                    />
-                </TableCell>
-                <TableCell>
-                    <TextField
-                        type="time"
-                        size="small"
-                        variant="standard"
-                        value={plan.end}
-                        onChange={e => this.updatePlan(id, index, { end: e.target.value })}
-                    />
-                </TableCell>
+                <TableCell>{this.renderBoundCell(id, index, plan, "start")}</TableCell>
+                <TableCell>{this.renderBoundCell(id, index, plan, "end")}</TableCell>
                 <TableCell>
                     <Select
                         size="small"

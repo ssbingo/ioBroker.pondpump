@@ -101,5 +101,9 @@
     "Max. change (% per hour)": "最大变化（% 每小时）",
     "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "限制功率变化的速度（平缓爬坡）。建议 10–20 · 0 = 立即。",
     "Maximum power %": "最大功率 %",
-    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "上限——流量绝不会超过此值，即便在增压或安全回退时。例如仅能运行到 90 % 的水泵设为 90 %。"
+    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "上限——流量绝不会超过此值，即便在增压或安全回退时。例如仅能运行到 90 % 的水泵设为 90 %。",
+    "Clock time": "时刻",
+    "Sunrise": "日出",
+    "Sunset": "日落",
+    "Offset (min)": "偏移（分钟）"
 }

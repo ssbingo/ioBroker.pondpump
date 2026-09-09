@@ -101,5 +101,9 @@
     "Max. change (% per hour)": "Variação máx. (% por hora)",
     "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Limita a rapidez com que a potência muda (rampa suave). Sugerido 10–20 · 0 = instantâneo.",
     "Maximum power %": "Potência máxima %",
-    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Limite superior — o caudal nunca ultrapassa isto, mesmo em boost ou modo de segurança. P. ex. 90 % para uma bomba que só chega até aí."
+    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Limite superior — o caudal nunca ultrapassa isto, mesmo em boost ou modo de segurança. P. ex. 90 % para uma bomba que só chega até aí.",
+    "Clock time": "Hora fixa",
+    "Sunrise": "Nascer do sol",
+    "Sunset": "Pôr do sol",
+    "Offset (min)": "Desvio (min)"
 }

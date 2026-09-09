@@ -101,5 +101,9 @@
     "Max. change (% per hour)": "Max. change (% per hour)",
     "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.",
     "Maximum power %": "Maximum power %",
-    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high."
+    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.",
+    "Clock time": "Clock time",
+    "Sunrise": "Sunrise",
+    "Sunset": "Sunset",
+    "Offset (min)": "Offset (min)"
 }

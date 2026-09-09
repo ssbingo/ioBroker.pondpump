@@ -101,5 +101,9 @@
     "Max. change (% per hour)": "Max. verandering (% per uur)",
     "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Begrenst hoe snel het vermogen mag veranderen (zachte helling). Aanbevolen 10–20 · 0 = direct.",
     "Maximum power %": "Maximaal vermogen %",
-    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Bovengrens — de doorstroming komt hier nooit boven, ook niet bij boost of failsafe. Bijv. 90 % voor een pomp die niet hoger draait."
+    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Bovengrens — de doorstroming komt hier nooit boven, ook niet bij boost of failsafe. Bijv. 90 % voor een pomp die niet hoger draait.",
+    "Clock time": "Kloktijd",
+    "Sunrise": "Zonsopgang",
+    "Sunset": "Zonsondergang",
+    "Offset (min)": "Verschuiving (min)"
 }
