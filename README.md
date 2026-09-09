@@ -79,8 +79,9 @@ All settings are available in the Admin UI (JSON config):
 
 ### 0.2.2 (2026-09-09)
 
-- (ssbingo) Lowered the minimum ioBroker **admin to 7.8.23** (was 8.0.0) so the adapter installs on the current stable admin. **Note:** the per-pump **scheduler UI requires admin ≥ 8** (React 19 / MUI 9) — configure schedules there; the pump control and telemetry work on admin 7.8.23+
+- (ssbingo) Set the minimum ioBroker **admin to 8.0.11** — the per-pump scheduler is a React 19 / MUI 9 (admin 8) component, so admin 8.0.11+ keeps it loading reliably
 - (ssbingo) Maintenance: processed the open Dependabot updates — `@iobroker/gui-components` 10.2.3, `@iobroker/json-config` 9.1.2, `@mui/material` + `@mui/icons-material` 9.4.0, `@module-federation/vite` 1.21.x, `@iobroker/types-vis-2` 2.20.1, `@tsconfig/node22` 22.0.6 (admin and widget bundles rebuilt to match)
+- (ssbingo) Fixed the CI type-check: `@tsconfig/node22` 22.0.6 pins `types` to `["node"]`, which dropped the mocha globals in the test files — restored via `types: ["node", "mocha"]` + a declared `@types/mocha`
 
 ### 0.2.1 (2026-08-14)
 
