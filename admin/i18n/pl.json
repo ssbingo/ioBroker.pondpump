@@ -99,5 +99,7 @@
     "Hysteresis (°C)": "Histereza (°C)",
     "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.": "Przelicza krzywą dopiero po zmianie temperatury o tę wartość. Zalecane 0,5–1 · 0 = wył.",
     "Max. change (% per hour)": "Maks. zmiana (% na godzinę)",
-    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Ogranicza szybkość zmiany mocy (łagodne narastanie). Zalecane 10–20 · 0 = natychmiast."
+    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Ogranicza szybkość zmiany mocy (łagodne narastanie). Zalecane 10–20 · 0 = natychmiast.",
+    "Maximum power %": "Moc maksymalna %",
+    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Górna granica — przepływ nigdy tego nie przekracza, nawet przy boost lub trybie awaryjnym. Np. 90 % dla pompy pracującej tylko do tego poziomu."
 }

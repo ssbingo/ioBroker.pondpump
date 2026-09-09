@@ -99,5 +99,7 @@
     "Hysteresis (°C)": "Гістерезис (°C)",
     "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.": "Перераховує криву лише після зміни температури на цю величину. Рекомендовано 0,5–1 · 0 = вимк.",
     "Max. change (% per hour)": "Макс. зміна (% за годину)",
-    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Обмежує швидкість зміни потужності (плавний розгін). Рекомендовано 10–20 · 0 = миттєво."
+    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Обмежує швидкість зміни потужності (плавний розгін). Рекомендовано 10–20 · 0 = миттєво.",
+    "Maximum power %": "Максимальна потужність %",
+    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Верхня межа — потік ніколи не перевищує це, навіть під час бусту чи аварійного режиму. Напр., 90 % для насоса, що працює лише до цього."
 }

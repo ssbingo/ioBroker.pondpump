@@ -438,6 +438,8 @@ Below the curve are optional limits. In the admin UI each field shows a **sugges
 placeholder) and a **help text**:
 
 - **Minimum power %** — a lower limit; the flow never drops below it. Suggested **35–40 %**.
+- **Maximum power %** — an upper limit; the flow never exceeds it (not even on boost or fail-safe). E.g.
+  **90 %** for a pump that only runs that high.
 - **Temperature smoothing (hours)** — averages the temperature so short spikes don't constantly re-adjust
   the pump. Suggested **12–24**, `0` = off.
 - **Hysteresis (°C)** — the curve is only re-mapped after the temperature has moved by this much.

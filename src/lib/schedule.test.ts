@@ -237,6 +237,33 @@ describe("schedule conditions (Phase 11)", () => {
         });
     });
 
+    describe("decideTarget — maxPower ceiling", () => {
+        const curve = {
+            enabled: true,
+            source: TEMP,
+            points: [
+                { temp: 0, power: 50 },
+                { temp: 30, power: 100 },
+            ],
+        };
+        it("caps the curve, a boost and the fail-safe at maxPower", () => {
+            const c = cfg({
+                maxPower: 90,
+                curve,
+                rules: [{ source: RAIN, cmp: "eq", threshold: 1, effect: "boostMax" }],
+            });
+            expect(decideTarget(c, at(12), { [TEMP]: 30 }).power).to.equal(90); // curve 100 → 90
+            expect(decideTarget(c, at(12), { [TEMP]: 10, [RAIN]: 1 }).power).to.equal(90); // boost 100 → 90
+            const d = decideTarget(c, at(12), {}); // source missing → fail-safe 100 → 90
+            expect(d.power).to.equal(90);
+            expect(d.failSafe).to.equal(true);
+        });
+        it("wins over a higher minPower, and defaults to 100 when unset", () => {
+            expect(decideTarget(cfg({ minPower: 80, maxPower: 60 }), at(12)).power).to.equal(60);
+            expect(decideTarget(cfg({}), at(12)).power).to.equal(50); // no maxPower → base 50 unaffected
+        });
+    });
+
     describe("decideTarget — weather rules only raise / hold / act", () => {
         const curve = {
             enabled: true,

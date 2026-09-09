@@ -907,6 +907,17 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                         helper: I18n.t("Lower limit — the flow never drops below this. Suggested 35–40 %."),
                     })}
                     {numField({
+                        label: I18n.t("Maximum power %"),
+                        key: "maxPower",
+                        value: cfg.maxPower,
+                        step: 5,
+                        clampPct: true,
+                        placeholder: "100",
+                        helper: I18n.t(
+                            "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.",
+                        ),
+                    })}
+                    {numField({
                         label: I18n.t("Temperature smoothing (hours)"),
                         key: "smoothingHours",
                         value: cfg.smoothingHours,

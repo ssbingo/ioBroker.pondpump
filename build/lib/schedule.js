@@ -231,6 +231,8 @@ function decideTarget(config, nowMin, sources = {}) {
         break;
     }
   }
+  const maxPower = config.maxPower === void 0 ? 100 : clampPercent(config.maxPower);
+  power = Math.min(power, maxPower);
   return { sfc, power: hold && !raised ? "hold" : power, actuators, failSafe };
 }
 function rampTowards(current, target, maxStep) {

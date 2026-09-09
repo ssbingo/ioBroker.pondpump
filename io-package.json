@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.5.1",
+        "version": "0.6.0",
         "news": {
-            "0.5.1": {
-                "en": "Two fixes: (1) the water-temperature sensor dropdown rendered as an empty, flat field — rebuilt as a proper labelled select; (2) on startup the scheduler evaluated the curve before subscribing to its source, briefly forcing the fail-safe 100 % even though the water sensor had a value — it now subscribes first, then evaluates.",
-                "de": "Zwei Fehlerbehebungen: (1) das Wassertemperatur-Sensor-Auswahlfeld wurde als leeres, flaches Feld dargestellt — als korrektes beschriftetes Auswahlfeld neu aufgebaut; (2) beim Start wertete der Scheduler die Kurve aus, bevor er ihre Quelle abonniert hatte, wodurch kurzzeitig der Notlauf (100 %) griff, obwohl der Wassersensor einen Wert hatte — nun wird erst abonniert, dann ausgewertet.",
-                "ru": "Два исправления: (1) поле выбора датчика температуры воды отображалось как пустое плоское поле — переделано в корректный список; (2) при запуске планировщик оценивал кривую до подписки на её источник, из-за чего кратковременно включался аварийный режим 100 %, хотя у датчика было значение — теперь сначала подписка, затем оценка.",
-                "pt": "Duas correções: (1) o seletor do sensor de temperatura da água aparecia como um campo vazio e plano — reconstruído como uma lista rotulada; (2) no arranque o agendador avaliava a curva antes de subscrever a sua fonte, forçando brevemente o modo de segurança 100 % embora o sensor tivesse valor — agora subscreve primeiro e só depois avalia.",
-                "nl": "Twee fixes: (1) het keuzeveld voor de watertemperatuursensor werd als een leeg, plat veld weergegeven — herbouwd als een correcte keuzelijst; (2) bij het starten evalueerde de planner de curve voordat op de bron was geabonneerd, waardoor kort de failsafe 100 % gold hoewel de sensor een waarde had — nu wordt eerst geabonneerd en dan geëvalueerd.",
-                "fr": "Deux correctifs : (1) le sélecteur de capteur de température de l'eau s'affichait comme un champ vide et plat — reconstruit en une liste déroulante ; (2) au démarrage, le planificateur évaluait la courbe avant de s'abonner à sa source, forçant brièvement le repli de sécurité 100 % alors que le capteur avait une valeur — il s'abonne désormais d'abord, puis évalue.",
-                "it": "Due correzioni: (1) il selettore del sensore di temperatura dell'acqua appariva come un campo vuoto e piatto — ricostruito come elenco a discesa; (2) all'avvio lo scheduler valutava la curva prima di sottoscrivere la sua sorgente, forzando brevemente la sicurezza 100 % anche se il sensore aveva un valore — ora prima sottoscrive, poi valuta.",
-                "es": "Dos correcciones: (1) el selector de sensor de temperatura del agua se mostraba como un campo vacío y plano — reconstruido como una lista desplegable; (2) al iniciar, el programador evaluaba la curva antes de suscribirse a su fuente, forzando brevemente el modo seguro 100 % aunque el sensor tenía valor — ahora primero se suscribe y luego evalúa.",
-                "pl": "Dwie poprawki: (1) pole wyboru czujnika temperatury wody wyświetlało się jako puste, płaskie pole — przebudowane na poprawną listę; (2) przy starcie harmonogram oceniał krzywą przed subskrypcją jej źródła, przez co chwilowo włączał tryb awaryjny 100 %, mimo że czujnik miał wartość — teraz najpierw subskrybuje, potem ocenia.",
-                "uk": "Два виправлення: (1) поле вибору датчика температури води відображалося як порожнє пласке поле — перебудовано на коректний список; (2) під час запуску планувальник оцінював криву до підписки на її джерело, через що короткочасно вмикався аварійний режим 100 %, хоча датчик мав значення — тепер спершу підписка, потім оцінювання.",
-                "zh-cn": "两处修复：(1) 水温传感器选择框显示为空白扁平字段——已重建为规范的下拉选择框；(2) 启动时调度器在订阅来源之前就评估了曲线，导致即便传感器有数值也短暂触发 100 % 安全回退——现在先订阅、后评估。"
+            "0.6.0": {
+                "en": "New per-pump Maximum power % — a hard ceiling the flow never exceeds, applied last to everything (curve, weather rules, boost and the fail-safe). For pumps that only run up to e.g. 90 %.",
+                "de": "Neu je Pumpe: Maximalleistung % — eine harte Obergrenze, die die Leistung nie übersteigt und zuletzt auf alles angewandt wird (Kurve, Wetterregeln, Boost und Notlauf). Für Pumpen, die z. B. nur bis 90 % laufen.",
+                "ru": "Новое для каждого насоса: Максимальная мощность % — жёсткий верхний предел, который поток никогда не превышает и который применяется последним ко всему (кривая, погодные правила, буст и аварийный режим). Для насосов, работающих, например, только до 90 %.",
+                "pt": "Novo por bomba: Potência máxima % — um limite rígido que o caudal nunca ultrapassa, aplicado por último a tudo (curva, regras meteorológicas, boost e modo de segurança). Para bombas que só chegam, p. ex., a 90 %.",
+                "nl": "Nieuw per pomp: Maximaal vermogen % — een harde bovengrens die de doorstroming nooit overschrijdt en als laatste op alles wordt toegepast (curve, weerregels, boost en failsafe). Voor pompen die bijv. maar tot 90 % draaien.",
+                "fr": "Nouveau par pompe : Puissance maximale % — une limite haute stricte que le débit ne dépasse jamais, appliquée en dernier à tout (courbe, règles météo, boost et repli de sécurité). Pour les pompes qui ne montent qu'à 90 % p. ex.",
+                "it": "Nuovo per pompa: Potenza massima % — un limite rigido che la portata non supera mai, applicato per ultimo a tutto (curva, regole meteo, boost e sicurezza). Per pompe che arrivano solo, es., al 90 %.",
+                "es": "Nuevo por bomba: Potencia máxima % — un límite rígido que el caudal nunca supera, aplicado en último lugar a todo (curva, reglas meteorológicas, boost y modo seguro). Para bombas que solo llegan, p. ej., al 90 %.",
+                "pl": "Nowość dla każdej pompy: Moc maksymalna % — twarda górna granica, której przepływ nigdy nie przekracza, stosowana na końcu do wszystkiego (krzywa, reguły pogodowe, boost i tryb awaryjny). Dla pomp pracujących np. tylko do 90 %.",
+                "uk": "Нове для кожного насоса: Максимальна потужність % — жорстка верхня межа, яку потік ніколи не перевищує і яка застосовується останньою до всього (крива, погодні правила, буст і аварійний режим). Для насосів, що працюють, наприклад, лише до 90 %.",
+                "zh-cn": "每台水泵新增：最大功率 %——流量绝不会超过的硬上限，最后应用于一切（曲线、天气规则、增压和安全回退）。适用于例如仅能运行到 90 % 的水泵。"
             }
         },
         "titleLang": {

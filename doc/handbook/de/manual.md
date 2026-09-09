@@ -453,6 +453,8 @@ Unter der Kurve stehen optionale Grenzwerte. Jedes Feld zeigt in der Admin-Oberf
 **Wertvorschlag** (grauer Platzhalter) und einen **Hilfetext**:
 
 - **Mindestleistung %** — Untergrenze, der Durchfluss fällt nie darunter. Empfohlen **35–40 %**.
+- **Maximalleistung %** — Obergrenze, die Leistung übersteigt diesen Wert nie (auch nicht bei Boost oder
+  Notlauf). Z. B. **90 %** für eine Pumpe, die nur bis dahin läuft.
 - **Temperatur-Glättung (Stunden)** — mittelt die Temperatur, damit kurze Ausschläge die Pumpe nicht
   ständig verstellen. Empfohlen **12–24**, `0` = aus.
 - **Hysterese (°C)** — die Kurve wird erst nach einer Temperaturänderung um diesen Betrag neu berechnet.

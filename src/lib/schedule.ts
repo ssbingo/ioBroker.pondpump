@@ -118,6 +118,12 @@ export interface PumpScheduleConfig {
     conditionPriority?: ConditionPriority;
     /** Phase 12 — hydraulic minimum power % the flow never drops below (0..100). */
     minPower?: number;
+    /**
+     * Phase 13 — hard maximum power % the flow never exceeds (0..100, default 100). Applied last, so it
+     * caps everything: the curve, weather rules (incl. `boostMax`) and the missing-source fail-safe.
+     * For pumps that only run up to e.g. 90 %.
+     */
+    maxPower?: number;
     /** Phase 12 — smoothing time constant for the curve's temperature source, in hours (0 = off). */
     smoothingHours?: number;
     /** Phase 12 — temperature hysteresis: re-map the curve only after ±this many K (0 = off). */
@@ -457,6 +463,10 @@ export function decideTarget(
                 break;
         }
     }
+
+    // maxPower is a hard ceiling applied last — it caps the curve, every raise/boost and the fail-safe.
+    const maxPower = config.maxPower === undefined ? 100 : clampPercent(config.maxPower);
+    power = Math.min(power, maxPower);
 
     // A frost "hold" freezes the pump — but an explicit raise/boost still wins (raising is the safe error).
     return { sfc, power: hold && !raised ? "hold" : power, actuators, failSafe };

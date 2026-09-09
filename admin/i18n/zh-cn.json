@@ -99,5 +99,7 @@
     "Hysteresis (°C)": "迟滞（°C）",
     "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.": "仅在温度变化达到该值后才重新计算曲线。建议 0.5–1 · 0 = 关闭。",
     "Max. change (% per hour)": "最大变化（% 每小时）",
-    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "限制功率变化的速度（平缓爬坡）。建议 10–20 · 0 = 立即。"
+    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "限制功率变化的速度（平缓爬坡）。建议 10–20 · 0 = 立即。",
+    "Maximum power %": "最大功率 %",
+    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "上限——流量绝不会超过此值，即便在增压或安全回退时。例如仅能运行到 90 % 的水泵设为 90 %。"
 }

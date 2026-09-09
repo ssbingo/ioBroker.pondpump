@@ -99,5 +99,7 @@
     "Hysteresis (°C)": "Hysteresis (°C)",
     "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.": "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.",
     "Max. change (% per hour)": "Max. change (% per hour)",
-    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant."
+    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.",
+    "Maximum power %": "Maximum power %",
+    "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high.": "Upper limit — the flow never exceeds this, even on boost or fail-safe. E.g. 90 % for a pump that only runs that high."
 }

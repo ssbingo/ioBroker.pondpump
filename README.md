@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.6.0 (2026-09-09)
+
+- (ssbingo) **Maximum power % per pump.** A new hard ceiling in the scheduler's fine-tuning: the applied power never exceeds it — it is capped **last**, so it also limits the temperature curve, weather-rule raises/`boostMax` and the missing-source fail-safe. For pumps that only run up to e.g. 90 %
+
 ### 0.5.1 (2026-09-09)
 
 - (ssbingo) Fix: the new **water temperature sensor** dropdown rendered as an empty, flat field (empty value, no visible control) — rebuilt as a proper labelled `Select` (with `displayEmpty`/notched label) so the field, its value and the dropdown show correctly
