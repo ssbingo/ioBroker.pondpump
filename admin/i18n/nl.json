@@ -82,5 +82,22 @@
     "Minimum power % (Q_min)": "Minimaal vermogen % (Q_min)",
     "Smoothing (hours)": "Afvlakking (uren)",
     "Hysteresis (K)": "Hysterese (K)",
-    "Max ramp (% per hour)": "Max. helling (% per uur)"
+    "Max ramp (% per hour)": "Max. helling (% per uur)",
+    "no value yet": "nog geen waarde",
+    "Sensor %s": "Sensor %s",
+    "Water temperature sensor": "Watertemperatuursensor",
+    "Pick the device sensor that reads the water — compare the live values below with a thermometer you trust. It feeds telemetry.waterTemperature and pre-fills the curve source. For an external sensor, leave this on “none” and choose the object in the curve source.": "Kies de apparaatsensor die het water meet — vergelijk de live-waarden hieronder met een betrouwbare thermometer. Hij voedt telemetry.waterTemperature en vult de curvebron voor. Laat dit voor een externe sensor op „geen“ en kies het object in de curvebron.",
+    "— none / external sensor (choose in the curve source) —": "— geen / externe sensor (kies in de curvebron) —",
+    "Curve vs. time windows": "Curve vs. tijdvensters",
+    "Whether the temperature curve replaces the active time window, or only applies outside the windows.": "Of de temperatuurcurve het actieve tijdvenster vervangt of alleen buiten de vensters geldt.",
+    "Pre-filled from the sensor above. For an external water sensor, pick its object with the magnifier.": "Vooraf ingevuld vanaf de sensor hierboven. Kies voor een externe watersensor het object met het vergrootglas.",
+    "Fine-tuning (optional)": "Fijnafstemming (optioneel)",
+    "Minimum power %": "Minimaal vermogen %",
+    "Lower limit — the flow never drops below this. Suggested 35–40 %.": "Ondergrens — de doorstroming komt hier nooit onder. Aanbevolen 35–40 %.",
+    "Temperature smoothing (hours)": "Temperatuurdemping (uren)",
+    "Averages the temperature so short spikes don't re-adjust the pump. Suggested 12–24 · 0 = off.": "Middelt de temperatuur zodat korte pieken de pomp niet bijstellen. Aanbevolen 12–24 · 0 = uit.",
+    "Hysteresis (°C)": "Hysterese (°C)",
+    "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.": "Herberekent de curve pas na een temperatuurverandering van deze waarde. Aanbevolen 0,5–1 · 0 = uit.",
+    "Max. change (% per hour)": "Max. verandering (% per uur)",
+    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Begrenst hoe snel het vermogen mag veranderen (zachte helling). Aanbevolen 10–20 · 0 = direct."
 }

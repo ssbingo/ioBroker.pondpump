@@ -412,10 +412,19 @@ The select at the top decides how the curve relates to the time windows:
 - **Curve applies only outside the time windows** — inside a window the window wins; outside, the curve
   takes over.
 
-### 11.2 Water temperature → power curve
+### 11.2 Water temperature sensor and curve
+
+At the top, pick the **water temperature sensor**: the dropdown lists the pump's own temperature sensors
+**with their current value** — compare them against a thermometer you trust and pick the one that reads
+the water. Your choice feeds the new `telemetry.waterTemperature` state and **pre-fills the curve source**.
+For an **external** probe, leave this on "none" and enter its object as the curve source below (magnifier
+icon).
+
+To turn on the curve:
 
 1. Turn on **Water temperature → power curve**.
-2. Use the **magnifier icon** to pick the **water-temperature source** (the sensor's object id).
+2. Check the **water-temperature source** — it is pre-filled from the sensor above; for an external probe,
+   pick its object with the **magnifier icon**.
 3. Enter **points** (temperature °C → power %). Values are interpolated linearly between points and clamped
    beyond the ends. **Load default curve** fills in the recommended research curve (Q10 rule, 17 °C → 100 %)
    as a starting point.
@@ -423,15 +432,18 @@ The select at the top decides how the curve relates to the time windows:
 **Safety behaviour:** if the sensor drops out (the source has no value), the pump runs at **100 %** to be
 safe — too much circulation only costs electricity, too little costs fish.
 
-### 11.3 Limits (smoothing, hysteresis, ramp)
+### 11.3 Fine-tuning (optional)
 
-Below the curve you can optionally set:
+Below the curve are optional limits. In the admin UI each field shows a **suggested value** (grey
+placeholder) and a **help text**:
 
-- **Minimum power % (Q_min)** — the flow never drops below this (the hydraulic minimum).
-- **Smoothing (hours)** — smooths the temperature (a rolling average) so short spikes don't constantly
-  re-adjust the pump. 0 = off.
-- **Hysteresis (K)** — the curve is only re-evaluated after the temperature has moved by ±this amount.
-- **Max ramp (% per hour)** — limits how fast the power may change (a gentle ramp). 0 = instant.
+- **Minimum power %** — a lower limit; the flow never drops below it. Suggested **35–40 %**.
+- **Temperature smoothing (hours)** — averages the temperature so short spikes don't constantly re-adjust
+  the pump. Suggested **12–24**, `0` = off.
+- **Hysteresis (°C)** — the curve is only re-mapped after the temperature has moved by this much.
+  Suggested **0.5–1**, `0` = off.
+- **Max. change (% per hour)** — limits how fast the power may change (a gentle ramp). Suggested **10–20**,
+  `0` = instant.
 
 ### 11.4 Weather rules
 

@@ -82,5 +82,22 @@
     "Minimum power % (Q_min)": "Мінімальна потужність % (Q_min)",
     "Smoothing (hours)": "Згладжування (години)",
     "Hysteresis (K)": "Гістерезис (K)",
-    "Max ramp (% per hour)": "Макс. швидкість зміни (% за годину)"
+    "Max ramp (% per hour)": "Макс. швидкість зміни (% за годину)",
+    "no value yet": "значення ще немає",
+    "Sensor %s": "Датчик %s",
+    "Water temperature sensor": "Датчик температури води",
+    "Pick the device sensor that reads the water — compare the live values below with a thermometer you trust. It feeds telemetry.waterTemperature and pre-fills the curve source. For an external sensor, leave this on “none” and choose the object in the curve source.": "Виберіть датчик пристрою, що вимірює воду — порівняйте поточні значення нижче з надійним термометром. Він живить telemetry.waterTemperature і попередньо заповнює джерело кривої. Для зовнішнього датчика залиште «немає» і виберіть об'єкт у джерелі кривої.",
+    "— none / external sensor (choose in the curve source) —": "— немає / зовнішній датчик (вибрати в джерелі кривої) —",
+    "Curve vs. time windows": "Крива та часові вікна",
+    "Whether the temperature curve replaces the active time window, or only applies outside the windows.": "Чи замінює температурна крива активне часове вікно, чи діє лише поза вікнами.",
+    "Pre-filled from the sensor above. For an external water sensor, pick its object with the magnifier.": "Попередньо заповнено з датчика вище. Для зовнішнього датчика води виберіть його об'єкт через лупу.",
+    "Fine-tuning (optional)": "Тонке налаштування (необов'язково)",
+    "Minimum power %": "Мінімальна потужність %",
+    "Lower limit — the flow never drops below this. Suggested 35–40 %.": "Нижня межа — потік ніколи не опускається нижче. Рекомендовано 35–40 %.",
+    "Temperature smoothing (hours)": "Згладжування температури (години)",
+    "Averages the temperature so short spikes don't re-adjust the pump. Suggested 12–24 · 0 = off.": "Усереднює температуру, щоб короткі сплески не переналаштовували насос. Рекомендовано 12–24 · 0 = вимк.",
+    "Hysteresis (°C)": "Гістерезис (°C)",
+    "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.": "Перераховує криву лише після зміни температури на цю величину. Рекомендовано 0,5–1 · 0 = вимк.",
+    "Max. change (% per hour)": "Макс. зміна (% за годину)",
+    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Обмежує швидкість зміни потужності (плавний розгін). Рекомендовано 10–20 · 0 = миттєво."
 }

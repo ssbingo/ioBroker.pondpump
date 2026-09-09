@@ -4,8 +4,11 @@ import {
     Alert,
     Box,
     Button,
+    FormControl,
     FormControlLabel,
+    FormHelperText,
     IconButton,
+    InputLabel,
     MenuItem,
     Paper,
     Select,
@@ -50,6 +53,8 @@ interface PondpumpSchedulerState extends ConfigGenericState {
     loaded: boolean;
     /** The open object-picker dialog, or null. `onPick` receives the selected state id. */
     picker: null | { selected: string; onPick: (id: string) => void };
+    /** Live values of the pump's device temperature sensors (tab mode), for the sensor picker. */
+    sensorValues: Record<string, number | null>;
 }
 
 const DEFAULT_CFG: PumpScheduleConfig = { enabled: false, basePower: 50, plans: [] };
@@ -123,7 +128,7 @@ function actuatorValueText(value: number | boolean | undefined): string {
 class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedulerState> {
     constructor(props: ConfigGenericProps) {
         super(props);
-        this.state = { ...this.state, pumps: [], loaded: false, picker: null };
+        this.state = { ...this.state, pumps: [], loaded: false, picker: null, sensorValues: {} };
     }
 
     async componentDidMount(): Promise<void> {
@@ -132,9 +137,29 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
             // List mode needs the full set of detected pumps (with names) for the enable switches.
             await this.loadPumps();
         } else {
-            // Tab mode renders straight from the config data — nothing to load.
+            // Tab mode: read the pump's live sensor values so the water-temperature picker can show them.
+            const slot = this.pumpSlot;
+            const id = slot !== undefined ? this.enabledIds()[slot] : undefined;
+            if (id) {
+                await this.loadSensorValues(id);
+            }
             this.setState({ loaded: true });
         }
+    }
+
+    /** Read the current values of the pump's device temperature sensors (for the sensor picker). */
+    private async loadSensorValues(id: string): Promise<void> {
+        const base = `pondpump.${this.props.oContext.instance}.pumps.${id}.telemetry`;
+        const out: Record<string, number | null> = {};
+        for (const key of ["temperature", "temperature2"]) {
+            try {
+                const st = await this.props.oContext.socket.getState(`${base}.${key}`);
+                out[key] = typeof st?.val === "number" ? st.val : null;
+            } catch {
+                out[key] = null;
+            }
+        }
+        this.setState({ sensorValues: out });
     }
 
     /** The pump slot this instance edits (tab mode), or undefined for the pump list. */
@@ -404,6 +429,40 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
         this.setCfg(id, { ...this.cfgOf(id), conditionPriority: priority });
     }
 
+    /** The derived water-temperature state id for a pump (fed by the picked device sensor). */
+    private waterTempOid(id: string): string {
+        return `pondpump.${this.props.oContext.instance}.pumps.${id}.telemetry.waterTemperature`;
+    }
+
+    /** Label for a device-sensor option in the water-temperature picker, with its live value. */
+    private sensorOptionLabel(key: string, n: number): string {
+        const v = this.state.sensorValues[key];
+        const val =
+            typeof v === "number"
+                ? `${v.toLocaleString(I18n.getLanguage(), { maximumFractionDigits: 1 })} °C`
+                : I18n.t("no value yet");
+        return `${I18n.t("Sensor %s", String(n))} · ${val} · telemetry.${key}`;
+    }
+
+    /**
+     * Assign which device sensor is the water temperature. This also pre-fills the curve source with
+     * the derived `telemetry.waterTemperature` state so the curve reads a clearly named value.
+     *
+     * @param id - the pump id
+     * @param sensor - the device sensor key, or "" to clear the assignment
+     */
+    private setWaterSensor(id: string, sensor: "" | "temperature" | "temperature2"): void {
+        const cfg = this.cfgOf(id);
+        const next: PumpScheduleConfig = { ...cfg };
+        if (sensor === "") {
+            delete next.waterTempSensor;
+        } else {
+            next.waterTempSensor = sensor;
+            next.curve = { enabled: false, points: [], ...next.curve, source: this.waterTempOid(id) };
+        }
+        this.setCfg(id, next);
+    }
+
     /** Write one of the Phase-12 numeric limits (undefined clears it back to the default). */
     private setLimit(id: string, key: keyof PumpScheduleConfig, value: number | undefined): void {
         this.setCfg(id, { ...this.cfgOf(id), [key]: value });
@@ -537,15 +596,43 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                         "The water-temperature curve sets the base flow; weather rules can only raise it (or hold / drive an actuator). Point the curve at a real water sensor — the pump's own telemetry.temperature is the device temperature, not the water.",
                     )}
                 </Alert>
-                <Select
+                <TextField
+                    select
                     size="small"
-                    value={priority}
-                    onChange={e => this.setPriority(id, e.target.value)}
-                    sx={{ mb: 2, minWidth: 360 }}
+                    label={I18n.t("Water temperature sensor")}
+                    helperText={I18n.t(
+                        "Pick the device sensor that reads the water — compare the live values below with a thermometer you trust. It feeds telemetry.waterTemperature and pre-fills the curve source. For an external sensor, leave this on “none” and choose the object in the curve source.",
+                    )}
+                    value={cfg.waterTempSensor ?? ""}
+                    onChange={e => this.setWaterSensor(id, e.target.value as "" | "temperature" | "temperature2")}
+                    sx={{ width: 560, maxWidth: "100%", mb: 2, display: "block" }}
                 >
-                    <MenuItem value="override">{I18n.t("Curve overrides the active time window")}</MenuItem>
-                    <MenuItem value="outsideOnly">{I18n.t("Curve applies only outside the time windows")}</MenuItem>
-                </Select>
+                    <MenuItem value="">{I18n.t("— none / external sensor (choose in the curve source) —")}</MenuItem>
+                    <MenuItem value="temperature">{this.sensorOptionLabel("temperature", 1)}</MenuItem>
+                    <MenuItem value="temperature2">{this.sensorOptionLabel("temperature2", 2)}</MenuItem>
+                </TextField>
+
+                <FormControl
+                    size="small"
+                    sx={{ mb: 2, minWidth: 360, maxWidth: "100%", display: "block" }}
+                >
+                    <InputLabel id={`prio-${id}`}>{I18n.t("Curve vs. time windows")}</InputLabel>
+                    <Select
+                        labelId={`prio-${id}`}
+                        label={I18n.t("Curve vs. time windows")}
+                        value={priority}
+                        onChange={e => this.setPriority(id, e.target.value)}
+                        sx={{ minWidth: 360, maxWidth: "100%" }}
+                    >
+                        <MenuItem value="override">{I18n.t("Curve overrides the active time window")}</MenuItem>
+                        <MenuItem value="outsideOnly">{I18n.t("Curve applies only outside the time windows")}</MenuItem>
+                    </Select>
+                    <FormHelperText>
+                        {I18n.t(
+                            "Whether the temperature curve replaces the active time window, or only applies outside the windows.",
+                        )}
+                    </FormHelperText>
+                </FormControl>
 
                 <FormControlLabel
                     control={
@@ -562,6 +649,11 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                             label: I18n.t("Water temperature source (state id)"),
                             width: 560,
                         })}
+                        <FormHelperText sx={{ mb: 1 }}>
+                            {I18n.t(
+                                "Pre-filled from the sensor above. For an external water sensor, pick its object with the magnifier.",
+                            )}
+                        </FormHelperText>
                         <Paper
                             variant="outlined"
                             sx={{ mt: 1 }}
@@ -750,40 +842,88 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
         );
     }
 
-    /** The Phase-12 numeric limits row (Q_min floor, smoothing, hysteresis, ramp). */
+    /** The Phase-12 numeric limits (Q_min floor, smoothing, hysteresis, ramp) with help + suggestions. */
     private renderLimits(id: string): React.JSX.Element {
         const cfg = this.cfgOf(id);
-        const numField = (
-            label: string,
-            key: keyof PumpScheduleConfig,
-            value: number | undefined,
-            step: number,
-            clampPct: boolean,
-        ): React.JSX.Element => (
+        const numField = (opts: {
+            label: string;
+            key: keyof PumpScheduleConfig;
+            value: number | undefined;
+            step: number;
+            clampPct: boolean;
+            placeholder: string;
+            helper: string;
+        }): React.JSX.Element => (
             <TextField
                 type="number"
                 size="small"
-                label={label}
-                slotProps={{ htmlInput: { min: 0, max: clampPct ? 100 : undefined, step } }}
-                value={value ?? ""}
+                label={opts.label}
+                placeholder={opts.placeholder}
+                helperText={opts.helper}
+                slotProps={{
+                    htmlInput: { min: 0, max: opts.clampPct ? 100 : undefined, step: opts.step },
+                    inputLabel: { shrink: true },
+                }}
+                value={opts.value ?? ""}
                 onChange={e => {
                     const raw = e.target.value;
                     if (raw === "") {
-                        this.setLimit(id, key, undefined);
+                        this.setLimit(id, opts.key, undefined);
                     } else {
                         const n = Number(raw);
-                        this.setLimit(id, key, clampPct ? clampPercent(n) : Math.max(0, n));
+                        this.setLimit(id, opts.key, opts.clampPct ? clampPercent(n) : Math.max(0, n));
                     }
                 }}
-                sx={{ width: 190 }}
+                sx={{ width: 270, maxWidth: "100%" }}
             />
         );
         return (
-            <Box sx={{ mt: 2, display: "flex", gap: 2, flexWrap: "wrap" }}>
-                {numField(I18n.t("Minimum power % (Q_min)"), "minPower", cfg.minPower, 5, true)}
-                {numField(I18n.t("Smoothing (hours)"), "smoothingHours", cfg.smoothingHours, 1, false)}
-                {numField(I18n.t("Hysteresis (K)"), "hysteresisK", cfg.hysteresisK, 0.5, false)}
-                {numField(I18n.t("Max ramp (% per hour)"), "rampPercentPerHour", cfg.rampPercentPerHour, 5, false)}
+            <Box sx={{ mt: 2 }}>
+                <Typography sx={{ mb: 1, fontWeight: 500 }}>{I18n.t("Fine-tuning (optional)")}</Typography>
+                <Box sx={{ display: "flex", gap: 3, rowGap: 2, flexWrap: "wrap" }}>
+                    {numField({
+                        label: I18n.t("Minimum power %"),
+                        key: "minPower",
+                        value: cfg.minPower,
+                        step: 5,
+                        clampPct: true,
+                        placeholder: "40",
+                        helper: I18n.t("Lower limit — the flow never drops below this. Suggested 35–40 %."),
+                    })}
+                    {numField({
+                        label: I18n.t("Temperature smoothing (hours)"),
+                        key: "smoothingHours",
+                        value: cfg.smoothingHours,
+                        step: 1,
+                        clampPct: false,
+                        placeholder: "12",
+                        helper: I18n.t(
+                            "Averages the temperature so short spikes don't re-adjust the pump. Suggested 12–24 · 0 = off.",
+                        ),
+                    })}
+                    {numField({
+                        label: I18n.t("Hysteresis (°C)"),
+                        key: "hysteresisK",
+                        value: cfg.hysteresisK,
+                        step: 0.5,
+                        clampPct: false,
+                        placeholder: "1",
+                        helper: I18n.t(
+                            "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.",
+                        ),
+                    })}
+                    {numField({
+                        label: I18n.t("Max. change (% per hour)"),
+                        key: "rampPercentPerHour",
+                        value: cfg.rampPercentPerHour,
+                        step: 5,
+                        clampPct: false,
+                        placeholder: "15",
+                        helper: I18n.t(
+                            "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.",
+                        ),
+                    })}
+                </Box>
             </Box>
         );
     }

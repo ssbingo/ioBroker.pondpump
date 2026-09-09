@@ -82,5 +82,22 @@
     "Minimum power % (Q_min)": "Moc minimalna % (Q_min)",
     "Smoothing (hours)": "Wygładzanie (godziny)",
     "Hysteresis (K)": "Histereza (K)",
-    "Max ramp (% per hour)": "Maks. narastanie (% na godzinę)"
+    "Max ramp (% per hour)": "Maks. narastanie (% na godzinę)",
+    "no value yet": "brak wartości",
+    "Sensor %s": "Czujnik %s",
+    "Water temperature sensor": "Czujnik temperatury wody",
+    "Pick the device sensor that reads the water — compare the live values below with a thermometer you trust. It feeds telemetry.waterTemperature and pre-fills the curve source. For an external sensor, leave this on “none” and choose the object in the curve source.": "Wybierz czujnik urządzenia mierzący wodę — porównaj wartości na żywo poniżej z zaufanym termometrem. Zasila telemetry.waterTemperature i wstępnie wypełnia źródło krzywej. Dla czujnika zewnętrznego zostaw „brak“ i wybierz obiekt w źródle krzywej.",
+    "— none / external sensor (choose in the curve source) —": "— brak / czujnik zewnętrzny (wybierz w źródle krzywej) —",
+    "Curve vs. time windows": "Krzywa a okna czasowe",
+    "Whether the temperature curve replaces the active time window, or only applies outside the windows.": "Czy krzywa temperatury zastępuje aktywne okno czasowe, czy działa tylko poza oknami.",
+    "Pre-filled from the sensor above. For an external water sensor, pick its object with the magnifier.": "Wstępnie wypełnione z czujnika powyżej. Dla zewnętrznego czujnika wody wybierz jego obiekt za pomocą lupy.",
+    "Fine-tuning (optional)": "Dostrajanie (opcjonalne)",
+    "Minimum power %": "Moc minimalna %",
+    "Lower limit — the flow never drops below this. Suggested 35–40 %.": "Dolna granica — przepływ nigdy nie spada poniżej. Zalecane 35–40 %.",
+    "Temperature smoothing (hours)": "Wygładzanie temperatury (godziny)",
+    "Averages the temperature so short spikes don't re-adjust the pump. Suggested 12–24 · 0 = off.": "Uśrednia temperaturę, aby krótkie skoki nie regulowały pompy. Zalecane 12–24 · 0 = wył.",
+    "Hysteresis (°C)": "Histereza (°C)",
+    "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.": "Przelicza krzywą dopiero po zmianie temperatury o tę wartość. Zalecane 0,5–1 · 0 = wył.",
+    "Max. change (% per hour)": "Maks. zmiana (% na godzinę)",
+    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Ogranicza szybkość zmiany mocy (łagodne narastanie). Zalecane 10–20 · 0 = natychmiast."
 }

@@ -427,10 +427,19 @@ Das Auswahlfeld oben legt fest, wie die Kurve zu den Zeitfenstern steht:
 - **Kurve gilt nur außerhalb der Zeitfenster** — innerhalb eines Fensters gewinnt das Fenster, außerhalb
   greift die Kurve.
 
-### 11.2 Wassertemperatur → Leistungskurve
+### 11.2 Wassertemperatur-Sensor und Kurve
+
+Ganz oben wählst du den **Wassertemperatur-Sensor**: Das Dropdown listet die geräteeigenen
+Temperatursensoren der Pumpe **mit ihrem aktuellen Wert** — vergleiche sie mit einem Thermometer und
+wähle den, der die Wassertemperatur zeigt. Die Auswahl speist den neuen State
+`telemetry.waterTemperature` und **belegt die Kurvenquelle vor**. Einen **externen** Fühler wählst du
+stattdessen auf „keiner" und trägst sein Objekt unten als Kurvenquelle ein (Lupen-Symbol).
+
+So aktivierst du die Kurve:
 
 1. Schalte **Wassertemperatur → Leistungskurve** ein.
-2. Wähle über das **Lupen-Symbol** die **Wassertemperatur-Quelle** (Objekt-ID des Sensors).
+2. Prüfe die **Wassertemperatur-Quelle** — durch den Sensor oben vorbelegt; für einen externen Fühler
+   sein Objekt über das **Lupen-Symbol** wählen.
 3. Trage **Stützpunkte** ein (Temperatur °C → Power %). Zwischen den Punkten wird linear interpoliert,
    unter-/oberhalb geklemmt. Mit **Standardkurve laden** setzt du die empfohlene Kurve aus der Forschung
    (Q10-Regel, 17 °C → 100 %) als Startpunkt.
@@ -438,16 +447,18 @@ Das Auswahlfeld oben legt fest, wie die Kurve zu den Zeitfenstern steht:
 **Sicherheitsverhalten:** Fällt der Sensor aus (Quelle liefert keinen Wert), läuft die Pumpe zur Sicherheit
 auf **100 %** — zu viel Umwälzung kostet nur Strom, zu wenig kostet Fische.
 
-### 11.3 Grenzwerte (Glättung, Hysterese, Rampe)
+### 11.3 Feinabstimmung (optional)
 
-Unter der Kurve stellst du optional ein:
+Unter der Kurve stehen optionale Grenzwerte. Jedes Feld zeigt in der Admin-Oberfläche einen
+**Wertvorschlag** (grauer Platzhalter) und einen **Hilfetext**:
 
-- **Mindestleistung % (Q_min)** — der Durchfluss fällt nie unter diesen Wert (hydraulisches Minimum).
-- **Glättung (Stunden)** — glättet die Temperatur (gleitender Mittelwert), damit kurze Ausschläge die
-  Pumpe nicht ständig verstellen. 0 = aus.
-- **Hysterese (K)** — die Kurve wird erst nach einer Temperaturänderung von ±diesem Wert neu ausgewertet.
-- **Max. Rampe (% pro Stunde)** — begrenzt, wie schnell sich die Leistung ändert (sanftes Anfahren).
-  0 = sofort.
+- **Mindestleistung %** — Untergrenze, der Durchfluss fällt nie darunter. Empfohlen **35–40 %**.
+- **Temperatur-Glättung (Stunden)** — mittelt die Temperatur, damit kurze Ausschläge die Pumpe nicht
+  ständig verstellen. Empfohlen **12–24**, `0` = aus.
+- **Hysterese (°C)** — die Kurve wird erst nach einer Temperaturänderung um diesen Betrag neu berechnet.
+  Empfohlen **0,5–1**, `0` = aus.
+- **Max. Änderung (% pro Stunde)** — begrenzt, wie schnell sich die Leistung ändert (sanftes Anfahren).
+  Empfohlen **10–20**, `0` = sofort.
 
 ### 11.4 Wetterregeln
 

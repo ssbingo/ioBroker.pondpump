@@ -82,5 +82,22 @@
     "Minimum power % (Q_min)": "最小功率 %（Q_min）",
     "Smoothing (hours)": "平滑（小时）",
     "Hysteresis (K)": "迟滞（K）",
-    "Max ramp (% per hour)": "最大爬坡（% 每小时）"
+    "Max ramp (% per hour)": "最大爬坡（% 每小时）",
+    "no value yet": "暂无数值",
+    "Sensor %s": "传感器 %s",
+    "Water temperature sensor": "水温传感器",
+    "Pick the device sensor that reads the water — compare the live values below with a thermometer you trust. It feeds telemetry.waterTemperature and pre-fills the curve source. For an external sensor, leave this on “none” and choose the object in the curve source.": "选择测量水的设备传感器——将下方的实时数值与可信的温度计比较。它为 telemetry.waterTemperature 提供数据并预填充曲线来源。对于外部传感器，请保持“无”并在曲线来源中选择对象。",
+    "— none / external sensor (choose in the curve source) —": "— 无 / 外部传感器（在曲线来源中选择）—",
+    "Curve vs. time windows": "曲线与时间窗口",
+    "Whether the temperature curve replaces the active time window, or only applies outside the windows.": "温度曲线是替换当前时间窗口，还是仅在窗口之外生效。",
+    "Pre-filled from the sensor above. For an external water sensor, pick its object with the magnifier.": "已根据上方传感器预填充。对于外部水温传感器，请用放大镜选择其对象。",
+    "Fine-tuning (optional)": "微调（可选）",
+    "Minimum power %": "最小功率 %",
+    "Lower limit — the flow never drops below this. Suggested 35–40 %.": "下限——流量绝不会低于此值。建议 35–40 %。",
+    "Temperature smoothing (hours)": "温度平滑（小时）",
+    "Averages the temperature so short spikes don't re-adjust the pump. Suggested 12–24 · 0 = off.": "对温度取平均，使短暂波动不会频繁调整水泵。建议 12–24 · 0 = 关闭。",
+    "Hysteresis (°C)": "迟滞（°C）",
+    "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.": "仅在温度变化达到该值后才重新计算曲线。建议 0.5–1 · 0 = 关闭。",
+    "Max. change (% per hour)": "最大变化（% 每小时）",
+    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "限制功率变化的速度（平缓爬坡）。建议 10–20 · 0 = 立即。"
 }

@@ -82,5 +82,22 @@
     "Minimum power % (Q_min)": "Minimum power % (Q_min)",
     "Smoothing (hours)": "Smoothing (hours)",
     "Hysteresis (K)": "Hysteresis (K)",
-    "Max ramp (% per hour)": "Max ramp (% per hour)"
+    "Max ramp (% per hour)": "Max ramp (% per hour)",
+    "no value yet": "no value yet",
+    "Sensor %s": "Sensor %s",
+    "Water temperature sensor": "Water temperature sensor",
+    "Pick the device sensor that reads the water — compare the live values below with a thermometer you trust. It feeds telemetry.waterTemperature and pre-fills the curve source. For an external sensor, leave this on “none” and choose the object in the curve source.": "Pick the device sensor that reads the water — compare the live values below with a thermometer you trust. It feeds telemetry.waterTemperature and pre-fills the curve source. For an external sensor, leave this on “none” and choose the object in the curve source.",
+    "— none / external sensor (choose in the curve source) —": "— none / external sensor (choose in the curve source) —",
+    "Curve vs. time windows": "Curve vs. time windows",
+    "Whether the temperature curve replaces the active time window, or only applies outside the windows.": "Whether the temperature curve replaces the active time window, or only applies outside the windows.",
+    "Pre-filled from the sensor above. For an external water sensor, pick its object with the magnifier.": "Pre-filled from the sensor above. For an external water sensor, pick its object with the magnifier.",
+    "Fine-tuning (optional)": "Fine-tuning (optional)",
+    "Minimum power %": "Minimum power %",
+    "Lower limit — the flow never drops below this. Suggested 35–40 %.": "Lower limit — the flow never drops below this. Suggested 35–40 %.",
+    "Temperature smoothing (hours)": "Temperature smoothing (hours)",
+    "Averages the temperature so short spikes don't re-adjust the pump. Suggested 12–24 · 0 = off.": "Averages the temperature so short spikes don't re-adjust the pump. Suggested 12–24 · 0 = off.",
+    "Hysteresis (°C)": "Hysteresis (°C)",
+    "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.": "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.",
+    "Max. change (% per hour)": "Max. change (% per hour)",
+    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant."
 }

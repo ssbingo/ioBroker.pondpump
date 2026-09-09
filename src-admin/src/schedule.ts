@@ -103,6 +103,13 @@ export interface PumpScheduleConfig {
      * without re-reading objects. Pure UI metadata — the backend scheduler ignores it.
      */
     name?: string;
+    /**
+     * Which device temperature sensor the user picked as the water temperature (Phase 12). The
+     * backend mirrors that sensor's value into `telemetry.waterTemperature`, and the admin pre-fills
+     * the curve source with it. The pump's raw sensors are the *device* temperature, so the user must
+     * choose which one actually reads the water. `decideTarget` itself ignores this (UI/backend only).
+     */
+    waterTempSensor?: "temperature" | "temperature2";
     /** Phase 11 — temperature→power curve. */
     curve?: TempCurve;
     /** Phase 11/12 — threshold rules (temperature/weather), all matching rules combine. */

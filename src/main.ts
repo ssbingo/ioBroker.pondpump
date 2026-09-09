@@ -21,6 +21,8 @@ import {
     parseInventory,
     SENSOR_POWER_W,
     SENSOR_SPEED_RPM,
+    SENSOR_TEMPERATURE2_C,
+    SENSOR_TEMPERATURE_C,
 } from "./lib/cloud/inventory";
 import {
     ensureGatewayObjects,
@@ -649,6 +651,23 @@ class Pondpump extends utils.Adapter {
             }
 
             await writePumpStates(this, livePump, { includeControl });
+
+            // Mirror the user-picked device sensor into telemetry.waterTemperature (Phase 12). The
+            // pump's raw sensors report the device temperature; the user chooses in the admin which
+            // one actually reads the water. Only written when that sensor has a value this poll.
+            const waterSensor = this.schedules[String(pump.deviceNumber)]?.waterTempSensor;
+            if (waterSensor) {
+                const rawWater =
+                    waterSensor === "temperature2"
+                        ? livePump.sensors[SENSOR_TEMPERATURE2_C]
+                        : livePump.sensors[SENSOR_TEMPERATURE_C];
+                if (typeof rawWater === "number" && Number.isFinite(rawWater)) {
+                    await this.setState(`pumps.${pump.deviceNumber}.telemetry.waterTemperature`, {
+                        val: rawWater,
+                        ack: true,
+                    });
+                }
+            }
 
             // The dmx speed setpoint is not readable locally, but on/off is unambiguous from live
             // telemetry: an off pump stands still (rpm 0) and only draws a small standby power

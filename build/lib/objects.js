@@ -200,6 +200,20 @@ function pumpObjectDefs(pump) {
       })
     },
     {
+      // The water temperature, mirrored from whichever device sensor the user picked in the
+      // admin (native.schedules[dn].waterTempSensor). Empty until a sensor is assigned — the
+      // pump's raw sensors are the device temperature, not necessarily the water (Phase 12).
+      id: `${base}.telemetry.waterTemperature`,
+      obj: stateObj({
+        name: "Water temperature",
+        type: "number",
+        role: "value.temperature",
+        unit: "\xB0C",
+        read: true,
+        write: false
+      })
+    },
+    {
       id: `${base}.telemetry.voltage`,
       obj: stateObj({
         name: "Mains voltage",

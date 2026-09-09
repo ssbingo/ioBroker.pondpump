@@ -465,7 +465,7 @@ class Pondpump extends utils.Adapter {
    * @param startedAt - poll start time (ms) for the timing summary
    */
   async applyInventory(id, inv, startedAt) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const { gateway, pumps, online, includeControl } = inv;
     if (!this.gatewayEnsured) {
       await (0, import_objects.ensureGatewayObjects)(this, gateway);
@@ -499,8 +499,18 @@ class Pondpump extends utils.Adapter {
         );
       }
       await (0, import_objects.writePumpStates)(this, livePump, { includeControl });
-      const rpm = (_b = livePump.sensors[import_inventory.SENSOR_SPEED_RPM]) != null ? _b : 0;
-      const power = (_c = livePump.sensors[import_inventory.SENSOR_POWER_W]) != null ? _c : 0;
+      const waterSensor = (_b = this.schedules[String(pump.deviceNumber)]) == null ? void 0 : _b.waterTempSensor;
+      if (waterSensor) {
+        const rawWater = waterSensor === "temperature2" ? livePump.sensors[import_inventory.SENSOR_TEMPERATURE2_C] : livePump.sensors[import_inventory.SENSOR_TEMPERATURE_C];
+        if (typeof rawWater === "number" && Number.isFinite(rawWater)) {
+          await this.setState(`pumps.${pump.deviceNumber}.telemetry.waterTemperature`, {
+            val: rawWater,
+            ack: true
+          });
+        }
+      }
+      const rpm = (_c = livePump.sensors[import_inventory.SENSOR_SPEED_RPM]) != null ? _c : 0;
+      const power = (_d = livePump.sensors[import_inventory.SENSOR_POWER_W]) != null ? _d : 0;
       const derivedOn = rpm > 0 || power > STANDBY_POWER_W;
       if (!includeControl) {
         await this.setState(`pumps.${pump.deviceNumber}.control.on`, { val: derivedOn, ack: true });

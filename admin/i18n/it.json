@@ -82,5 +82,22 @@
     "Minimum power % (Q_min)": "Potenza minima % (Q_min)",
     "Smoothing (hours)": "Livellamento (ore)",
     "Hysteresis (K)": "Isteresi (K)",
-    "Max ramp (% per hour)": "Rampa max (% all'ora)"
+    "Max ramp (% per hour)": "Rampa max (% all'ora)",
+    "no value yet": "ancora nessun valore",
+    "Sensor %s": "Sensore %s",
+    "Water temperature sensor": "Sensore temperatura dell'acqua",
+    "Pick the device sensor that reads the water — compare the live values below with a thermometer you trust. It feeds telemetry.waterTemperature and pre-fills the curve source. For an external sensor, leave this on “none” and choose the object in the curve source.": "Scegli il sensore del dispositivo che misura l'acqua: confronta i valori in tempo reale qui sotto con un termometro affidabile. Alimenta telemetry.waterTemperature e precompila la sorgente della curva. Per un sensore esterno, lascia su «nessuno» e scegli l'oggetto nella sorgente della curva.",
+    "— none / external sensor (choose in the curve source) —": "— nessuno / sensore esterno (scegli nella sorgente della curva) —",
+    "Curve vs. time windows": "Curva vs finestre orarie",
+    "Whether the temperature curve replaces the active time window, or only applies outside the windows.": "Se la curva di temperatura sostituisce la finestra oraria attiva o si applica solo al di fuori delle finestre.",
+    "Pre-filled from the sensor above. For an external water sensor, pick its object with the magnifier.": "Precompilato dal sensore sopra. Per un sensore dell'acqua esterno, scegli il suo oggetto con la lente.",
+    "Fine-tuning (optional)": "Regolazione fine (opzionale)",
+    "Minimum power %": "Potenza minima %",
+    "Lower limit — the flow never drops below this. Suggested 35–40 %.": "Limite inferiore: la portata non scende mai sotto. Consigliato 35–40 %.",
+    "Temperature smoothing (hours)": "Livellamento temperatura (ore)",
+    "Averages the temperature so short spikes don't re-adjust the pump. Suggested 12–24 · 0 = off.": "Media la temperatura così i picchi brevi non riregolano la pompa. Consigliato 12–24 · 0 = disattivato.",
+    "Hysteresis (°C)": "Isteresi (°C)",
+    "Re-maps the curve only after the temperature moved by this much. Suggested 0.5–1 · 0 = off.": "Ricalcola la curva solo dopo una variazione di temperatura di questo valore. Consigliato 0,5–1 · 0 = disattivato.",
+    "Max. change (% per hour)": "Variazione max. (% all'ora)",
+    "Limits how fast the power may change (gentle ramp). Suggested 10–20 · 0 = instant.": "Limita la velocità di variazione della potenza (rampa dolce). Consigliato 10–20 · 0 = istantaneo."
 }
