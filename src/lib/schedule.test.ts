@@ -3,13 +3,15 @@ import {
     activeWindow,
     collectSourceOids,
     compareValue,
-    evaluateConditions,
+    decideTarget,
+    DEFAULT_CURVE_POINTS,
     interpolateCurve,
     minutesUntilNextChange,
     parseHhmm,
     type PumpSchedule,
     type PumpScheduleConfig,
-    targetForConfig,
+    rampTowards,
+    updateEma,
     validatePlans,
 } from "./schedule";
 
@@ -80,7 +82,7 @@ describe("schedule core", () => {
         });
     });
 
-    describe("targetForConfig", () => {
+    describe("decideTarget (time windows only)", () => {
         const config: PumpScheduleConfig = {
             enabled: true,
             basePower: 25,
@@ -91,17 +93,22 @@ describe("schedule core", () => {
             ],
         };
         it("returns the base power (SFC off) outside every window", () => {
-            expect(targetForConfig(config, at(3))).to.deep.equal({ sfc: false, power: 25 });
-            expect(targetForConfig(config, at(19))).to.deep.equal({ sfc: false, power: 25 });
+            expect(decideTarget(config, at(3))).to.deep.equal({
+                sfc: false,
+                power: 25,
+                actuators: [],
+                failSafe: false,
+            });
+            expect(decideTarget(config, at(19))).to.include({ sfc: false, power: 25 });
         });
         it("applies a power window (forcing SFC off)", () => {
-            expect(targetForConfig(config, at(7))).to.deep.equal({ sfc: false, power: 80 });
+            expect(decideTarget(config, at(7))).to.include({ sfc: false, power: 80 });
         });
         it("applies an SFC-on window (power stays at base)", () => {
-            expect(targetForConfig(config, at(12))).to.deep.equal({ sfc: true, power: 25 });
+            expect(decideTarget(config, at(12))).to.include({ sfc: true, power: 25 });
         });
         it("applies an SFC-off window (SFC off, base power)", () => {
-            expect(targetForConfig(config, at(21))).to.deep.equal({ sfc: false, power: 25 });
+            expect(decideTarget(config, at(21))).to.include({ sfc: false, power: 25 });
         });
     });
 
@@ -129,9 +136,9 @@ const TEMP = "pondpump.0.pumps.1.telemetry.temperature";
 const RAIN = "weather.0.rain";
 
 /**
- * A minimal enabled config with the given Phase-11 extras.
+ * A minimal enabled config with the given Phase-11/12 extras.
  *
- * @param extra
+ * @param extra - the curve/rules/priority/… fields to merge in
  */
 const cfg = (extra: Partial<PumpScheduleConfig>): PumpScheduleConfig => ({
     enabled: true,
@@ -181,89 +188,140 @@ describe("schedule conditions (Phase 11)", () => {
         });
     });
 
-    describe("evaluateConditions", () => {
-        it("returns undefined when nothing applies", () => {
-            expect(evaluateConditions(cfg({}), {})).to.equal(undefined);
+    describe("decideTarget — curve, priority, Q_min, fail-safe", () => {
+        it("uses the curve as the base and clamps up to minPower", () => {
+            const c = cfg({
+                minPower: 40,
+                curve: {
+                    enabled: true,
+                    source: TEMP,
+                    points: [
+                        { temp: 4, power: 20 },
+                        { temp: 20, power: 100 },
+                    ],
+                },
+            });
+            expect(decideTarget(c, at(12), { [TEMP]: 4 }).power).to.equal(40); // curve 20 → Q_min 40
+            expect(decideTarget(c, at(12), { [TEMP]: 20 }).power).to.equal(100);
         });
-        it("applies the first matching rule (rules override the curve)", () => {
+        it("override: the curve beats the active window; outsideOnly: the window wins while active", () => {
+            const plan: PumpSchedule = { start: "08:00", end: "20:00", mode: "power", power: 70 };
+            const curve = {
+                enabled: true,
+                source: TEMP,
+                points: [
+                    { temp: 0, power: 30 },
+                    { temp: 30, power: 90 },
+                ],
+            }; // slope 2 → 15 °C = 60 %
+            const ov = cfg({ plans: [plan], conditionPriority: "override", curve });
+            expect(decideTarget(ov, at(12), { [TEMP]: 15 }).power).to.equal(60); // curve overrides window
+            const oo = cfg({ plans: [plan], conditionPriority: "outsideOnly", curve });
+            expect(decideTarget(oo, at(12), { [TEMP]: 15 }).power).to.equal(70); // window wins inside
+            expect(decideTarget(oo, at(6), { [TEMP]: 15 }).power).to.equal(60); // curve applies outside
+        });
+        it("fails safe to 100 % when the curve source is missing", () => {
             const c = cfg({
                 curve: {
                     enabled: true,
                     source: TEMP,
                     points: [
-                        { temp: 0, power: 30 },
+                        { temp: 0, power: 20 },
                         { temp: 30, power: 100 },
                     ],
                 },
-                rules: [{ source: TEMP, cmp: "lt", threshold: 4, effect: "off" }],
             });
-            // 2°C matches the frost rule → off, even though the curve is enabled
-            expect(evaluateConditions(c, { [TEMP]: 2 })).to.deep.equal({ sfc: false, power: 0 });
-        });
-        it("falls back to the curve when no rule matches", () => {
-            const c = cfg({
-                curve: {
-                    enabled: true,
-                    source: TEMP,
-                    points: [
-                        { temp: 10, power: 40 },
-                        { temp: 20, power: 80 },
-                    ],
-                },
-                rules: [{ source: TEMP, cmp: "lt", threshold: 4, effect: "off" }],
-            });
-            expect(evaluateConditions(c, { [TEMP]: 15 })).to.deep.equal({ sfc: false, power: 60 });
-        });
-        it("supports boolean weather sources (1/0) and sfc/power effects", () => {
-            const c = cfg({ rules: [{ source: RAIN, cmp: "eq", threshold: 1, effect: "power", power: 40 }] });
-            expect(evaluateConditions(c, { [RAIN]: 1 })).to.deep.equal({ sfc: false, power: 40 });
-            expect(evaluateConditions(c, { [RAIN]: 0 })).to.equal(undefined);
-        });
-        it("ignores rules whose source value is missing", () => {
-            const c = cfg({ rules: [{ source: TEMP, cmp: "lt", threshold: 4, effect: "off" }] });
-            expect(evaluateConditions(c, {})).to.equal(undefined);
+            const d = decideTarget(c, at(12), {});
+            expect(d.power).to.equal(100);
+            expect(d.failSafe).to.equal(true);
         });
     });
 
-    describe("targetForConfig with conditions", () => {
-        const windowPlan: PumpSchedule = { start: "08:00", end: "20:00", mode: "power", power: 70 };
-        it("with empty sources equals the pre-Phase-11 window behaviour", () => {
-            const c = cfg({ plans: [windowPlan] });
-            expect(targetForConfig(c, 12 * 60)).to.deep.equal({ sfc: false, power: 70 });
-            expect(targetForConfig(c, 6 * 60)).to.deep.equal({ sfc: false, power: 50 });
-        });
-        it("override: a matching rule beats the active window", () => {
+    describe("decideTarget — weather rules only raise / hold / act", () => {
+        const curve = {
+            enabled: true,
+            source: TEMP,
+            points: [
+                { temp: 0, power: 30 },
+                { temp: 30, power: 90 },
+            ],
+        }; // slope 2 → 10 °C = 50 %
+        it("raisePower/boostMax only raise, never lower", () => {
             const c = cfg({
-                plans: [windowPlan],
-                conditionPriority: "override",
-                rules: [{ source: TEMP, cmp: "lt", threshold: 4, effect: "off" }],
+                curve,
+                rules: [
+                    { source: RAIN, cmp: "eq", threshold: 1, effect: "raisePower", power: 70 },
+                    { source: TEMP, cmp: "gte", threshold: 25, effect: "boostMax" },
+                ],
             });
-            expect(targetForConfig(c, 12 * 60, { [TEMP]: 2 })).to.deep.equal({ sfc: false, power: 0 });
-            expect(targetForConfig(c, 12 * 60, { [TEMP]: 10 })).to.deep.equal({ sfc: false, power: 70 });
+            expect(decideTarget(c, at(12), { [TEMP]: 10, [RAIN]: 1 }).power).to.equal(70); // 50 → raised to 70
+            expect(decideTarget(c, at(12), { [TEMP]: 10, [RAIN]: 0 }).power).to.equal(50); // rule inactive
+            expect(decideTarget(c, at(12), { [TEMP]: 26 }).power).to.equal(100); // boostMax
         });
-        it("outsideOnly: the window wins while active, conditions apply only outside", () => {
-            const c = cfg({
-                plans: [windowPlan],
-                conditionPriority: "outsideOnly",
-                rules: [{ source: TEMP, cmp: "lt", threshold: 4, effect: "off" }],
+        it("hold freezes the pump, but an explicit raise wins over hold", () => {
+            const c = cfg({ curve, rules: [{ source: TEMP, cmp: "lt", threshold: 2, effect: "hold" }] });
+            expect(decideTarget(c, at(12), { [TEMP]: 1 }).power).to.equal("hold");
+            const c2 = cfg({
+                curve,
+                rules: [
+                    { source: TEMP, cmp: "lt", threshold: 2, effect: "hold" },
+                    { source: RAIN, cmp: "eq", threshold: 1, effect: "boostMax" },
+                ],
             });
-            // inside the window (12:00): window wins despite the frost rule
-            expect(targetForConfig(c, 12 * 60, { [TEMP]: 2 })).to.deep.equal({ sfc: false, power: 70 });
-            // outside the window (06:00): the frost rule applies
-            expect(targetForConfig(c, 6 * 60, { [TEMP]: 2 })).to.deep.equal({ sfc: false, power: 0 });
+            expect(decideTarget(c2, at(12), { [TEMP]: 1, [RAIN]: 1 }).power).to.equal(100);
+        });
+        it("setState emits actuator writes; sfc toggles SFC", () => {
+            const AER = "sonoff.0.aerator";
+            const c = cfg({
+                rules: [
+                    { source: TEMP, cmp: "gte", threshold: 25, effect: "setState", target: AER, value: true },
+                    { source: TEMP, cmp: "lt", threshold: 10, effect: "sfc", sfc: true },
+                ],
+            });
+            expect(decideTarget(c, at(12), { [TEMP]: 26 }).actuators).to.deep.equal([{ target: AER, value: true }]);
+            expect(decideTarget(c, at(12), { [TEMP]: 20 }).actuators).to.deep.equal([]);
+            expect(decideTarget(c, at(12), { [TEMP]: 5 }).sfc).to.equal(true);
+        });
+    });
+
+    describe("rampTowards", () => {
+        it("limits the step, passes through within range, disables at 0", () => {
+            expect(rampTowards(50, 80, 10)).to.equal(60);
+            expect(rampTowards(50, 20, 10)).to.equal(40);
+            expect(rampTowards(50, 55, 10)).to.equal(55);
+            expect(rampTowards(50, 80, 0)).to.equal(80);
+        });
+    });
+
+    describe("updateEma", () => {
+        it("returns raw when tau or dt is 0, and smooths in between otherwise", () => {
+            expect(updateEma(10, 20, 1000, 0)).to.equal(20);
+            expect(updateEma(10, 20, 0, 1000)).to.equal(20);
+            const s = updateEma(10, 20, 1000, 1000);
+            expect(s).to.be.greaterThan(10);
+            expect(s).to.be.lessThan(20);
+        });
+    });
+
+    describe("DEFAULT_CURVE_POINTS", () => {
+        it("is the research Q10 curve (clamped at 17 °C → 100 %, 8 °C → 54 %)", () => {
+            expect(interpolateCurve(DEFAULT_CURVE_POINTS, 17)).to.equal(100);
+            expect(interpolateCurve(DEFAULT_CURVE_POINTS, 25)).to.equal(100);
+            expect(interpolateCurve(DEFAULT_CURVE_POINTS, 8)).to.equal(54);
         });
     });
 
     describe("collectSourceOids", () => {
-        it("collects distinct source ids from the curve and rules", () => {
+        it("collects distinct INPUT ids from the curve and rules, not setState targets", () => {
+            const AER = "sonoff.0.aerator";
             const c = cfg({
                 curve: { enabled: true, source: TEMP, points: [] },
                 rules: [
-                    { source: RAIN, cmp: "eq", threshold: 1, effect: "power", power: 40 },
-                    { source: TEMP, cmp: "gt", threshold: 26, effect: "sfc", sfc: true },
+                    { source: RAIN, cmp: "eq", threshold: 1, effect: "raisePower", power: 40 },
+                    { source: TEMP, cmp: "gt", threshold: 26, effect: "setState", target: AER, value: true },
                 ],
             });
-            expect(collectSourceOids(c).sort()).to.deep.equal([RAIN, TEMP].sort());
+            expect(collectSourceOids(c).sort()).to.deep.equal([RAIN, TEMP].sort()); // AER is an output
         });
         it("skips a disabled curve", () => {
             const c = cfg({ curve: { enabled: false, source: TEMP, points: [] } });

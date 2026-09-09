@@ -29,27 +29,40 @@ export interface PumpSchedule {
 /** Comparison operator for a condition rule (source value vs. threshold). */
 export type Comparison = "lt" | "lte" | "gt" | "gte" | "eq" | "ne";
 
-/** What a triggered condition applies to the pump. */
-export type ConditionEffectType = "power" | "sfc" | "off";
+/**
+ * What a matching weather rule does (Phase 12). Rules never lower the flow — the reduction is the
+ * temperature curve's job — they only **raise** it, freeze it (frost), toggle SFC, or write an
+ * external actuator (aeration, waterfall, …).
+ */
+export type RuleEffectType =
+    | "raisePower" // raise pump power to at least `power` %
+    | "boostMax" // raise pump power to 100 %
+    | "hold" // freeze the pump power at its last applied value (frost)
+    | "sfc" // set the pump's SFC on/off (advanced; hands temperature control back to the pump)
+    | "setState"; // generic actuator: set the foreign `target` state to `value` (aeration, waterfall, …)
 
 /**
- * A single threshold rule (Phase 11). When the value read from `source` satisfies `cmp threshold`,
- * the rule's effect is applied. Booleans are read as 1/0. Rules are evaluated top-down; the first
- * matching rule wins and overrides the temperature curve.
+ * A single threshold rule. When the value read from `source` satisfies `cmp threshold`, the effect
+ * is applied. Booleans are read as 1/0. All matching rules combine (raises take the maximum, a
+ * matching hold freezes unless a raise won, actuator writes accumulate).
  */
 export interface ConditionRule {
-    /** ioBroker state id to read (pump's own `telemetry.temperature`, or an external weather OID). */
+    /** ioBroker state id to read (an external weather/water OID, or a pump telemetry state). */
     source: string;
     /** Comparison operator. */
     cmp: Comparison;
     /** Threshold the source value is compared against. */
     threshold: number;
     /** What to do while the rule holds. */
-    effect: ConditionEffectType;
-    /** Target power % (0..100) when `effect` is "power". */
+    effect: RuleEffectType;
+    /** Target power % (0..100) when `effect` is "raisePower". */
     power?: number;
     /** Target SFC state when `effect` is "sfc". */
     sfc?: boolean;
+    /** Foreign state id to write when `effect` is "setState". */
+    target?: string;
+    /** Value to write when `effect` is "setState". */
+    value?: number | boolean;
 }
 
 /** One point of the temperature→power curve. */
@@ -60,11 +73,11 @@ export interface CurvePoint {
     power: number;
 }
 
-/** Temperature-driven power curve (Phase 11). Power is linearly interpolated between points. */
+/** Temperature-driven power curve. Power is linearly interpolated between points (clamped at the ends). */
 export interface TempCurve {
     /** Whether the curve is active. */
     enabled: boolean;
-    /** State id providing the temperature (default: the pump's own `telemetry.temperature`). */
+    /** State id providing the water temperature (recommend a pond mid-depth sensor, not the pump). */
     source: string;
     /** Interpolation points; any order (sorted internally by temperature). */
     points: CurvePoint[];
@@ -72,8 +85,8 @@ export interface TempCurve {
 
 /**
  * How the temperature/weather conditions relate to the time windows:
- * - "override": a matching condition (rule or active curve) overrides the current time window.
- * - "outsideOnly": conditions apply only when no time window is active (they replace the base power).
+ * - "override": the temperature curve (when enabled) overrides the current time window.
+ * - "outsideOnly": the curve applies only when no time window is active (it replaces the base power).
  */
 export type ConditionPriority = "override" | "outsideOnly";
 
@@ -92,11 +105,53 @@ export interface PumpScheduleConfig {
     name?: string;
     /** Phase 11 — temperature→power curve. */
     curve?: TempCurve;
-    /** Phase 11 — threshold rules (temperature/weather), evaluated before the curve. */
+    /** Phase 11/12 — threshold rules (temperature/weather), all matching rules combine. */
     rules?: ConditionRule[];
-    /** Phase 11 — how conditions relate to the time windows. Default "override". */
+    /** Phase 11 — how the curve relates to the time windows. Default "override". */
     conditionPriority?: ConditionPriority;
+    /** Phase 12 — hydraulic minimum power % the flow never drops below (0..100). */
+    minPower?: number;
+    /** Phase 12 — smoothing time constant for the curve's temperature source, in hours (0 = off). */
+    smoothingHours?: number;
+    /** Phase 12 — temperature hysteresis: re-map the curve only after ±this many K (0 = off). */
+    hysteresisK?: number;
+    /** Phase 12 — max change of applied power per hour, in percentage points (0 = instant). */
+    rampPercentPerHour?: number;
 }
+
+/** A write the scheduler wants to make to an external actuator state (aeration, waterfall, …). */
+export interface ActuatorWrite {
+    /** Foreign state id to write. */
+    target: string;
+    /** Value to write. */
+    value: number | boolean;
+}
+
+/** The scheduler's full decision for a pump at a moment in time. */
+export interface ScheduleDecision {
+    /** Desired SFC state. */
+    sfc: boolean;
+    /** Desired pump power % (0..100), or "hold" to keep the last applied value (frost). */
+    power: number | "hold";
+    /** External actuator writes triggered by matching rules. */
+    actuators: ActuatorWrite[];
+    /** True when the curve was enabled but its temperature source was missing → fail-safe 100 %. */
+    failSafe: boolean;
+}
+
+/**
+ * Default temperature→power curve (research reference, Q10-2 normalised to 17 °C, clamped to Q_min).
+ * The "Load default curve" preset in the admin uses these points.
+ */
+export const DEFAULT_CURVE_POINTS: CurvePoint[] = [
+    { temp: 2, power: 35 },
+    { temp: 4, power: 41 },
+    { temp: 8, power: 54 },
+    { temp: 10, power: 62 },
+    { temp: 12, power: 71 },
+    { temp: 15, power: 87 },
+    { temp: 17, power: 100 },
+];
 
 /** Per-pump scheduling config, keyed by the pump's device number (as a string). */
 export type SchedulesConfig = Record<string, PumpScheduleConfig>;
@@ -206,9 +261,9 @@ export function activeWindow(plans: PumpSchedule[], nowMin: number): PumpSchedul
 /**
  * Compare a numeric value against a threshold with the given operator.
  *
- * @param value
- * @param cmp
- * @param threshold
+ * @param value - the source value to test
+ * @param cmp - the comparison operator
+ * @param threshold - the threshold to compare against
  */
 export function compareValue(value: number, cmp: Comparison, threshold: number): boolean {
     switch (cmp) {
@@ -263,56 +318,55 @@ export function interpolateCurve(points: CurvePoint[], temp: number): number | n
 }
 
 /**
- * Turn a rule's effect into a control target, given the pump's base power.
- *
- * @param rule
- * @param basePower
- */
-function effectTarget(rule: ConditionRule, basePower: number): ScheduleTarget {
-    if (rule.effect === "sfc") {
-        return { sfc: rule.sfc === true, power: basePower };
-    }
-    if (rule.effect === "off") {
-        return { sfc: false, power: 0 };
-    }
-    return { sfc: false, power: clampPercent(rule.power ?? basePower) };
-}
-
-/**
- * Evaluate the temperature/weather conditions (Phase 11): the first matching threshold rule wins;
- * otherwise, if the curve is enabled and its source value is present, the interpolated curve power.
- * Returns undefined when nothing applies. Booleans in `sources` are read as 1/0.
+ * The control target from the time windows alone (no curve, no rules).
  *
  * @param config - the pump's scheduling configuration
- * @param sources - current numeric values keyed by state id (booleans as 1/0)
+ * @param nowMin - current minute-of-day (0..1439)
  */
-export function evaluateConditions(
-    config: PumpScheduleConfig,
-    sources: Record<string, number>,
-): ScheduleTarget | undefined {
+function windowTarget(config: PumpScheduleConfig, nowMin: number): ScheduleTarget {
     const basePower = clampPercent(config.basePower);
-    for (const rule of config.rules ?? []) {
-        const value = sources[rule.source];
-        if (value !== undefined && Number.isFinite(value) && compareValue(value, rule.cmp, rule.threshold)) {
-            return effectTarget(rule, basePower);
-        }
+    const window = activeWindow(config.plans, nowMin);
+    if (!window) {
+        return { sfc: false, power: basePower };
     }
-    if (config.curve?.enabled) {
-        const temp = sources[config.curve.source];
-        if (temp !== undefined && Number.isFinite(temp)) {
-            const power = interpolateCurve(config.curve.points ?? [], temp);
-            if (power !== null) {
-                return { sfc: false, power };
-            }
-        }
+    if (window.mode === "sfc") {
+        return { sfc: window.sfc === true, power: basePower };
     }
-    return undefined;
+    return { sfc: false, power: clampPercent(window.power ?? basePower) };
 }
 
 /**
- * All distinct state ids the config reads for its conditions (for the backend to subscribe/read).
+ * The base target from the temperature curve, or the fail-safe (100 %) when the curve is enabled but
+ * its temperature source is missing. Returns undefined when the curve is off or has no usable points.
  *
- * @param config
+ * @param config - the pump's scheduling configuration
+ * @param sources - current numeric values of the referenced state ids
+ */
+function curveTarget(
+    config: PumpScheduleConfig,
+    sources: Record<string, number>,
+): { target: ScheduleTarget; failSafe: boolean } | undefined {
+    const curve = config.curve;
+    if (!curve?.enabled) {
+        return undefined;
+    }
+    const temp = sources[curve.source];
+    if (temp === undefined || !Number.isFinite(temp)) {
+        // Sensor failure: never under-flow — too much flow costs electricity, too little costs fish.
+        return { target: { sfc: false, power: 100 }, failSafe: true };
+    }
+    const power = interpolateCurve(curve.points ?? [], temp);
+    if (power === null) {
+        return undefined;
+    }
+    return { target: { sfc: false, power }, failSafe: false };
+}
+
+/**
+ * All distinct state ids the config READS for its conditions (curve + rule sources) — the backend
+ * subscribes to these. Rule `setState` targets are outputs, not inputs, and are not included.
+ *
+ * @param config - the pump's scheduling configuration
  */
 export function collectSourceOids(config: PumpScheduleConfig): string[] {
     const ids = new Set<string>();
@@ -328,52 +382,113 @@ export function collectSourceOids(config: PumpScheduleConfig): string[] {
 }
 
 /**
- * The control target from the time windows alone (the pre-Phase-11 behaviour).
- *
- * @param config
- * @param nowMin
- */
-function windowTarget(config: PumpScheduleConfig, nowMin: number): ScheduleTarget {
-    const basePower = clampPercent(config.basePower);
-    const window = activeWindow(config.plans, nowMin);
-    if (!window) {
-        return { sfc: false, power: basePower };
-    }
-    if (window.mode === "sfc") {
-        return { sfc: window.sfc === true, power: basePower };
-    }
-    return { sfc: false, power: clampPercent(window.power ?? basePower) };
-}
-
-/**
- * The control target the scheduler wants at `nowMin`, combining the time windows with the Phase-11
- * temperature/weather conditions:
- * - "override" (default): a matching condition (rule or active curve) overrides the time window.
- * - "outsideOnly": the time window wins while active; conditions apply only when no window is active.
- *
- * With an empty `sources` map no condition applies, so the result equals the pre-Phase-11 behaviour.
+ * Decide the full control target at `nowMin` (Phase 12): the base power comes from the time windows
+ * and the temperature curve (per `conditionPriority`), is clamped up to `minPower`, and is then only
+ * ever **raised** (or frozen / SFC-toggled / accompanied by actuator writes) by the matching weather
+ * rules. With an empty `sources` map and no curve/rules the result equals the plain time-window
+ * behaviour. Smoothing, hysteresis and ramping of the applied value are the backend's job.
  *
  * @param config - the pump's scheduling configuration
  * @param nowMin - current minute-of-day (0..1439)
  * @param sources - current numeric values of the referenced state ids (booleans as 1/0)
  */
-export function targetForConfig(
+export function decideTarget(
     config: PumpScheduleConfig,
     nowMin: number,
     sources: Record<string, number> = {},
-): ScheduleTarget {
+): ScheduleDecision {
     const window = activeWindow(config.plans, nowMin);
-    const conditionTarget = evaluateConditions(config, sources);
     const priority = config.conditionPriority ?? "override";
+    const curve = curveTarget(config, sources);
 
+    // Base: the curve overrides the window ("override"), or the window wins while active ("outsideOnly").
+    let base: ScheduleTarget;
+    let failSafe = false;
     if (priority === "outsideOnly") {
-        if (window) {
-            return windowTarget(config, nowMin);
-        }
-        return conditionTarget ?? { sfc: false, power: clampPercent(config.basePower) };
+        base = window ? windowTarget(config, nowMin) : (curve?.target ?? windowTarget(config, nowMin));
+        failSafe = !window && !!curve?.failSafe;
+    } else {
+        base = curve?.target ?? windowTarget(config, nowMin);
+        failSafe = !!curve?.failSafe;
     }
-    // "override": conditions beat the window when they apply
-    return conditionTarget ?? windowTarget(config, nowMin);
+
+    let sfc = base.sfc;
+    let power = Math.max(base.power, clampPercent(config.minPower));
+
+    // Weather rules: only raise / hold / toggle SFC / write actuators. All matching rules combine.
+    let hold = false;
+    let raised = false;
+    const actuators: ActuatorWrite[] = [];
+    for (const rule of config.rules ?? []) {
+        const value = sources[rule.source];
+        if (value === undefined || !Number.isFinite(value) || !compareValue(value, rule.cmp, rule.threshold)) {
+            continue;
+        }
+        switch (rule.effect) {
+            case "raisePower": {
+                const raisedTo = clampPercent(rule.power ?? 100);
+                if (raisedTo > power) {
+                    power = raisedTo;
+                    raised = true;
+                }
+                break;
+            }
+            case "boostMax":
+                power = 100;
+                raised = true;
+                break;
+            case "hold":
+                hold = true;
+                break;
+            case "sfc":
+                sfc = rule.sfc === true;
+                break;
+            case "setState":
+                if (rule.target) {
+                    actuators.push({ target: rule.target, value: rule.value ?? true });
+                }
+                break;
+        }
+    }
+
+    // A frost "hold" freezes the pump — but an explicit raise/boost still wins (raising is the safe error).
+    return { sfc, power: hold && !raised ? "hold" : power, actuators, failSafe };
+}
+
+/**
+ * Move `current` towards `target` by at most `maxStep` (rate limiting / ramping). A maxStep of 0 (or
+ * negative) disables ramping and returns the target directly.
+ *
+ * @param current - the current value
+ * @param target - the desired value
+ * @param maxStep - the maximum absolute change allowed this step
+ */
+export function rampTowards(current: number, target: number, maxStep: number): number {
+    if (!(maxStep > 0)) {
+        return target;
+    }
+    const delta = target - current;
+    if (Math.abs(delta) <= maxStep) {
+        return target;
+    }
+    return current + Math.sign(delta) * maxStep;
+}
+
+/**
+ * One step of an exponential moving average approximating a rolling mean with time constant `tauMs`.
+ * A tau of 0 (or negative) disables smoothing and returns the raw value.
+ *
+ * @param prev - the previous smoothed value
+ * @param raw - the new raw sample
+ * @param dtMs - milliseconds since the previous sample
+ * @param tauMs - the smoothing time constant in milliseconds
+ */
+export function updateEma(prev: number, raw: number, dtMs: number, tauMs: number): number {
+    if (!(tauMs > 0) || !(dtMs > 0)) {
+        return raw;
+    }
+    const alpha = 1 - Math.exp(-dtMs / tauMs);
+    return prev + alpha * (raw - prev);
 }
 
 /**

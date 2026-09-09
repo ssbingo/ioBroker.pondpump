@@ -18,19 +18,30 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var schedule_exports = {};
 __export(schedule_exports, {
+  DEFAULT_CURVE_POINTS: () => DEFAULT_CURVE_POINTS,
   MINUTES_PER_DAY: () => MINUTES_PER_DAY,
   activeWindow: () => activeWindow,
   clampPercent: () => clampPercent,
   collectSourceOids: () => collectSourceOids,
   compareValue: () => compareValue,
-  evaluateConditions: () => evaluateConditions,
+  decideTarget: () => decideTarget,
   interpolateCurve: () => interpolateCurve,
   minutesUntilNextChange: () => minutesUntilNextChange,
   parseHhmm: () => parseHhmm,
-  targetForConfig: () => targetForConfig,
+  rampTowards: () => rampTowards,
+  updateEma: () => updateEma,
   validatePlans: () => validatePlans
 });
 module.exports = __toCommonJS(schedule_exports);
+const DEFAULT_CURVE_POINTS = [
+  { temp: 2, power: 35 },
+  { temp: 4, power: 41 },
+  { temp: 8, power: 54 },
+  { temp: 10, power: 62 },
+  { temp: 12, power: 71 },
+  { temp: 15, power: 87 },
+  { temp: 17, power: 100 }
+];
 const MINUTES_PER_DAY = 24 * 60;
 function parseHhmm(value) {
   const match = /^(\d{1,2}):(\d{2})$/.exec((value != null ? value : "").trim());
@@ -129,35 +140,33 @@ function interpolateCurve(points, temp) {
   }
   return clampPercent(pts[pts.length - 1].power);
 }
-function effectTarget(rule, basePower) {
+function windowTarget(config, nowMin) {
   var _a;
-  if (rule.effect === "sfc") {
-    return { sfc: rule.sfc === true, power: basePower };
-  }
-  if (rule.effect === "off") {
-    return { sfc: false, power: 0 };
-  }
-  return { sfc: false, power: clampPercent((_a = rule.power) != null ? _a : basePower) };
-}
-function evaluateConditions(config, sources) {
-  var _a, _b, _c;
   const basePower = clampPercent(config.basePower);
-  for (const rule of (_a = config.rules) != null ? _a : []) {
-    const value = sources[rule.source];
-    if (value !== void 0 && Number.isFinite(value) && compareValue(value, rule.cmp, rule.threshold)) {
-      return effectTarget(rule, basePower);
-    }
+  const window = activeWindow(config.plans, nowMin);
+  if (!window) {
+    return { sfc: false, power: basePower };
   }
-  if ((_b = config.curve) == null ? void 0 : _b.enabled) {
-    const temp = sources[config.curve.source];
-    if (temp !== void 0 && Number.isFinite(temp)) {
-      const power = interpolateCurve((_c = config.curve.points) != null ? _c : [], temp);
-      if (power !== null) {
-        return { sfc: false, power };
-      }
-    }
+  if (window.mode === "sfc") {
+    return { sfc: window.sfc === true, power: basePower };
   }
-  return void 0;
+  return { sfc: false, power: clampPercent((_a = window.power) != null ? _a : basePower) };
+}
+function curveTarget(config, sources) {
+  var _a;
+  const curve = config.curve;
+  if (!(curve == null ? void 0 : curve.enabled)) {
+    return void 0;
+  }
+  const temp = sources[curve.source];
+  if (temp === void 0 || !Number.isFinite(temp)) {
+    return { target: { sfc: false, power: 100 }, failSafe: true };
+  }
+  const power = interpolateCurve((_a = curve.points) != null ? _a : [], temp);
+  if (power === null) {
+    return void 0;
+  }
+  return { target: { sfc: false, power }, failSafe: false };
 }
 function collectSourceOids(config) {
   var _a, _b;
@@ -172,30 +181,74 @@ function collectSourceOids(config) {
   }
   return [...ids];
 }
-function windowTarget(config, nowMin) {
-  var _a;
-  const basePower = clampPercent(config.basePower);
+function decideTarget(config, nowMin, sources = {}) {
+  var _a, _b, _c, _d, _e, _f;
   const window = activeWindow(config.plans, nowMin);
-  if (!window) {
-    return { sfc: false, power: basePower };
-  }
-  if (window.mode === "sfc") {
-    return { sfc: window.sfc === true, power: basePower };
-  }
-  return { sfc: false, power: clampPercent((_a = window.power) != null ? _a : basePower) };
-}
-function targetForConfig(config, nowMin, sources = {}) {
-  var _a;
-  const window = activeWindow(config.plans, nowMin);
-  const conditionTarget = evaluateConditions(config, sources);
   const priority = (_a = config.conditionPriority) != null ? _a : "override";
+  const curve = curveTarget(config, sources);
+  let base;
+  let failSafe = false;
   if (priority === "outsideOnly") {
-    if (window) {
-      return windowTarget(config, nowMin);
-    }
-    return conditionTarget != null ? conditionTarget : { sfc: false, power: clampPercent(config.basePower) };
+    base = window ? windowTarget(config, nowMin) : (_b = curve == null ? void 0 : curve.target) != null ? _b : windowTarget(config, nowMin);
+    failSafe = !window && !!(curve == null ? void 0 : curve.failSafe);
+  } else {
+    base = (_c = curve == null ? void 0 : curve.target) != null ? _c : windowTarget(config, nowMin);
+    failSafe = !!(curve == null ? void 0 : curve.failSafe);
   }
-  return conditionTarget != null ? conditionTarget : windowTarget(config, nowMin);
+  let sfc = base.sfc;
+  let power = Math.max(base.power, clampPercent(config.minPower));
+  let hold = false;
+  let raised = false;
+  const actuators = [];
+  for (const rule of (_d = config.rules) != null ? _d : []) {
+    const value = sources[rule.source];
+    if (value === void 0 || !Number.isFinite(value) || !compareValue(value, rule.cmp, rule.threshold)) {
+      continue;
+    }
+    switch (rule.effect) {
+      case "raisePower": {
+        const raisedTo = clampPercent((_e = rule.power) != null ? _e : 100);
+        if (raisedTo > power) {
+          power = raisedTo;
+          raised = true;
+        }
+        break;
+      }
+      case "boostMax":
+        power = 100;
+        raised = true;
+        break;
+      case "hold":
+        hold = true;
+        break;
+      case "sfc":
+        sfc = rule.sfc === true;
+        break;
+      case "setState":
+        if (rule.target) {
+          actuators.push({ target: rule.target, value: (_f = rule.value) != null ? _f : true });
+        }
+        break;
+    }
+  }
+  return { sfc, power: hold && !raised ? "hold" : power, actuators, failSafe };
+}
+function rampTowards(current, target, maxStep) {
+  if (!(maxStep > 0)) {
+    return target;
+  }
+  const delta = target - current;
+  if (Math.abs(delta) <= maxStep) {
+    return target;
+  }
+  return current + Math.sign(delta) * maxStep;
+}
+function updateEma(prev, raw, dtMs, tauMs) {
+  if (!(tauMs > 0) || !(dtMs > 0)) {
+    return raw;
+  }
+  const alpha = 1 - Math.exp(-dtMs / tauMs);
+  return prev + alpha * (raw - prev);
 }
 function minutesUntilNextChange(plans, nowMin) {
   const boundaries = /* @__PURE__ */ new Set();
@@ -221,16 +274,18 @@ function minutesUntilNextChange(plans, nowMin) {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  DEFAULT_CURVE_POINTS,
   MINUTES_PER_DAY,
   activeWindow,
   clampPercent,
   collectSourceOids,
   compareValue,
-  evaluateConditions,
+  decideTarget,
   interpolateCurve,
   minutesUntilNextChange,
   parseHhmm,
-  targetForConfig,
+  rampTowards,
+  updateEma,
   validatePlans
 });
 //# sourceMappingURL=schedule.js.map

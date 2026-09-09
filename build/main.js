@@ -89,6 +89,10 @@ class Pondpump extends utils.Adapter {
   scheduleSourceOids = /* @__PURE__ */ new Set();
   /** Debounce timer coalescing bursts of source-state changes before re-evaluating. */
   scheduleReevalTimer;
+  /** Per-pump smoothing/hysteresis/ramp runtime state (Phase 12), keyed by device number. */
+  scheduleRuntime = /* @__PURE__ */ new Map();
+  /** Last value written to each actuator target (Phase 12), so writes only fire on change. */
+  lastActuatorValue = /* @__PURE__ */ new Map();
   constructor(options = {}) {
     super({
       ...options,
@@ -787,18 +791,66 @@ class Pondpump extends utils.Adapter {
     }, 2e3);
   }
   /**
+   * Get (creating if needed) the Phase-12 runtime state for a pump.
+   *
+   * @param deviceNumber - the pump device number
+   */
+  getScheduleRuntime(deviceNumber) {
+    let rt = this.scheduleRuntime.get(deviceNumber);
+    if (!rt) {
+      rt = {};
+      this.scheduleRuntime.set(deviceNumber, rt);
+    }
+    return rt;
+  }
+  /**
+   * Return the source map fed to `decideTarget`, with the curve's temperature source replaced by its
+   * EMA-smoothed (Phase 12: `smoothingHours`) and hysteresis-anchored (`hysteresisK`) value. The raw
+   * map is returned unchanged when there is no enabled curve or its source is currently unavailable
+   * (so the pure core fails safe on a missing sensor). Mutates the pump's runtime state.
+   *
+   * @param cfg - the pump's scheduling configuration
+   * @param rawSources - the freshly read raw source values
+   * @param rt - the pump's runtime state
+   * @param nowMs - current wall-clock time (ms)
+   */
+  smoothedSources(cfg, rawSources, rt, nowMs) {
+    var _a, _b;
+    const curve = cfg.curve;
+    if (!(curve == null ? void 0 : curve.enabled) || !curve.source) {
+      return rawSources;
+    }
+    const raw = rawSources[curve.source];
+    if (raw === void 0 || !Number.isFinite(raw)) {
+      return rawSources;
+    }
+    const tauMs = Math.max(0, (_a = cfg.smoothingHours) != null ? _a : 0) * 36e5;
+    const dtMs = rt.smoothedAt ? nowMs - rt.smoothedAt : 0;
+    const smoothed = rt.smoothedTemp === void 0 ? raw : (0, import_schedule.updateEma)(rt.smoothedTemp, raw, dtMs, tauMs);
+    rt.smoothedTemp = smoothed;
+    rt.smoothedAt = nowMs;
+    const hystK = Math.max(0, (_b = cfg.hysteresisK) != null ? _b : 0);
+    if (rt.mappedTemp === void 0 || hystK <= 0 || Math.abs(smoothed - rt.mappedTemp) >= hystK) {
+      rt.mappedTemp = smoothed;
+    }
+    return { ...rawSources, [curve.source]: rt.mappedTemp };
+  }
+  /**
    * Evaluate every scheduled pump for the current wall-clock time, apply any changed target via the
    * command path, then re-arm the tick for the next window boundary (capped at 60 min so the loop
    * self-corrects against clock drift / DST; a re-evaluation without a target change sends nothing).
+   * When a pump is still ramping (Phase 12) the tick is shortened so the ramp continues promptly.
    */
   async runScheduler() {
+    var _a;
     if (this.stopping) {
       return;
     }
     const now = /* @__PURE__ */ new Date();
+    const nowMs = now.getTime();
     const nowMin = now.getHours() * 60 + now.getMinutes();
     let nextChange = 60;
-    const sources = await this.readScheduleSources();
+    const rawSources = await this.readScheduleSources();
     for (const [dnStr, cfg] of Object.entries(this.schedules)) {
       if (!(cfg == null ? void 0 : cfg.enabled) || !(0, import_schedule.validatePlans)(cfg.plans || []).valid) {
         continue;
@@ -807,7 +859,29 @@ class Pondpump extends utils.Adapter {
       if (!this.pumpControl.has(deviceNumber)) {
         continue;
       }
-      await this.applyScheduleTarget(deviceNumber, (0, import_schedule.targetForConfig)(cfg, nowMin, sources));
+      const rt = this.getScheduleRuntime(deviceNumber);
+      const sources = this.smoothedSources(cfg, rawSources, rt, nowMs);
+      const decision = (0, import_schedule.decideTarget)(cfg, nowMin, sources);
+      this.warnFailSafe(deviceNumber, cfg, decision, rt);
+      await this.warnSfcConflict(deviceNumber, cfg, decision, rt);
+      let resolvedPower;
+      const rampPph = (_a = cfg.rampPercentPerHour) != null ? _a : 0;
+      if (decision.power === "hold") {
+        resolvedPower = rt.appliedPower;
+      } else if (rt.appliedPower === void 0 || !(rampPph > 0)) {
+        resolvedPower = decision.power;
+      } else {
+        const rampMinutes = Math.max(1, Math.round(60 / Math.max(rampPph, 1)));
+        const cadenceMs = rampMinutes * 6e4;
+        const dtMs = rt.appliedAt ? Math.min(nowMs - rt.appliedAt, cadenceMs) : cadenceMs;
+        const maxStep = rampPph * dtMs / 36e5;
+        resolvedPower = Math.round((0, import_schedule.rampTowards)(rt.appliedPower, decision.power, maxStep));
+        if (resolvedPower !== decision.power) {
+          nextChange = Math.min(nextChange, rampMinutes);
+        }
+      }
+      await this.applyScheduleTarget(deviceNumber, decision.sfc, resolvedPower, rt, nowMs);
+      await this.writeActuators(decision.actuators);
       nextChange = Math.min(nextChange, (0, import_schedule.minutesUntilNextChange)(cfg.plans || [], nowMin));
     }
     const delayMs = Math.max(1, nextChange) * 6e4 + 2e3;
@@ -817,24 +891,98 @@ class Pondpump extends utils.Adapter {
     }, delayMs);
   }
   /**
-   * Apply a scheduled target to a pump, but only when it differs from the last applied target, by
-   * writing the control states as commands (ack:false) so the normal command path sends them.
+   * Warn (once per episode) when the temperature curve is regulating but its source is missing.
    *
    * @param deviceNumber - the pump device number
-   * @param target - the desired SFC/power state for now
+   * @param cfg - the pump's scheduling configuration
+   * @param decision - the decision just computed for this pump
+   * @param rt - the pump's runtime state
    */
-  async applyScheduleTarget(deviceNumber, target) {
-    const key = `sfc=${target.sfc};power=${target.power}`;
+  warnFailSafe(deviceNumber, cfg, decision, rt) {
+    var _a, _b;
+    if (decision.failSafe && !rt.failSafeWarned) {
+      this.log.warn(
+        `[schedule] pump ${deviceNumber}: temperature source "${(_b = (_a = cfg.curve) == null ? void 0 : _a.source) != null ? _b : ""}" unavailable \u2014 running at 100 % (fail-safe)`
+      );
+      rt.failSafeWarned = true;
+    } else if (!decision.failSafe) {
+      rt.failSafeWarned = false;
+    }
+  }
+  /**
+   * Warn (once per episode) when the curve is set to regulate the pump's power while the pump's own
+   * native Seasonal Flow Control is on — the pump then overrides our setpoint (Phase 12, decision F).
+   *
+   * @param deviceNumber - the pump device number
+   * @param cfg - the pump's scheduling configuration
+   * @param decision - the decision just computed for this pump
+   * @param rt - the pump's runtime state
+   */
+  async warnSfcConflict(deviceNumber, cfg, decision, rt) {
+    var _a;
+    if (!((_a = cfg.curve) == null ? void 0 : _a.enabled) || decision.sfc) {
+      rt.sfcConflictWarned = false;
+      return;
+    }
+    const st = await this.getStateAsync(`pumps.${deviceNumber}.status.fcStatus`);
+    const active = (0, import_objects.isSfcActive)(typeof (st == null ? void 0 : st.val) === "string" ? st.val : void 0);
+    if (active && !rt.sfcConflictWarned) {
+      this.log.warn(
+        `[schedule] pump ${deviceNumber}: the temperature curve is regulating power, but the pump's native Seasonal Flow Control is ON \u2014 the pump overrides the setpoint. Turn SFC off, or drive it via an "sfc" rule.`
+      );
+      rt.sfcConflictWarned = true;
+    } else if (!active) {
+      rt.sfcConflictWarned = false;
+    }
+  }
+  /**
+   * Write each generic actuator target (Phase 12 setState effect), only when its value changed.
+   *
+   * @param actuators - the actuator writes decided for this tick
+   */
+  async writeActuators(actuators) {
+    for (const a of actuators) {
+      if (this.lastActuatorValue.get(a.target) === a.value) {
+        continue;
+      }
+      try {
+        await this.setForeignStateAsync(a.target, { val: a.value, ack: false });
+        this.lastActuatorValue.set(a.target, a.value);
+        this.log.info(`[schedule] actuator ${a.target} = ${a.value}`);
+      } catch (e) {
+        this.log.warn(
+          `[schedule] cannot write actuator ${a.target}: ${e instanceof Error ? e.message : String(e)}`
+        );
+      }
+    }
+  }
+  /**
+   * Apply a scheduled decision to a pump, but only when it differs from the last applied target, by
+   * writing the control states as commands (ack:false) so the normal command path sends them. When
+   * the pump's power is written, the applied value/time are recorded for "hold" and ramping.
+   *
+   * @param deviceNumber - the pump device number
+   * @param sfc - the desired SFC state
+   * @param power - the resolved power % to apply, or undefined to leave the setpoint untouched (hold)
+   * @param rt - the pump's runtime state
+   * @param nowMs - current wall-clock time (ms)
+   */
+  async applyScheduleTarget(deviceNumber, sfc, power, rt, nowMs) {
+    const key = sfc ? "sfc=true" : `sfc=false;power=${power != null ? power : "hold"}`;
     if (this.lastScheduleTarget.get(deviceNumber) === key) {
       return;
     }
     this.lastScheduleTarget.set(deviceNumber, key);
     this.log.info(`[schedule] pump ${deviceNumber}: applying ${key}`);
-    if (target.sfc) {
+    if (sfc) {
       await this.setState(`pumps.${deviceNumber}.control.sfc`, { val: true, ack: false });
     } else {
       await this.setState(`pumps.${deviceNumber}.control.sfc`, { val: false, ack: false });
-      await this.setState(`pumps.${deviceNumber}.control.speed`, { val: target.power, ack: false });
+      if (power !== void 0) {
+        await this.setState(`pumps.${deviceNumber}.control.speed`, { val: power, ack: false });
+        rt.appliedPower = power;
+        rt.appliedAt = nowMs;
+      }
     }
   }
   /**
