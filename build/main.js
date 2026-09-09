@@ -745,7 +745,9 @@ class Pondpump extends utils.Adapter {
       }
     }
     if (this.scheduleSourceOids.size) {
-      this.log.info(`[schedule] watching ${this.scheduleSourceOids.size} condition source(s): ${[...this.scheduleSourceOids].join(", ")}`);
+      this.log.info(
+        `[schedule] watching ${this.scheduleSourceOids.size} condition source(s): ${[...this.scheduleSourceOids].join(", ")}`
+      );
     }
   }
   /** Read the current numeric value of every subscribed condition source (booleans as 1/0). */
@@ -763,7 +765,9 @@ class Pondpump extends utils.Adapter {
           sources[id] = Number(val);
         }
       } catch (e) {
-        this.log.debug(`[schedule] cannot read condition source ${id}: ${e instanceof Error ? e.message : String(e)}`);
+        this.log.debug(
+          `[schedule] cannot read condition source ${id}: ${e instanceof Error ? e.message : String(e)}`
+        );
       }
     }
     return sources;

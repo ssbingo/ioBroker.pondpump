@@ -24,9 +24,14 @@ import { ConfigGeneric, type ConfigGenericProps, type ConfigGenericState } from 
 
 import {
     clampPercent,
+    type Comparison,
+    type ConditionPriority,
+    type ConditionRule,
+    type CurvePoint,
     type PumpSchedule,
     type PumpScheduleConfig,
     type SchedulesConfig,
+    type TempCurve,
     validatePlans,
 } from "./schedule";
 
@@ -45,6 +50,9 @@ interface PondpumpSchedulerState extends ConfigGenericState {
 
 const DEFAULT_CFG: PumpScheduleConfig = { enabled: false, basePower: 50, plans: [] };
 const NEW_PLAN: PumpSchedule = { start: "08:00", end: "20:00", mode: "power", power: 60 };
+const NEW_POINT: CurvePoint = { temp: 15, power: 50 };
+const NEW_RULE: ConditionRule = { source: "", cmp: "lt", threshold: 8, effect: "off" };
+const CMP_LABELS: Record<Comparison, string> = { lt: "<", lte: "≤", gt: ">", gte: "≥", eq: "=", ne: "≠" };
 
 /**
  * Admin custom component (Phase 9): per-pump time schedules.
@@ -295,6 +303,312 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                         {I18n.t("Schedules must not overlap")}: {validation.error}
                     </Alert>
                 ) : null}
+                {this.renderConditions(id)}
+            </Box>
+        );
+    }
+
+    /** The pump's own water-temperature state id — the default source for the curve. */
+    private tempOid(id: string): string {
+        return `pondpump.${this.props.oContext.instance}.pumps.${id}.telemetry.temperature`;
+    }
+
+    private setPriority(id: string, priority: ConditionPriority): void {
+        this.setCfg(id, { ...this.cfgOf(id), conditionPriority: priority });
+    }
+
+    private setCurve(id: string, patch: Partial<TempCurve>): void {
+        const cfg = this.cfgOf(id);
+        const curve: TempCurve = { enabled: false, source: this.tempOid(id), points: [], ...cfg.curve, ...patch };
+        this.setCfg(id, { ...cfg, curve });
+    }
+
+    private updateCurvePoint(id: string, index: number, patch: Partial<CurvePoint>): void {
+        const points = (this.cfgOf(id).curve?.points ?? []).map((p, i) => (i === index ? { ...p, ...patch } : p));
+        this.setCurve(id, { points });
+    }
+
+    private addCurvePoint(id: string): void {
+        this.setCurve(id, { points: [...(this.cfgOf(id).curve?.points ?? []), { ...NEW_POINT }] });
+    }
+
+    private removeCurvePoint(id: string, index: number): void {
+        this.setCurve(id, { points: (this.cfgOf(id).curve?.points ?? []).filter((_, i) => i !== index) });
+    }
+
+    private updateRule(id: string, index: number, patch: Partial<ConditionRule>): void {
+        const cfg = this.cfgOf(id);
+        const rules = (cfg.rules ?? []).map((r, i) => (i === index ? { ...r, ...patch } : r));
+        this.setCfg(id, { ...cfg, rules });
+    }
+
+    private addRule(id: string): void {
+        const cfg = this.cfgOf(id);
+        this.setCfg(id, { ...cfg, rules: [...(cfg.rules ?? []), { ...NEW_RULE, source: this.tempOid(id) }] });
+    }
+
+    private removeRule(id: string, index: number): void {
+        const cfg = this.cfgOf(id);
+        this.setCfg(id, { ...cfg, rules: (cfg.rules ?? []).filter((_, i) => i !== index) });
+    }
+
+    /** Value cell for one rule: a power %, an SFC on/off, or nothing for "off". */
+    private renderRuleValue(id: string, rule: ConditionRule, index: number): React.JSX.Element | null {
+        if (rule.effect === "power") {
+            return (
+                <TextField
+                    type="number"
+                    size="small"
+                    variant="standard"
+                    slotProps={{ htmlInput: { min: 0, max: 100, step: 5 } }}
+                    value={rule.power ?? 0}
+                    onChange={e => this.updateRule(id, index, { power: clampPercent(Number(e.target.value)) })}
+                    sx={{ width: 70 }}
+                />
+            );
+        }
+        if (rule.effect === "sfc") {
+            return (
+                <Select
+                    size="small"
+                    variant="standard"
+                    value={rule.sfc ? "on" : "off"}
+                    onChange={e => this.updateRule(id, index, { sfc: e.target.value === "on" })}
+                >
+                    <MenuItem value="on">{I18n.t("on")}</MenuItem>
+                    <MenuItem value="off">{I18n.t("off")}</MenuItem>
+                </Select>
+            );
+        }
+        return null;
+    }
+
+    /** Phase 11: the temperature/weather conditions editor for one pump. */
+    private renderConditions(id: string): React.JSX.Element {
+        const cfg = this.cfgOf(id);
+        const curve = cfg.curve;
+        const rules = cfg.rules ?? [];
+        const priority = cfg.conditionPriority ?? "override";
+        const curvePoints = (curve?.points ?? [])
+            .map((point, index) => ({ point, index }))
+            .sort((a, b) => a.point.temp - b.point.temp);
+        return (
+            <Box sx={{ mt: 3 }}>
+                <Typography
+                    variant="h6"
+                    sx={{ mb: 1 }}
+                >
+                    {I18n.t("Temperature / weather conditions")}
+                </Typography>
+                <Select
+                    size="small"
+                    value={priority}
+                    onChange={e => this.setPriority(id, e.target.value)}
+                    sx={{ mb: 2, minWidth: 360 }}
+                >
+                    <MenuItem value="override">{I18n.t("Conditions override the active time window")}</MenuItem>
+                    <MenuItem value="outsideOnly">{I18n.t("Conditions apply only outside the time windows")}</MenuItem>
+                </Select>
+
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={!!curve?.enabled}
+                            onChange={e => this.setCurve(id, { enabled: e.target.checked })}
+                        />
+                    }
+                    label={I18n.t("Temperature → power curve")}
+                />
+                {curve?.enabled ? (
+                    <Box sx={{ mb: 2 }}>
+                        <TextField
+                            size="small"
+                            label={I18n.t("Temperature source (state id)")}
+                            value={curve.source || ""}
+                            onChange={e => this.setCurve(id, { source: e.target.value })}
+                            sx={{ width: "100%", maxWidth: 560, mt: 1, mb: 1 }}
+                        />
+                        <Paper variant="outlined">
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>{I18n.t("Temperature °C")}</TableCell>
+                                        <TableCell>{I18n.t("Power %")}</TableCell>
+                                        <TableCell padding="none" />
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {curvePoints.length ? (
+                                        curvePoints.map(({ point, index }) => (
+                                            <TableRow key={index}>
+                                                <TableCell>
+                                                    <TextField
+                                                        type="number"
+                                                        size="small"
+                                                        variant="standard"
+                                                        value={point.temp}
+                                                        onChange={e =>
+                                                            this.updateCurvePoint(id, index, {
+                                                                temp: Number(e.target.value),
+                                                            })
+                                                        }
+                                                        sx={{ width: 80 }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <TextField
+                                                        type="number"
+                                                        size="small"
+                                                        variant="standard"
+                                                        slotProps={{ htmlInput: { min: 0, max: 100, step: 5 } }}
+                                                        value={point.power}
+                                                        onChange={e =>
+                                                            this.updateCurvePoint(id, index, {
+                                                                power: clampPercent(Number(e.target.value)),
+                                                            })
+                                                        }
+                                                        sx={{ width: 80 }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell padding="none">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => this.removeCurvePoint(id, index)}
+                                                    >
+                                                        <IconDelete fontSize="small" />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={3}
+                                                sx={{ color: "text.secondary" }}
+                                            >
+                                                {I18n.t("Add at least two points (e.g. 5 °C → 15 %, 24 °C → 100 %).")}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </Paper>
+                        <Button
+                            startIcon={<IconAdd />}
+                            onClick={() => this.addCurvePoint(id)}
+                            sx={{ mt: 1 }}
+                        >
+                            {I18n.t("Add point")}
+                        </Button>
+                    </Box>
+                ) : null}
+
+                <Typography sx={{ mt: 1, mb: 1, fontWeight: 500 }}>
+                    {I18n.t("Threshold rules (override the curve when they match)")}
+                </Typography>
+                <Paper variant="outlined">
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>{I18n.t("Source (state id)")}</TableCell>
+                                <TableCell>{I18n.t("Compare")}</TableCell>
+                                <TableCell>{I18n.t("Threshold")}</TableCell>
+                                <TableCell>{I18n.t("Effect")}</TableCell>
+                                <TableCell>{I18n.t("Value")}</TableCell>
+                                <TableCell padding="none" />
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {rules.length ? (
+                                rules.map((rule, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>
+                                            <TextField
+                                                size="small"
+                                                variant="standard"
+                                                value={rule.source}
+                                                onChange={e => this.updateRule(id, index, { source: e.target.value })}
+                                                sx={{ minWidth: 220 }}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Select
+                                                size="small"
+                                                variant="standard"
+                                                value={rule.cmp}
+                                                onChange={e => this.updateRule(id, index, { cmp: e.target.value })}
+                                            >
+                                                {(Object.keys(CMP_LABELS) as Comparison[]).map(c => (
+                                                    <MenuItem
+                                                        key={c}
+                                                        value={c}
+                                                    >
+                                                        {CMP_LABELS[c]}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </TableCell>
+                                        <TableCell>
+                                            <TextField
+                                                type="number"
+                                                size="small"
+                                                variant="standard"
+                                                value={rule.threshold}
+                                                onChange={e =>
+                                                    this.updateRule(id, index, { threshold: Number(e.target.value) })
+                                                }
+                                                sx={{ width: 80 }}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Select
+                                                size="small"
+                                                variant="standard"
+                                                value={rule.effect}
+                                                onChange={e =>
+                                                    this.updateRule(id, index, {
+                                                        effect: e.target.value,
+                                                    })
+                                                }
+                                            >
+                                                <MenuItem value="power">{I18n.t("Power %")}</MenuItem>
+                                                <MenuItem value="sfc">{I18n.t("SFC")}</MenuItem>
+                                                <MenuItem value="off">{I18n.t("Off")}</MenuItem>
+                                            </Select>
+                                        </TableCell>
+                                        <TableCell>{this.renderRuleValue(id, rule, index)}</TableCell>
+                                        <TableCell padding="none">
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => this.removeRule(id, index)}
+                                            >
+                                                <IconDelete fontSize="small" />
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={6}
+                                        sx={{ color: "text.secondary" }}
+                                    >
+                                        {I18n.t(
+                                            "No rules — e.g. temperature < 4 °C → Off (frost), or a weather OID = 1 → Power 40 %.",
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </Paper>
+                <Button
+                    startIcon={<IconAdd />}
+                    onClick={() => this.addRule(id)}
+                    sx={{ mt: 1 }}
+                >
+                    {I18n.t("Add rule")}
+                </Button>
             </Box>
         );
     }

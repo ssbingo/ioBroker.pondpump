@@ -44,5 +44,21 @@
     "Add schedule": "Добавить расписание",
     "Schedules must not overlap": "Расписания не должны перекрываться",
     "Schedules for %s": "Расписания для %s",
-    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Включите планирование для насосов, которые должны работать по расписанию. Каждый включённый насос получает собственную вкладку выше для настройки его расписаний."
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Включите планирование для насосов, которые должны работать по расписанию. Каждый включённый насос получает собственную вкладку выше для настройки его расписаний.",
+    "Temperature / weather conditions": "Температурные/погодные условия",
+    "Conditions override the active time window": "Условия переопределяют активное временное окно",
+    "Conditions apply only outside the time windows": "Условия действуют только вне временных окон",
+    "Temperature → power curve": "Температура → кривая мощности",
+    "Temperature source (state id)": "Источник температуры (ID состояния)",
+    "Temperature °C": "Температура °C",
+    "Add at least two points (e.g. 5 °C → 15 %, 24 °C → 100 %).": "Добавьте минимум две точки (напр. 5 °C → 15 %, 24 °C → 100 %).",
+    "Add point": "Добавить точку",
+    "Threshold rules (override the curve when they match)": "Пороговые правила (переопределяют кривую при совпадении)",
+    "Source (state id)": "Источник (ID состояния)",
+    "Compare": "Сравнение",
+    "Threshold": "Порог",
+    "Effect": "Эффект",
+    "Off": "Выкл",
+    "No rules — e.g. temperature < 4 °C → Off (frost), or a weather OID = 1 → Power 40 %.": "Нет правил — напр. температура < 4 °C → Выкл (мороз), или погодный OID = 1 → Мощность 40 %.",
+    "Add rule": "Добавить правило"
 }

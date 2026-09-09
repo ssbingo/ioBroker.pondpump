@@ -44,5 +44,21 @@
     "Add schedule": "Ajouter un horaire",
     "Schedules must not overlap": "Les horaires ne doivent pas se chevaucher",
     "Schedules for %s": "Horaires pour %s",
-    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Activez la planification pour les pompes que vous voulez faire fonctionner selon un horaire. Chaque pompe activée obtient son propre onglet ci-dessus pour configurer ses horaires."
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Activez la planification pour les pompes que vous voulez faire fonctionner selon un horaire. Chaque pompe activée obtient son propre onglet ci-dessus pour configurer ses horaires.",
+    "Temperature / weather conditions": "Conditions de température/météo",
+    "Conditions override the active time window": "Les conditions remplacent la fenêtre horaire active",
+    "Conditions apply only outside the time windows": "Les conditions s’appliquent uniquement hors des fenêtres horaires",
+    "Temperature → power curve": "Température → courbe de puissance",
+    "Temperature source (state id)": "Source de température (ID d’état)",
+    "Temperature °C": "Température °C",
+    "Add at least two points (e.g. 5 °C → 15 %, 24 °C → 100 %).": "Ajoutez au moins deux points (p. ex. 5 °C → 15 %, 24 °C → 100 %).",
+    "Add point": "Ajouter un point",
+    "Threshold rules (override the curve when they match)": "Règles de seuil (remplacent la courbe lorsqu’elles s’appliquent)",
+    "Source (state id)": "Source (ID d’état)",
+    "Compare": "Comparer",
+    "Threshold": "Seuil",
+    "Effect": "Effet",
+    "Off": "Arrêt",
+    "No rules — e.g. temperature < 4 °C → Off (frost), or a weather OID = 1 → Power 40 %.": "Aucune règle — p. ex. température < 4 °C → Arrêt (gel), ou un OID météo = 1 → Puissance 40 %.",
+    "Add rule": "Ajouter une règle"
 }

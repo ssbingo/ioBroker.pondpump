@@ -44,5 +44,21 @@
     "Add schedule": "Añadir horario",
     "Schedules must not overlap": "Los horarios no deben superponerse",
     "Schedules for %s": "Horarios para %s",
-    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Active la programación para las bombas que quiera hacer funcionar según un horario. Cada bomba activada obtiene su propia pestaña arriba para configurar sus horarios."
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Active la programación para las bombas que quiera hacer funcionar según un horario. Cada bomba activada obtiene su propia pestaña arriba para configurar sus horarios.",
+    "Temperature / weather conditions": "Condiciones de temperatura/tiempo",
+    "Conditions override the active time window": "Las condiciones anulan la ventana horaria activa",
+    "Conditions apply only outside the time windows": "Las condiciones se aplican solo fuera de las ventanas horarias",
+    "Temperature → power curve": "Temperatura → curva de potencia",
+    "Temperature source (state id)": "Fuente de temperatura (ID de estado)",
+    "Temperature °C": "Temperatura °C",
+    "Add at least two points (e.g. 5 °C → 15 %, 24 °C → 100 %).": "Añade al menos dos puntos (p. ej. 5 °C → 15 %, 24 °C → 100 %).",
+    "Add point": "Añadir punto",
+    "Threshold rules (override the curve when they match)": "Reglas de umbral (anulan la curva cuando coinciden)",
+    "Source (state id)": "Fuente (ID de estado)",
+    "Compare": "Comparar",
+    "Threshold": "Umbral",
+    "Effect": "Efecto",
+    "Off": "Apagado",
+    "No rules — e.g. temperature < 4 °C → Off (frost), or a weather OID = 1 → Power 40 %.": "Sin reglas — p. ej. temperatura < 4 °C → Apagado (helada), o un OID meteo = 1 → Potencia 40 %.",
+    "Add rule": "Añadir regla"
 }

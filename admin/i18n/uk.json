@@ -44,5 +44,21 @@
     "Add schedule": "Додати розклад",
     "Schedules must not overlap": "Розклади не повинні перекриватися",
     "Schedules for %s": "Розклади для %s",
-    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Увімкніть планування для насосів, які мають працювати за розкладом. Кожен увімкнений насос отримує власну вкладку вище для налаштування його розкладів."
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Увімкніть планування для насосів, які мають працювати за розкладом. Кожен увімкнений насос отримує власну вкладку вище для налаштування його розкладів.",
+    "Temperature / weather conditions": "Умови температури/погоди",
+    "Conditions override the active time window": "Умови перевизначають активне часове вікно",
+    "Conditions apply only outside the time windows": "Умови діють лише поза часовими вікнами",
+    "Temperature → power curve": "Температура → крива потужності",
+    "Temperature source (state id)": "Джерело температури (ID стану)",
+    "Temperature °C": "Температура °C",
+    "Add at least two points (e.g. 5 °C → 15 %, 24 °C → 100 %).": "Додайте щонайменше дві точки (напр. 5 °C → 15 %, 24 °C → 100 %).",
+    "Add point": "Додати точку",
+    "Threshold rules (override the curve when they match)": "Порогові правила (перевизначають криву за збігу)",
+    "Source (state id)": "Джерело (ID стану)",
+    "Compare": "Порівняти",
+    "Threshold": "Поріг",
+    "Effect": "Ефект",
+    "Off": "Вимк.",
+    "No rules — e.g. temperature < 4 °C → Off (frost), or a weather OID = 1 → Power 40 %.": "Немає правил — напр. температура < 4 °C → Вимк. (мороз), або погодний OID = 1 → Потужність 40 %.",
+    "Add rule": "Додати правило"
 }

@@ -44,5 +44,21 @@
     "Add schedule": "Dodaj harmonogram",
     "Schedules must not overlap": "Harmonogramy nie mogą się nakładać",
     "Schedules for %s": "Harmonogramy dla %s",
-    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Włącz harmonogramowanie dla pomp, które mają działać według harmonogramu. Każda włączona pompa otrzymuje własną kartę powyżej do konfiguracji swoich harmonogramów."
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "Włącz harmonogramowanie dla pomp, które mają działać według harmonogramu. Każda włączona pompa otrzymuje własną kartę powyżej do konfiguracji swoich harmonogramów.",
+    "Temperature / weather conditions": "Warunki temperatury/pogody",
+    "Conditions override the active time window": "Warunki zastępują aktywne okno czasowe",
+    "Conditions apply only outside the time windows": "Warunki działają tylko poza oknami czasowymi",
+    "Temperature → power curve": "Temperatura → krzywa mocy",
+    "Temperature source (state id)": "Źródło temperatury (ID stanu)",
+    "Temperature °C": "Temperatura °C",
+    "Add at least two points (e.g. 5 °C → 15 %, 24 °C → 100 %).": "Dodaj co najmniej dwa punkty (np. 5 °C → 15 %, 24 °C → 100 %).",
+    "Add point": "Dodaj punkt",
+    "Threshold rules (override the curve when they match)": "Reguły progowe (zastępują krzywą, gdy pasują)",
+    "Source (state id)": "Źródło (ID stanu)",
+    "Compare": "Porównaj",
+    "Threshold": "Próg",
+    "Effect": "Efekt",
+    "Off": "Wył.",
+    "No rules — e.g. temperature < 4 °C → Off (frost), or a weather OID = 1 → Power 40 %.": "Brak reguł — np. temperatura < 4 °C → Wył. (mróz), lub OID pogody = 1 → Moc 40 %.",
+    "Add rule": "Dodaj regułę"
 }

@@ -44,5 +44,21 @@
     "Add schedule": "添加计划",
     "Schedules must not overlap": "计划不得重叠",
     "Schedules for %s": "%s 的计划",
-    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "为需要按时间表运行的水泵启用计划。每台启用的水泵会在上方获得自己的选项卡以配置其计划。"
+    "Enable scheduling for the pumps you want to run on a timetable. Each enabled pump gets its own tab above where you configure its schedules.": "为需要按时间表运行的水泵启用计划。每台启用的水泵会在上方获得自己的选项卡以配置其计划。",
+    "Temperature / weather conditions": "温度/天气条件",
+    "Conditions override the active time window": "条件覆盖当前时间窗口",
+    "Conditions apply only outside the time windows": "条件仅在时间窗口之外生效",
+    "Temperature → power curve": "温度 → 功率曲线",
+    "Temperature source (state id)": "温度来源（状态 ID）",
+    "Temperature °C": "温度 °C",
+    "Add at least two points (e.g. 5 °C → 15 %, 24 °C → 100 %).": "至少添加两个点（例如 5 °C → 15 %，24 °C → 100 %）。",
+    "Add point": "添加点",
+    "Threshold rules (override the curve when they match)": "阈值规则（匹配时覆盖曲线）",
+    "Source (state id)": "来源（状态 ID）",
+    "Compare": "比较",
+    "Threshold": "阈值",
+    "Effect": "效果",
+    "Off": "关闭",
+    "No rules — e.g. temperature < 4 °C → Off (frost), or a weather OID = 1 → Power 40 %.": "暂无规则 — 例如 温度 < 4 °C → 关闭（防冻），或天气 OID = 1 → 功率 40 %。",
+    "Add rule": "添加规则"
 }
