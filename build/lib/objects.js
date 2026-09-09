@@ -223,6 +223,28 @@ function pumpObjectDefs(pump) {
         read: true,
         write: false
       })
+    },
+    // Astro (Phase 13): today's sunrise/sunset for this pump's location, for astro schedule windows.
+    { id: `${base}.astro`, obj: channel("Astro") },
+    {
+      id: `${base}.astro.sunrise`,
+      obj: stateObj({ name: "Sunrise", type: "string", role: "date.sunrise", read: true, write: false })
+    },
+    {
+      id: `${base}.astro.sunset`,
+      obj: stateObj({ name: "Sunset", type: "string", role: "date.sunset", read: true, write: false })
+    },
+    {
+      id: `${base}.astro.sunriseTs`,
+      obj: stateObj({ name: "Sunrise timestamp", type: "number", role: "value.time", read: true, write: false })
+    },
+    {
+      id: `${base}.astro.sunsetTs`,
+      obj: stateObj({ name: "Sunset timestamp", type: "number", role: "value.time", read: true, write: false })
+    },
+    {
+      id: `${base}.astro.isDay`,
+      obj: stateObj({ name: "Daytime", type: "boolean", role: "indicator", read: true, write: false })
     }
   ];
   const rawSensorIds = unmappedSensorIds(pump);

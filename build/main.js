@@ -31,13 +31,35 @@ var import_client2 = require("./lib/local/client");
 var import_inventory2 = require("./lib/local/inventory");
 var import_protocol = require("./lib/local/protocol");
 var import_schedule = require("./lib/schedule");
+var import_astro = require("./lib/astro");
 const MIN_POLL_INTERVAL_S = 5;
+const GEOCODE_TIMEOUT_MS = 1e4;
 const REFRESH_TOKEN_STATE = "cloud.refreshToken";
 const COMMAND_CONFIRM_DELAY_MS = 2e3;
 const SENSOR_SCAN_COUNT = 11;
 const FAST_SENSOR_IDS = [import_inventory.SENSOR_SPEED_RPM, import_inventory.SENSOR_POWER_W];
 const SLOW_SENSOR_EVERY = 6;
 const STANDBY_POWER_W = 15;
+function minuteToHhmm(minute) {
+  const h = Math.floor(minute / 60);
+  const m = minute % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+function minuteToTodayTs(minute) {
+  if (minute === null) {
+    return 0;
+  }
+  const d = /* @__PURE__ */ new Date();
+  d.setHours(Math.floor(minute / 60), minute % 60, 0, 0);
+  return d.getTime();
+}
+function activeWindowIsDay(astro, nowMin) {
+  const { sunriseMin: sr, sunsetMin: ss } = astro;
+  if (sr === null || ss === null) {
+    return false;
+  }
+  return sr < ss ? nowMin >= sr && nowMin < ss : nowMin >= sr || nowMin < ss;
+}
 function extractResponseData(response) {
   if (response && typeof response === "object") {
     const record = response;
@@ -93,6 +115,12 @@ class Pondpump extends utils.Adapter {
   scheduleRuntime = /* @__PURE__ */ new Map();
   /** Last value written to each actuator target (Phase 12), so writes only fire on change. */
   lastActuatorValue = /* @__PURE__ */ new Map();
+  /** ioBroker system coordinates (Phase 13), cached from system.config; null when unset. */
+  systemCoords = null;
+  /** Today's resolved sunrise/sunset per pump device number (Phase 13). */
+  pumpAstro = /* @__PURE__ */ new Map();
+  /** Timer that recomputes the astro times just after midnight (Phase 13). */
+  midnightTimer;
   constructor(options = {}) {
     super({
       ...options,
@@ -100,6 +128,7 @@ class Pondpump extends utils.Adapter {
     });
     this.on("ready", this.onReady.bind(this));
     this.on("stateChange", this.onStateChange.bind(this));
+    this.on("message", this.onMessage.bind(this));
     this.on("unload", this.onUnload.bind(this));
   }
   /**
@@ -128,6 +157,7 @@ class Pondpump extends utils.Adapter {
     await this.applyConnectionType(mode);
     this.pollIntervalMs = Math.max(MIN_POLL_INTERVAL_S, this.config.pollInterval || 30) * 1e3;
     this.loadSchedules();
+    await this.setupAstro();
     const baseUrl = this.config.cloudBaseUrl || import_client.DEFAULT_BASE_URL;
     const tokenUrl = this.config.cloudTokenUrl || import_client.DEFAULT_TOKEN_URL;
     const clientId = this.config.cloudClientId || import_client.DEFAULT_CLIENT_ID;
@@ -716,6 +746,121 @@ class Pondpump extends utils.Adapter {
     }
     this.log.info(enabled > 0 ? `[schedule] active for ${enabled} pump(s)` : "[schedule] no pump schedules");
   }
+  /** The instance location mode from the config (Phase 13). */
+  get locationMode() {
+    const m = String(this.config.locationMode || "system");
+    return m === "shared" || m === "individual" ? m : "system";
+  }
+  /**
+   * Phase 13: read the ioBroker system coordinates once, compute today's sunrise/sunset for every
+   * pump's location and arm the after-midnight recomputation. Safe to call again on a config change.
+   */
+  async setupAstro() {
+    var _a;
+    try {
+      const sys = await this.getForeignObjectAsync("system.config");
+      const common = (_a = sys == null ? void 0 : sys.common) != null ? _a : {};
+      this.systemCoords = (0, import_astro.toCoordinates)(common.latitude, common.longitude);
+    } catch {
+      this.systemCoords = null;
+    }
+    await this.recomputeAstro();
+    this.scheduleMidnightRecalc();
+  }
+  /**
+   * Resolve one pump's coordinates from the instance mode, system and per-pump config (Phase 13).
+   *
+   * @param deviceNumber - the pump device number
+   */
+  coordsForPump(deviceNumber) {
+    var _a, _b;
+    const shared = (0, import_astro.toCoordinates)(
+      this.config.latitude,
+      this.config.longitude
+    );
+    return (0, import_astro.resolvePumpCoordinates)(
+      this.locationMode,
+      this.systemCoords,
+      shared,
+      (_b = (_a = this.schedules[String(deviceNumber)]) == null ? void 0 : _a.location) != null ? _b : {}
+    );
+  }
+  /**
+   * Compute today's sunrise/sunset for every discovered pump, cache it and write the astro states.
+   * Pumps without a resolvable location get empty astro (their astro windows stay inactive).
+   */
+  async recomputeAstro() {
+    const now = /* @__PURE__ */ new Date();
+    for (const deviceNumber of this.pumpControl.keys()) {
+      const coords = this.coordsForPump(deviceNumber);
+      const astro = coords ? (0, import_astro.astroForDate)(now, coords) : import_schedule.NO_ASTRO;
+      this.pumpAstro.set(deviceNumber, astro);
+      const base = `pumps.${deviceNumber}.astro`;
+      const sunrise = astro.sunriseMin === null ? "" : minuteToHhmm(astro.sunriseMin);
+      const sunset = astro.sunsetMin === null ? "" : minuteToHhmm(astro.sunsetMin);
+      await this.setState(`${base}.sunrise`, { val: sunrise, ack: true });
+      await this.setState(`${base}.sunset`, { val: sunset, ack: true });
+      await this.setState(`${base}.sunriseTs`, { val: minuteToTodayTs(astro.sunriseMin), ack: true });
+      await this.setState(`${base}.sunsetTs`, { val: minuteToTodayTs(astro.sunsetMin), ack: true });
+    }
+    if (this.pumpControl.size) {
+      this.log.debug(`[astro] recomputed sunrise/sunset for ${this.pumpControl.size} pump(s)`);
+    }
+  }
+  /** Arm a one-shot timer that recomputes the astro times shortly after the next midnight. */
+  scheduleMidnightRecalc() {
+    if (this.midnightTimer) {
+      this.clearTimeout(this.midnightTimer);
+    }
+    const now = /* @__PURE__ */ new Date();
+    const next = new Date(now);
+    next.setHours(24, 0, 30, 0);
+    const delay = Math.max(1e3, next.getTime() - now.getTime());
+    this.midnightTimer = this.setTimeout(() => {
+      this.midnightTimer = void 0;
+      void this.recomputeAstro();
+      this.scheduleMidnightRecalc();
+    }, delay);
+  }
+  /**
+   * Handle admin messages (Phase 13). "geocode" resolves a free-text address to coordinates via
+   * OpenStreetMap Nominatim from the BACKEND (so the admin's map picker avoids browser CORS/CSP).
+   * Replies with `{ lat, lon, displayName }` or `{ error }`.
+   *
+   * @param obj - the incoming message
+   */
+  async onMessage(obj) {
+    var _a;
+    if (!obj || typeof obj !== "object" || obj.command !== "geocode" || !obj.callback) {
+      return;
+    }
+    const rawQuery = (_a = obj.message) == null ? void 0 : _a.query;
+    const query = typeof rawQuery === "string" ? rawQuery.trim() : "";
+    if (!query) {
+      this.sendTo(obj.from, obj.command, { error: "empty query" }, obj.callback);
+      return;
+    }
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+      const res = await fetch(url, {
+        headers: { "User-Agent": `ioBroker.pondpump/${this.version || "0"}` },
+        signal: AbortSignal.timeout(GEOCODE_TIMEOUT_MS)
+      });
+      const data = await res.json();
+      if (Array.isArray(data) && data.length) {
+        this.sendTo(
+          obj.from,
+          obj.command,
+          { lat: Number(data[0].lat), lon: Number(data[0].lon), displayName: data[0].display_name },
+          obj.callback
+        );
+      } else {
+        this.sendTo(obj.from, obj.command, { error: "no location found" }, obj.callback);
+      }
+    } catch (e) {
+      this.sendTo(obj.from, obj.command, { error: e instanceof Error ? e.message : String(e) }, obj.callback);
+    }
+  }
   /** Start the scheduler once (after the first successful poll) if any pump has a valid schedule. */
   maybeStartScheduler() {
     if (this.scheduleStarted || this.stopping) {
@@ -732,6 +877,7 @@ class Pondpump extends utils.Adapter {
     void (async () => {
       try {
         await this.subscribeScheduleSources();
+        await this.recomputeAstro();
         await this.runScheduler();
       } catch (e) {
         this.log.error(`[schedule] failed to start: ${e instanceof Error ? e.message : String(e)}`);
@@ -858,7 +1004,7 @@ class Pondpump extends utils.Adapter {
    * When a pump is still ramping (Phase 12) the tick is shortened so the ramp continues promptly.
    */
   async runScheduler() {
-    var _a;
+    var _a, _b;
     if (this.stopping) {
       return;
     }
@@ -877,11 +1023,16 @@ class Pondpump extends utils.Adapter {
       }
       const rt = this.getScheduleRuntime(deviceNumber);
       const sources = this.smoothedSources(cfg, rawSources, rt, nowMs);
-      const decision = (0, import_schedule.decideTarget)(cfg, nowMin, sources);
+      const astro = (_a = this.pumpAstro.get(deviceNumber)) != null ? _a : import_schedule.NO_ASTRO;
+      const decision = (0, import_schedule.decideTarget)(cfg, nowMin, sources, astro);
+      await this.setState(`pumps.${deviceNumber}.astro.isDay`, {
+        val: !!activeWindowIsDay(astro, nowMin),
+        ack: true
+      });
       this.warnFailSafe(deviceNumber, cfg, decision, rt);
       await this.warnSfcConflict(deviceNumber, cfg, decision, rt);
       let resolvedPower;
-      const rampPph = (_a = cfg.rampPercentPerHour) != null ? _a : 0;
+      const rampPph = (_b = cfg.rampPercentPerHour) != null ? _b : 0;
       if (decision.power === "hold") {
         resolvedPower = rt.appliedPower;
       } else if (rt.appliedPower === void 0 || !(rampPph > 0)) {
@@ -898,7 +1049,7 @@ class Pondpump extends utils.Adapter {
       }
       await this.applyScheduleTarget(deviceNumber, decision.sfc, resolvedPower, rt, nowMs);
       await this.writeActuators(decision.actuators);
-      nextChange = Math.min(nextChange, (0, import_schedule.minutesUntilNextChange)(cfg.plans || [], nowMin));
+      nextChange = Math.min(nextChange, (0, import_schedule.minutesUntilNextChange)(cfg.plans || [], nowMin, astro));
     }
     const delayMs = Math.max(1, nextChange) * 6e4 + 2e3;
     this.scheduleTimer = this.setTimeout(() => {
@@ -1022,6 +1173,10 @@ class Pondpump extends utils.Adapter {
       if (this.scheduleReevalTimer) {
         this.clearTimeout(this.scheduleReevalTimer);
         this.scheduleReevalTimer = void 0;
+      }
+      if (this.midnightTimer) {
+        this.clearTimeout(this.midnightTimer);
+        this.midnightTimer = void 0;
       }
       (_a = this.cloud) == null ? void 0 : _a.reset();
       this.cloud = void 0;

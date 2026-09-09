@@ -154,6 +154,12 @@ export interface PumpScheduleConfig {
     hysteresisK?: number;
     /** Phase 12 — max change of applied power per hour, in percentage points (0 = instant). */
     rampPercentPerHour?: number;
+    /**
+     * Phase 13 — per-pump location, only consulted when the instance location mode is "individual".
+     * `coordinateSource` "specific" uses this pump's own latitude/longitude; "system" (the default)
+     * falls back to the ioBroker system location.
+     */
+    location?: { coordinateSource?: "system" | "specific"; latitude?: string; longitude?: string };
 }
 
 /** A write the scheduler wants to make to an external actuator state (aeration, waterfall, …). */

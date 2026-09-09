@@ -49,6 +49,10 @@ const ALLOWED_ROLES = new Set([
     "value.speed",
     "value.temperature",
     "value.voltage",
+    "value.time",
+    "date.sunrise",
+    "date.sunset",
+    "indicator",
 ]);
 
 describe("gatewayObjectDefs", () => {
