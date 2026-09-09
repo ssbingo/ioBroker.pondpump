@@ -596,21 +596,37 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                         "The water-temperature curve sets the base flow; weather rules can only raise it (or hold / drive an actuator). Point the curve at a real water sensor — the pump's own telemetry.temperature is the device temperature, not the water.",
                     )}
                 </Alert>
-                <TextField
-                    select
+                <FormControl
                     size="small"
-                    label={I18n.t("Water temperature sensor")}
-                    helperText={I18n.t(
-                        "Pick the device sensor that reads the water — compare the live values below with a thermometer you trust. It feeds telemetry.waterTemperature and pre-fills the curve source. For an external sensor, leave this on “none” and choose the object in the curve source.",
-                    )}
-                    value={cfg.waterTempSensor ?? ""}
-                    onChange={e => this.setWaterSensor(id, e.target.value as "" | "temperature" | "temperature2")}
                     sx={{ width: 560, maxWidth: "100%", mb: 2, display: "block" }}
                 >
-                    <MenuItem value="">{I18n.t("— none / external sensor (choose in the curve source) —")}</MenuItem>
-                    <MenuItem value="temperature">{this.sensorOptionLabel("temperature", 1)}</MenuItem>
-                    <MenuItem value="temperature2">{this.sensorOptionLabel("temperature2", 2)}</MenuItem>
-                </TextField>
+                    <InputLabel
+                        id={`wts-${id}`}
+                        shrink
+                    >
+                        {I18n.t("Water temperature sensor")}
+                    </InputLabel>
+                    <Select
+                        labelId={`wts-${id}`}
+                        label={I18n.t("Water temperature sensor")}
+                        notched
+                        displayEmpty
+                        value={cfg.waterTempSensor ?? ""}
+                        onChange={e => this.setWaterSensor(id, e.target.value)}
+                        sx={{ width: "100%" }}
+                    >
+                        <MenuItem value="">
+                            {I18n.t("— none / external sensor (choose in the curve source) —")}
+                        </MenuItem>
+                        <MenuItem value="temperature">{this.sensorOptionLabel("temperature", 1)}</MenuItem>
+                        <MenuItem value="temperature2">{this.sensorOptionLabel("temperature2", 2)}</MenuItem>
+                    </Select>
+                    <FormHelperText>
+                        {I18n.t(
+                            "Pick the device sensor that reads the water — compare the live values below with a thermometer you trust. It feeds telemetry.waterTemperature and pre-fills the curve source. For an external sensor, leave this on “none” and choose the object in the curve source.",
+                        )}
+                    </FormHelperText>
+                </FormControl>
 
                 <FormControl
                     size="small"
