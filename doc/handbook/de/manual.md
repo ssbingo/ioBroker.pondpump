@@ -407,7 +407,75 @@ Start):
 Er schreibt nur, wenn sich das Ziel tatsächlich ändert — so verträgt sich der Zeitplan mit der manuellen
 Steuerung: Deine letzte manuelle Änderung bleibt, bis die nächste Fenstergrenze die Pumpe erneut setzt.
 
-## 11. Fehlerbehebung
+## 11. Temperatur- und wetterabhängige Steuerung
+
+Zusätzlich zu festen Zeitfenstern kann jede Pumpe **nach Wassertemperatur und Wetter** geregelt werden.
+Die Grundidee aus der Teich-Forschung (siehe `doc/research/`): Der **Durchfluss richtet sich nach der
+Wassertemperatur** (kälteres Wasser = weniger Umwälzung, wärmeres = mehr), und **Wetter darf den
+Durchfluss nur anheben**, nie senken (z. B. Hitze → mehr Belüftung).
+
+> **Wichtig:** Der Pumpen-State `telemetry.temperature` ist die **Geräte-**, nicht die Wassertemperatur.
+> Nutze als Kurvenquelle einen **echten Wassersensor** (z. B. einen Teichfühler eines anderen Adapters).
+
+Öffne den **Scheduler**-Tab der Pumpe und scrolle zum Abschnitt **Temperatur-/Wettersteuerung**.
+
+### 11.1 Zusammenspiel mit den Zeitfenstern
+
+Das Auswahlfeld oben legt fest, wie die Kurve zu den Zeitfenstern steht:
+
+- **Kurve überschreibt das aktive Zeitfenster** — die Wassertemperatur-Kurve bestimmt immer die Leistung.
+- **Kurve gilt nur außerhalb der Zeitfenster** — innerhalb eines Fensters gewinnt das Fenster, außerhalb
+  greift die Kurve.
+
+### 11.2 Wassertemperatur → Leistungskurve
+
+1. Schalte **Wassertemperatur → Leistungskurve** ein.
+2. Wähle über das **Lupen-Symbol** die **Wassertemperatur-Quelle** (Objekt-ID des Sensors).
+3. Trage **Stützpunkte** ein (Temperatur °C → Power %). Zwischen den Punkten wird linear interpoliert,
+   unter-/oberhalb geklemmt. Mit **Standardkurve laden** setzt du die empfohlene Kurve aus der Forschung
+   (Q10-Regel, 17 °C → 100 %) als Startpunkt.
+
+**Sicherheitsverhalten:** Fällt der Sensor aus (Quelle liefert keinen Wert), läuft die Pumpe zur Sicherheit
+auf **100 %** — zu viel Umwälzung kostet nur Strom, zu wenig kostet Fische.
+
+### 11.3 Grenzwerte (Glättung, Hysterese, Rampe)
+
+Unter der Kurve stellst du optional ein:
+
+- **Mindestleistung % (Q_min)** — der Durchfluss fällt nie unter diesen Wert (hydraulisches Minimum).
+- **Glättung (Stunden)** — glättet die Temperatur (gleitender Mittelwert), damit kurze Ausschläge die
+  Pumpe nicht ständig verstellen. 0 = aus.
+- **Hysterese (K)** — die Kurve wird erst nach einer Temperaturänderung von ±diesem Wert neu ausgewertet.
+- **Max. Rampe (% pro Stunde)** — begrenzt, wie schnell sich die Leistung ändert (sanftes Anfahren).
+  0 = sofort.
+
+### 11.4 Wetterregeln
+
+Die Regeltabelle darunter kann den Durchfluss zusätzlich **anheben** oder Aktoren schalten. Jede Regel
+vergleicht eine **Quelle** (beliebige State-ID, z. B. Außentemperatur oder ein Regen-OID) über einen
+Operator (`<`, `≤`, `>`, `≥`, `=`, `≠`) mit einem **Schwellwert**. Trifft sie zu, greift ihr **Effekt**:
+
+- **Auf Leistung % anheben** — hebt die Leistung auf mindestens diesen Wert (senkt nie).
+- **Auf 100 % anheben** — volle Leistung (z. B. Hitze).
+- **Halten (Frost)** — friert die Leistung auf dem letzten Wert ein.
+- **SFC ein/aus** — schaltet die Seasonal Flow Control der Pumpe.
+- **Aktor setzen** — schreibt eine beliebige **Ziel-Objekt-ID** auf einen Wert (true/false oder Zahl),
+  z. B. einen Belüfter oder Bachlauf einschalten.
+
+Alle zutreffenden Regeln werden kombiniert (Anhebungen nehmen das Maximum; ein „Halten" friert ein, sofern
+keine Anhebung gewinnt; Aktor-Schreibvorgänge summieren sich). Der Adapter abonniert die Quell-States und
+wertet **sofort bei Änderung** neu aus, nicht nur an Fenstergrenzen.
+
+> **Hinweis zu SFC:** Regelt die Kurve die Leistung, während die **native SFC** der Pumpe eingeschaltet ist,
+> überschreibt die Pumpe den Sollwert — der Adapter warnt dann im Log. Schalte SFC aus oder steuere sie
+> über eine „SFC"-Regel.
+>
+> **Umstieg von 0.3.0:** Das Regelmodell hat sich geändert. Regeln aus 0.3.0 (Effekte *Power %/SFC/Aus*)
+> sind inaktiv und müssen mit den neuen Effekten neu angelegt werden.
+
+Nicht vergessen zu **speichern**.
+
+## 12. Fehlerbehebung
 
 | Symptom | Was zu prüfen ist |
 | --- | --- |
@@ -422,7 +490,7 @@ Füge bei einer Fehlermeldung das Debug-Log rund um den Fehler bei.
 
 ---
 
-## 12. Datenschutz & Sicherheit
+## 13. Datenschutz & Sicherheit
 
 - Dein **OASE-Kontopasswort** wird nie in den Adapter eingegeben oder gespeichert.
 - Der **Refresh-Token** und das **Gerätepasswort** werden in ioBroker **verschlüsselt** gespeichert.

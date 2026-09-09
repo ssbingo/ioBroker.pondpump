@@ -392,7 +392,73 @@ start-up):
 It only writes when the target actually changes, so scheduling coexists with manual control: your last
 manual change stays until the next window boundary moves the pump again.
 
-## 11. Troubleshooting
+## 11. Temperature- and weather-based control
+
+On top of fixed time windows, each pump can be driven by **water temperature and weather**. The idea comes
+from the pond-flow research (see `doc/research/`): the **flow follows the water temperature** (colder water
+= less circulation, warmer = more), and **weather may only raise the flow**, never lower it (e.g. heat →
+more aeration).
+
+> **Important:** the pump state `telemetry.temperature` is the **device** temperature, not the water. Use a
+> **real water sensor** as the curve source (e.g. a pond probe from another adapter).
+
+Open the pump's **Scheduler** tab and scroll to the **Temperature / weather control** section.
+
+### 11.1 How it relates to the time windows
+
+The select at the top decides how the curve relates to the time windows:
+
+- **Curve overrides the active time window** — the water-temperature curve always sets the power.
+- **Curve applies only outside the time windows** — inside a window the window wins; outside, the curve
+  takes over.
+
+### 11.2 Water temperature → power curve
+
+1. Turn on **Water temperature → power curve**.
+2. Use the **magnifier icon** to pick the **water-temperature source** (the sensor's object id).
+3. Enter **points** (temperature °C → power %). Values are interpolated linearly between points and clamped
+   beyond the ends. **Load default curve** fills in the recommended research curve (Q10 rule, 17 °C → 100 %)
+   as a starting point.
+
+**Safety behaviour:** if the sensor drops out (the source has no value), the pump runs at **100 %** to be
+safe — too much circulation only costs electricity, too little costs fish.
+
+### 11.3 Limits (smoothing, hysteresis, ramp)
+
+Below the curve you can optionally set:
+
+- **Minimum power % (Q_min)** — the flow never drops below this (the hydraulic minimum).
+- **Smoothing (hours)** — smooths the temperature (a rolling average) so short spikes don't constantly
+  re-adjust the pump. 0 = off.
+- **Hysteresis (K)** — the curve is only re-evaluated after the temperature has moved by ±this amount.
+- **Max ramp (% per hour)** — limits how fast the power may change (a gentle ramp). 0 = instant.
+
+### 11.4 Weather rules
+
+The rules table below can additionally **raise** the flow or drive actuators. Each rule compares a
+**source** (any state id, e.g. an outdoor temperature or a rain OID) against a **threshold** with an
+operator (`<`, `≤`, `>`, `≥`, `=`, `≠`). When it matches, its **effect** applies:
+
+- **Raise to power %** — raises the power to at least this value (never lowers).
+- **Boost to 100 %** — full power (e.g. heat).
+- **Hold (frost)** — freezes the power at its last value.
+- **SFC on/off** — switches the pump's Seasonal Flow Control.
+- **Set actuator** — writes any **target object id** to a value (true/false or a number), e.g. turning an
+  aerator or waterfall on.
+
+All matching rules combine (raises take the maximum; a "hold" freezes unless a raise wins; actuator writes
+accumulate). The adapter subscribes to the source states and re-evaluates **the moment they change**, not
+just at window boundaries.
+
+> **Note on SFC:** if the curve is regulating power while the pump's **native SFC** is on, the pump
+> overrides the setpoint — the adapter then warns in the log. Turn SFC off, or drive it via an "SFC" rule.
+>
+> **Upgrading from 0.3.0:** the rule model changed. Rules from 0.3.0 (effects *Power %/SFC/Off*) are inert
+> and must be recreated with the new effects.
+
+Don't forget to **save**.
+
+## 12. Troubleshooting
 
 | Symptom | What to check |
 | --- | --- |
@@ -407,7 +473,7 @@ include the debug log around the failure.
 
 ---
 
-## 12. Privacy & safety
+## 13. Privacy & safety
 
 - Your **OASE account password** is never entered into or stored by the adapter.
 - The **refresh token** and **device password** are stored **encrypted** in ioBroker.
