@@ -2,14 +2,15 @@
 
 **Grundlagen, Belege und Referenzkurve – mit Bezug auf die OASE Seasonal Flow Control (SFC)**
 
-> Stand: 9. September 2026 · Recherche-Basis: rund 100 Suchanfragen und etwa 170 ausgewertete Seiten
-> (Herstellerhandbücher, Fachhändler-Ratgeber, Koi-/Teichforen, Aquakultur- und Abwasser-Fachliteratur,
-> Extension-Fact-Sheets). Zahlen aus Formeln der Quellen sind als **[eigene Berechnung]** markiert;
-> Forenaussagen als solche gekennzeichnet; englische Zitate übersetzt.
+> Stand: 9. September 2026 (**ergänzt um Kapitel 7, Tag/Nacht**) · Recherche-Basis: rund 160 Suchanfragen
+> und etwa 290 ausgewertete Seiten (Herstellerhandbücher, Fachhändler-Ratgeber, Koi-/Teichforen, Aquakultur-
+> und Abwasser-Fachliteratur, Extension-Fact-Sheets). Zahlen aus Formeln der Quellen sind als
+> **[eigene Berechnung]** markiert; Forenaussagen als solche gekennzeichnet; englische Zitate übersetzt.
 >
 > Diese Ausarbeitung ist die Design-Grundlage für die temperatur-/wetterabhängigen Scheduler-Parameter
-> des `iobroker.pondpump`-Adapters (Phase 11/12). **Original-PDF:** [`../Teichpumpe_Durchfluss_Temperatur_Wetter.pdf`](../Teichpumpe_Durchfluss_Temperatur_Wetter.pdf).
-> Diese Markdown-Fassung ist die durchsuchbare/greppbare Referenz im Repo.
+> des `iobroker.pondpump`-Adapters (Phase 11/12/13). **Original-PDF:** [`../Teichpumpe_Durchfluss_Temperatur_Wetter.pdf`](../Teichpumpe_Durchfluss_Temperatur_Wetter.pdf)
+> (die um Kapitel 7 erweiterte Fassung ist als PDF vom Anwender bereitzustellen). Diese Markdown-Fassung ist
+> die durchsuchbare/greppbare Referenz im Repo und enthält Kapitel 7 als Volltext.
 
 ## 0. Kurzfassung
 
@@ -250,7 +251,72 @@ Ersetzt keine Sauerstoffmessung (Sommer: gelöster O₂ ist die eigentliche Rege
 die Filterbiologie nicht (Frühjahr: NH₄/NO₂-Anstieg soll den Durchfluss übersteuern); gilt für den
 unabgedeckten Teich (unter Abdeckung Q_min = 100 %).
 
-## 7. Grenzen der Recherche
+## 7. Tag und Nacht – gibt es sinnvolle Abhängigkeiten?
+
+**Kurz: Ja – aber fast alle laufen der intuitiven „Nachtabsenkung" ENTGEGEN.** Die Nacht ist im Sommer die
+**kritische** Phase des Teichs, nicht die ruhige. Eine Tageszeit-Eingangsgröße ist als **Schutzfenster**
+(Sperrfenster, in dem der Durchfluss nicht reduziert wird) und für **Nebenaktoren** (Bachlauf, UVC, Fütterung,
+Energie/PV) sinnvoll – **nicht** als Treiber des Filterdurchflusses. Im Winter verschwindet der Tagesgang
+praktisch vollständig.
+
+### 7.1 Sauerstoff: Minimum vor Sonnenaufgang – oder 2 h nach der letzten Fütterung
+Tagsüber übersteigt die Photosynthese die Atmung, nachts stoppt sie → O₂ „am niedrigsten kurz vor
+Tagesanbruch" [Q43], nachts −5 bis −10 mg/l möglich [Q20]. In stark besetzten, viel gefütterten Koiteichen
+liegt das Tief dagegen **kurz vor Sonnenuntergang, ~2 h nach der letzten Fütterung** [Q101]. Aquakultur-
+Regel: Belüfter „22–24 h ein, 7–8 h aus" bzw. sensorgesteuert ab 3–4 mg/l bis nach der Dämmerung; die
+Tiefphase dauert im Hochsommer 3–6 h. Koi-Szene: „nachts mehr, tagsüber nicht weniger", Belüfter idealer-
+weise 24 h. [Q43][Q124][Q47][Q134]
+
+### 7.2 pH/NH₃/CO₂/Temperatur im Tagesgang
+pH steigt tagsüber (Photosynthese entzieht CO₂), fällt nachts; da der NH₃-Anteil mit pH steigt, ist die
+giftige Form **am späten Nachmittag/frühen Abend** am höchsten → **Nachmittag ist die zweite Zeit, in der
+der Filter nicht gedrosselt werden darf**. Wassertemperatur schwankt 1–3 K/24 h (Min. vor Sonnenaufgang);
+in Koiteichen mit laufendem Filter klein. Verdunstungskühlung eines Bachlaufs trägt nur Zehntelgrade/Nacht
+(Kodama: Wasserfälle „keine Kühlmechanismen"). [Q27][Q102][Q105][Q106][Q66]
+
+### 7.3 Fische: nacht-/dämmerungsaktiv, Verdauung ist der Tageszeit-Faktor
+Karpfen fressen überwiegend nachts, sind nacht-/dämmerungsaktiv; „stilles Wasser zum Ruhen" ist **nicht
+belegt** (die Nachtabsenkung stammt aus der Riffaquaristik). Der Tag-Nacht-Grundumsatz-Unterschied
+beträgt nur **10–20 %** – klein gegen Q10 (2–3) und klein gegen die **Verdauung**: nach der Fütterung
+verdoppelt sich der O₂-Bedarf binnen 30 min und bleibt **14–18 h** erhöht; die Ammoniumspitze folgt ~8 h
+später (Faktor 4–5). Eine **abendliche Fütterung legt Verdauungs-O₂-Bedarf, Ammoniumspitze und Filterlast
+genau in die Nacht**. [Q114][Q115][Q109][Q120][Q121]
+
+### 7.4 Filter, UVC, Bachlauf, Lärm, Energie
+- **Nitrifikation hat keinen Tagesgang** (hängt von NH₄/Temp/O₂ ab, nicht vom Licht); Last folgt der
+  Fütterung mit Stunden Verzögerung. Nächtliches Drosseln der Filterpumpe wird bei Fischbesatz **von allen
+  Koi-Quellen abgelehnt**; die Ersparnis ist gering (~60 €/Jahr bei 100 W). [Q27][Q125]
+- **UVC** ist tageszeitunabhängig → in ein **Laufzeitbudget** (8–12 h/Tag) in einem Block legen, wenige
+  Schaltzyklen; welcher Block, entscheidet der Strompreis/PV. [Q123]
+- **Bachlauf/Wasserfall** sind echte Tageszeit-Aktoren: **Nachtruhe/Lärm** (22–6 h, je Kommune 20/22–6/7 h),
+  Wärmehaushalt, O₂. Koi-Lösung: Bypass, Wasserfall ~9–20/22 h, im Winter aus; bei Hitze umgekehrt
+  (nachts an, tags aus). [Q129][Q51][Q126][Q66]
+
+### 7.5 Fütterungszeit als Steuergröße (Astro-Anker)
+Sommer: morgens bis später Nachmittag füttern, **letzte Gabe ≥ 6–8 h vor Sonnenaufgang** (≈ Sonnenuntergang
+− 2–3 h). Winter (5–10 °C): **10–14 Uhr** am Tagesmaximum, 2–3×/Woche, < 5–8 °C keine. Ein Futterautomat
+gehört an die Astro-Uhr; **jede Fütterung startet ein Sperrfenster**, in dem Durchfluss und Belüftung nicht
+reduziert werden. [Q113][Q109][Q127][Q66]
+
+### 7.6 Tag-Nacht-Regeln für die Steuerung (Zusammenfassung)
+
+| Aktor / Größe | Sommer (Wasser ≥ 15–20 °C) | Winter (Wasser < 8–10 °C) | Beleglage |
+| --- | --- | --- | --- |
+| **Filterpumpe** | Rund um die Uhr auf Kurven-Sollwert; **Sperrfenster ohne Reduktion** von „letzte Fütterung + 2 h" bis „Sonnenaufgang + 2 h" und nachmittags; falls Absenkung unvermeidbar: später Vormittag–Mittag, nur im klaren Teich | **Kein Tagesgang**; Q_min nachts, tagsüber bei PV-Überschuss etwas höher (**Q_min … Q_min + 15 %**) – biologisch neutral | stark (O₂/SDA/NH₄); Koi-Logger-Daten fehlen |
+| **Belüftung** | 24 h, nachts Boost (22–8 h), Sensor-Trigger 4–5 mg/l; nach später Fütterung/Hitze Pflicht | leicht, flach, Eisloch; keine Tageszeitlogik | stark |
+| **Bachlauf/Wasserfall** | Bypass, Lärmfenster 9–20/22 h; bei Hitze umgekehrt (nachts an); täglich ≥ 30 min Spülung | aus; höchstens bei Luft(Feuchtkugel) > Wasser tagsüber | mittel |
+| **UVC** | Laufzeitbudget in einem Block, Tageszeit egal → PV-Fenster | aus < 6–10 °C | stark |
+| **Fütterung** | morgens–später Nachmittag; letzte Gabe ≥ 6–8 h vor Sonnenaufgang; > 26–28 °C reduziert, Hitze/Gewitter keine | 10–14 Uhr, 2–3×/Woche, < 5–8 °C keine | stark |
+| **Energie/PV** | nur variable Verbraucher verschieben (Hysterese > Verbraucherleistung, Mindestlaufzeit, SoC-Stopp) | Filterpumpe darf PV-folgend modulieren (Q_min … Q_min + 15 %) | Foren-Praxis |
+
+**Fazit für pondpump:** Kein Sommer-„Nachtabsenkungs"-Feature für den Filterdurchfluss. Astro liefert
+stattdessen: (1) ein **Sperrfenster** (Sonnenuntergang bzw. letzte Fütterung + 2 h → Sonnenaufgang + 2 h),
+in dem keine Reduktion erfolgt; (2) **Nebenaktor-Zeitfenster** (Bachlauf/Wasserfall, UVC-Budget) als
+`setState`-Aktoren; (3) im **Winter** eine optionale PV-folgende Modulation der Pumpe zwischen Q_min und
+Q_min + 15 %. Alles überlagert die Temperaturkurve **nie nach unten** außer der bewusst gewählten
+Winter-PV-Modulation oberhalb von Q_min.
+
+## 8. Grenzen der Recherche
 
 Es gibt keine peer-reviewte Studie zum optimalen Filterdurchfluss für Koiteiche nach Temperatur; die
 Koi-Szene-Zahlen sind Erfahrungswerte, mittelbar durch Aquakultur-/Abwasserliteratur gestützt. Gut belegt
