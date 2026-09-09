@@ -20,6 +20,7 @@ var schedule_exports = {};
 __export(schedule_exports, {
   DEFAULT_CURVE_POINTS: () => DEFAULT_CURVE_POINTS,
   MINUTES_PER_DAY: () => MINUTES_PER_DAY,
+  NO_ASTRO: () => NO_ASTRO,
   activeWindow: () => activeWindow,
   clampPercent: () => clampPercent,
   collectSourceOids: () => collectSourceOids,
@@ -29,6 +30,7 @@ __export(schedule_exports, {
   minutesUntilNextChange: () => minutesUntilNextChange,
   parseHhmm: () => parseHhmm,
   rampTowards: () => rampTowards,
+  resolveBound: () => resolveBound,
   updateEma: () => updateEma,
   validatePlans: () => validatePlans
 });
@@ -60,9 +62,19 @@ function clampPercent(value) {
   return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : 0;
 }
 function validatePlans(plans) {
+  var _a, _b;
   const windows = [];
   for (let i = 0; i < plans.length; i++) {
     const plan = plans[i];
+    if (plan.mode === "power") {
+      const v = Number(plan.power);
+      if (!Number.isFinite(v) || v < 0 || v > 100) {
+        return { valid: false, error: `Schedule ${i + 1}: power must be between 0 and 100` };
+      }
+    }
+    if (((_a = plan.startMode) != null ? _a : "clock") !== "clock" || ((_b = plan.endMode) != null ? _b : "clock") !== "clock") {
+      continue;
+    }
     const start = parseHhmm(plan.start);
     const end = parseHhmm(plan.end);
     if (start === null || end === null) {
@@ -70,12 +82,6 @@ function validatePlans(plans) {
     }
     if (end <= start) {
       return { valid: false, error: `Schedule ${i + 1}: end must be after start` };
-    }
-    if (plan.mode === "power") {
-      const v = Number(plan.power);
-      if (!Number.isFinite(v) || v < 0 || v > 100) {
-        return { valid: false, error: `Schedule ${i + 1}: power must be between 0 and 100` };
-      }
     }
     windows.push({ start, end, index: i });
   }
@@ -90,11 +96,31 @@ function validatePlans(plans) {
   }
   return { valid: true };
 }
-function activeWindow(plans, nowMin) {
+const NO_ASTRO = { sunriseMin: null, sunsetMin: null };
+function normMinute(minute) {
+  return (Math.round(minute) % MINUTES_PER_DAY + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+}
+function resolveBound(mode, clock, offset, astro) {
+  const off = Number.isFinite(offset) ? Number(offset) : 0;
+  if (mode === "sunrise") {
+    return astro.sunriseMin === null ? null : normMinute(astro.sunriseMin + off);
+  }
+  if (mode === "sunset") {
+    return astro.sunsetMin === null ? null : normMinute(astro.sunsetMin + off);
+  }
+  return parseHhmm(clock);
+}
+function windowActive(start, end, nowMin) {
+  if (start === end) {
+    return false;
+  }
+  return start < end ? nowMin >= start && nowMin < end : nowMin >= start || nowMin < end;
+}
+function activeWindow(plans, nowMin, astro = NO_ASTRO) {
   for (const plan of plans) {
-    const start = parseHhmm(plan.start);
-    const end = parseHhmm(plan.end);
-    if (start !== null && end !== null && end > start && nowMin >= start && nowMin < end) {
+    const start = resolveBound(plan.startMode, plan.start, plan.startOffset, astro);
+    const end = resolveBound(plan.endMode, plan.end, plan.endOffset, astro);
+    if (start !== null && end !== null && windowActive(start, end, nowMin)) {
       return plan;
     }
   }
@@ -140,10 +166,10 @@ function interpolateCurve(points, temp) {
   }
   return clampPercent(pts[pts.length - 1].power);
 }
-function windowTarget(config, nowMin) {
+function windowTarget(config, nowMin, astro) {
   var _a;
   const basePower = clampPercent(config.basePower);
-  const window = activeWindow(config.plans, nowMin);
+  const window = activeWindow(config.plans, nowMin, astro);
   if (!window) {
     return { sfc: false, power: basePower };
   }
@@ -181,18 +207,18 @@ function collectSourceOids(config) {
   }
   return [...ids];
 }
-function decideTarget(config, nowMin, sources = {}) {
+function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO) {
   var _a, _b, _c, _d, _e, _f;
-  const window = activeWindow(config.plans, nowMin);
+  const window = activeWindow(config.plans, nowMin, astro);
   const priority = (_a = config.conditionPriority) != null ? _a : "override";
   const curve = curveTarget(config, sources);
   let base;
   let failSafe = false;
   if (priority === "outsideOnly") {
-    base = window ? windowTarget(config, nowMin) : (_b = curve == null ? void 0 : curve.target) != null ? _b : windowTarget(config, nowMin);
+    base = window ? windowTarget(config, nowMin, astro) : (_b = curve == null ? void 0 : curve.target) != null ? _b : windowTarget(config, nowMin, astro);
     failSafe = !window && !!(curve == null ? void 0 : curve.failSafe);
   } else {
-    base = (_c = curve == null ? void 0 : curve.target) != null ? _c : windowTarget(config, nowMin);
+    base = (_c = curve == null ? void 0 : curve.target) != null ? _c : windowTarget(config, nowMin, astro);
     failSafe = !!(curve == null ? void 0 : curve.failSafe);
   }
   let sfc = base.sfc;
@@ -252,11 +278,11 @@ function updateEma(prev, raw, dtMs, tauMs) {
   const alpha = 1 - Math.exp(-dtMs / tauMs);
   return prev + alpha * (raw - prev);
 }
-function minutesUntilNextChange(plans, nowMin) {
+function minutesUntilNextChange(plans, nowMin, astro = NO_ASTRO) {
   const boundaries = /* @__PURE__ */ new Set();
   for (const plan of plans) {
-    const start = parseHhmm(plan.start);
-    const end = parseHhmm(plan.end);
+    const start = resolveBound(plan.startMode, plan.start, plan.startOffset, astro);
+    const end = resolveBound(plan.endMode, plan.end, plan.endOffset, astro);
     if (start !== null) {
       boundaries.add(start);
     }
@@ -278,6 +304,7 @@ function minutesUntilNextChange(plans, nowMin) {
 0 && (module.exports = {
   DEFAULT_CURVE_POINTS,
   MINUTES_PER_DAY,
+  NO_ASTRO,
   activeWindow,
   clampPercent,
   collectSourceOids,
@@ -287,6 +314,7 @@ function minutesUntilNextChange(plans, nowMin) {
   minutesUntilNextChange,
   parseHhmm,
   rampTowards,
+  resolveBound,
   updateEma,
   validatePlans
 });

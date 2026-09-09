@@ -2,22 +2,46 @@
  * Per-pump scheduling core (Phase 9).
  *
  * Pure, side-effect-free logic shared by the backend scheduler (main.ts) and the admin scheduler
- * component. A pump has an ordered set of non-overlapping daily time windows; each window sets either
- * a power % or switches SFC. Outside every window the pump falls back to a configurable base power.
+ * component. A pump has a set of daily time windows; each window sets either a power % or switches
+ * SFC. Outside every window the pump falls back to a configurable base power.
  *
- * Times are daily "HH:MM" (no date, no midnight crossing — split into two windows for that). All
- * internal maths use minutes-of-day (0..1439).
+ * Window bounds are either a fixed "HH:MM" clock time or an astronomical event (sunrise/sunset ±
+ * offset, Phase 13); astro windows are resolved daily and may wrap past midnight. All internal maths
+ * use minutes-of-day (0..1439).
  */
 
 /** Whether a schedule window sets a power % or switches Seasonal Flow Control. */
 export type ScheduleMode = "power" | "sfc";
 
+/**
+ * How a window boundary is defined (Phase 13):
+ * - "clock": a fixed time of day ("HH:MM").
+ * - "sunrise" / "sunset": that day's astronomical event plus an offset in minutes (may be negative).
+ */
+export type WindowBoundMode = "clock" | "sunrise" | "sunset";
+
+/** Resolved astronomical times for a day, as minutes-of-day (0..1439), or null when unavailable. */
+export interface AstroTimes {
+    /** Sunrise as minutes-of-day, or null (no location / polar day-night). */
+    sunriseMin: number | null;
+    /** Sunset as minutes-of-day, or null. */
+    sunsetMin: number | null;
+}
+
 /** One daily time window for a pump. */
 export interface PumpSchedule {
-    /** Window start, "HH:MM" (00:00..23:59). */
+    /** Window start, "HH:MM" (00:00..23:59) — used when `startMode` is "clock" (the default). */
     start: string;
-    /** Window end, "HH:MM"; must be strictly after `start` (no midnight crossing). */
+    /** Window end, "HH:MM" — used when `endMode` is "clock". */
     end: string;
+    /** Phase 13 — how the start is defined; defaults to "clock". */
+    startMode?: WindowBoundMode;
+    /** Phase 13 — offset in minutes (may be negative) applied when `startMode` is sunrise/sunset. */
+    startOffset?: number;
+    /** Phase 13 — how the end is defined; defaults to "clock". */
+    endMode?: WindowBoundMode;
+    /** Phase 13 — offset in minutes (may be negative) applied when `endMode` is sunrise/sunset. */
+    endOffset?: number;
     /** Whether the window sets a power % ("power") or switches SFC ("sfc"). */
     mode: ScheduleMode;
     /** Target power in % (0..100) when `mode` is "power". */
@@ -226,6 +250,17 @@ export function validatePlans(plans: PumpSchedule[]): ValidationResult {
     const windows: Array<{ start: number; end: number; index: number }> = [];
     for (let i = 0; i < plans.length; i++) {
         const plan = plans[i];
+        if (plan.mode === "power") {
+            const v = Number(plan.power);
+            if (!Number.isFinite(v) || v < 0 || v > 100) {
+                return { valid: false, error: `Schedule ${i + 1}: power must be between 0 and 100` };
+            }
+        }
+        // Astro (sunrise/sunset) bounds are resolved daily and may wrap past midnight — they can't be
+        // statically ordered or overlap-checked, so only fixed-clock windows enter those checks.
+        if ((plan.startMode ?? "clock") !== "clock" || (plan.endMode ?? "clock") !== "clock") {
+            continue;
+        }
         const start = parseHhmm(plan.start);
         const end = parseHhmm(plan.end);
         if (start === null || end === null) {
@@ -233,12 +268,6 @@ export function validatePlans(plans: PumpSchedule[]): ValidationResult {
         }
         if (end <= start) {
             return { valid: false, error: `Schedule ${i + 1}: end must be after start` };
-        }
-        if (plan.mode === "power") {
-            const v = Number(plan.power);
-            if (!Number.isFinite(v) || v < 0 || v > 100) {
-                return { valid: false, error: `Schedule ${i + 1}: power must be between 0 and 100` };
-            }
         }
         windows.push({ start, end, index: i });
     }
@@ -254,17 +283,75 @@ export function validatePlans(plans: PumpSchedule[]): ValidationResult {
     return { valid: true };
 }
 
+/** Astro times meaning "no location known" — every astro bound resolves to null (clock bounds work). */
+export const NO_ASTRO: AstroTimes = { sunriseMin: null, sunsetMin: null };
+
 /**
- * The window active at `nowMin`, or undefined if none. Malformed windows are ignored.
+ * Wrap a minute value into [0, 1440).
+ *
+ * @param minute - a possibly out-of-range minute-of-day
+ */
+function normMinute(minute: number): number {
+    return ((Math.round(minute) % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+}
+
+/**
+ * Resolve one window boundary to minutes-of-day (0..1439). Returns null when a "clock" time is
+ * malformed or an astro event is unavailable (no location, or polar day/night).
+ *
+ * @param mode - how the boundary is defined (default "clock")
+ * @param clock - the "HH:MM" time for clock mode
+ * @param offset - minutes offset (may be negative) for sunrise/sunset mode
+ * @param astro - the resolved astro times for the day
+ */
+export function resolveBound(
+    mode: WindowBoundMode | undefined,
+    clock: string,
+    offset: number | undefined,
+    astro: AstroTimes,
+): number | null {
+    const off = Number.isFinite(offset) ? Number(offset) : 0;
+    if (mode === "sunrise") {
+        return astro.sunriseMin === null ? null : normMinute(astro.sunriseMin + off);
+    }
+    if (mode === "sunset") {
+        return astro.sunsetMin === null ? null : normMinute(astro.sunsetMin + off);
+    }
+    return parseHhmm(clock);
+}
+
+/**
+ * Whether `nowMin` falls in [start, end), allowing a window to wrap past midnight (start > end, e.g.
+ * an astro "sunset → sunrise" night window). start == end is never active.
+ *
+ * @param start - resolved start minute
+ * @param end - resolved end minute
+ * @param nowMin - current minute-of-day
+ */
+function windowActive(start: number, end: number, nowMin: number): boolean {
+    if (start === end) {
+        return false;
+    }
+    return start < end ? nowMin >= start && nowMin < end : nowMin >= start || nowMin < end;
+}
+
+/**
+ * The window active at `nowMin`, or undefined if none. Boundaries are resolved against `astro` (so
+ * sunrise/sunset windows work and may wrap past midnight); malformed/unavailable windows are ignored.
  *
  * @param plans - the pump's schedule windows
  * @param nowMin - current minute-of-day (0..1439)
+ * @param astro - resolved astro times for the day (default: none → astro bounds are skipped)
  */
-export function activeWindow(plans: PumpSchedule[], nowMin: number): PumpSchedule | undefined {
+export function activeWindow(
+    plans: PumpSchedule[],
+    nowMin: number,
+    astro: AstroTimes = NO_ASTRO,
+): PumpSchedule | undefined {
     for (const plan of plans) {
-        const start = parseHhmm(plan.start);
-        const end = parseHhmm(plan.end);
-        if (start !== null && end !== null && end > start && nowMin >= start && nowMin < end) {
+        const start = resolveBound(plan.startMode, plan.start, plan.startOffset, astro);
+        const end = resolveBound(plan.endMode, plan.end, plan.endOffset, astro);
+        if (start !== null && end !== null && windowActive(start, end, nowMin)) {
             return plan;
         }
     }
@@ -335,10 +422,11 @@ export function interpolateCurve(points: CurvePoint[], temp: number): number | n
  *
  * @param config - the pump's scheduling configuration
  * @param nowMin - current minute-of-day (0..1439)
+ * @param astro - resolved astro times for the day
  */
-function windowTarget(config: PumpScheduleConfig, nowMin: number): ScheduleTarget {
+function windowTarget(config: PumpScheduleConfig, nowMin: number, astro: AstroTimes): ScheduleTarget {
     const basePower = clampPercent(config.basePower);
-    const window = activeWindow(config.plans, nowMin);
+    const window = activeWindow(config.plans, nowMin, astro);
     if (!window) {
         return { sfc: false, power: basePower };
     }
@@ -404,13 +492,15 @@ export function collectSourceOids(config: PumpScheduleConfig): string[] {
  * @param config - the pump's scheduling configuration
  * @param nowMin - current minute-of-day (0..1439)
  * @param sources - current numeric values of the referenced state ids (booleans as 1/0)
+ * @param astro - resolved astro times for the day (for sunrise/sunset window bounds)
  */
 export function decideTarget(
     config: PumpScheduleConfig,
     nowMin: number,
     sources: Record<string, number> = {},
+    astro: AstroTimes = NO_ASTRO,
 ): ScheduleDecision {
-    const window = activeWindow(config.plans, nowMin);
+    const window = activeWindow(config.plans, nowMin, astro);
     const priority = config.conditionPriority ?? "override";
     const curve = curveTarget(config, sources);
 
@@ -418,10 +508,10 @@ export function decideTarget(
     let base: ScheduleTarget;
     let failSafe = false;
     if (priority === "outsideOnly") {
-        base = window ? windowTarget(config, nowMin) : (curve?.target ?? windowTarget(config, nowMin));
+        base = window ? windowTarget(config, nowMin, astro) : (curve?.target ?? windowTarget(config, nowMin, astro));
         failSafe = !window && !!curve?.failSafe;
     } else {
-        base = curve?.target ?? windowTarget(config, nowMin);
+        base = curve?.target ?? windowTarget(config, nowMin, astro);
         failSafe = !!curve?.failSafe;
     }
 
@@ -514,12 +604,13 @@ export function updateEma(prev: number, raw: number, dtMs: number, tauMs: number
  *
  * @param plans - the pump's schedule windows
  * @param nowMin - current minute-of-day (0..1439)
+ * @param astro - resolved astro times for the day (for sunrise/sunset window bounds)
  */
-export function minutesUntilNextChange(plans: PumpSchedule[], nowMin: number): number {
+export function minutesUntilNextChange(plans: PumpSchedule[], nowMin: number, astro: AstroTimes = NO_ASTRO): number {
     const boundaries = new Set<number>();
     for (const plan of plans) {
-        const start = parseHhmm(plan.start);
-        const end = parseHhmm(plan.end);
+        const start = resolveBound(plan.startMode, plan.start, plan.startOffset, astro);
+        const end = resolveBound(plan.endMode, plan.end, plan.endOffset, astro);
         if (start !== null) {
             boundaries.add(start);
         }

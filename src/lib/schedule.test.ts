@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import {
     activeWindow,
+    type AstroTimes,
     collectSourceOids,
     compareValue,
     decideTarget,
@@ -11,6 +12,7 @@ import {
     type PumpSchedule,
     type PumpScheduleConfig,
     rampTowards,
+    resolveBound,
     updateEma,
     validatePlans,
 } from "./schedule";
@@ -79,6 +81,65 @@ describe("schedule core", () => {
             expect(activeWindow(plans, at(10))?.start).to.equal("10:00"); // 10:00 belongs to the next window
             expect(activeWindow(plans, at(18))).to.equal(undefined); // end is exclusive
             expect(activeWindow(plans, at(5, 59))).to.equal(undefined);
+        });
+    });
+
+    describe("astro window bounds (Phase 13)", () => {
+        const astro: AstroTimes = { sunriseMin: at(6, 30), sunsetMin: at(20, 15) }; // 06:30 / 20:15
+
+        describe("resolveBound", () => {
+            it("resolves clock, sunrise+offset and sunset−offset", () => {
+                expect(resolveBound("clock", "07:45", 0, astro)).to.equal(at(7, 45));
+                expect(resolveBound("sunrise", "", 30, astro)).to.equal(at(7)); // 06:30 + 30
+                expect(resolveBound("sunset", "", -45, astro)).to.equal(at(19, 30)); // 20:15 − 45
+            });
+            it("wraps past midnight and returns null when the event is unavailable", () => {
+                expect(resolveBound("sunset", "", 240, astro)).to.equal(at(0, 15)); // 20:15 + 4h → 00:15
+                expect(resolveBound("sunrise", "", 0, { sunriseMin: null, sunsetMin: null })).to.equal(null);
+            });
+        });
+
+        it("activates a sunrise→sunset day window only during the day", () => {
+            const day: PumpSchedule[] = [
+                {
+                    start: "",
+                    startMode: "sunrise",
+                    startOffset: 0,
+                    end: "",
+                    endMode: "sunset",
+                    endOffset: 0,
+                    mode: "power",
+                    power: 90,
+                },
+            ];
+            expect(activeWindow(day, at(12), astro)?.mode).to.equal("power"); // midday: active
+            expect(activeWindow(day, at(5), astro)).to.equal(undefined); // before sunrise
+            expect(activeWindow(day, at(22), astro)).to.equal(undefined); // after sunset
+        });
+
+        it("activates a sunset→sunrise night window that wraps past midnight", () => {
+            const night: PumpSchedule[] = [
+                {
+                    start: "",
+                    startMode: "sunset",
+                    startOffset: 0,
+                    end: "",
+                    endMode: "sunrise",
+                    endOffset: 0,
+                    mode: "sfc",
+                    sfc: true,
+                },
+            ];
+            expect(activeWindow(night, at(23), astro)?.mode).to.equal("sfc"); // late evening
+            expect(activeWindow(night, at(3), astro)?.mode).to.equal("sfc"); // after midnight
+            expect(activeWindow(night, at(12), astro)).to.equal(undefined); // midday: inactive
+        });
+
+        it("skips an astro window when no location is known (astro times null)", () => {
+            const day: PumpSchedule[] = [
+                { start: "", startMode: "sunrise", end: "", endMode: "sunset", mode: "power", power: 90 },
+            ];
+            expect(activeWindow(day, at(12))).to.equal(undefined); // default NO_ASTRO → unresolved → skipped
         });
     });
 
