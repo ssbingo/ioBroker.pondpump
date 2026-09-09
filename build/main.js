@@ -85,6 +85,10 @@ class Pondpump extends utils.Adapter {
   scheduleStarted = false;
   /** Last target the scheduler applied per pump device number, to only send commands on change. */
   lastScheduleTarget = /* @__PURE__ */ new Map();
+  /** State ids the schedules read for their temperature/weather conditions (Phase 11); subscribed. */
+  scheduleSourceOids = /* @__PURE__ */ new Set();
+  /** Debounce timer coalescing bursts of source-state changes before re-evaluating. */
+  scheduleReevalTimer;
   constructor(options = {}) {
     super({
       ...options,
@@ -711,7 +715,72 @@ class Pondpump extends utils.Adapter {
     }
     this.scheduleStarted = true;
     this.log.info("[schedule] starting the pump scheduler");
+    void this.subscribeScheduleSources();
     void this.runScheduler();
+  }
+  /**
+   * Subscribe to every state id the schedules read for their temperature/weather conditions
+   * (Phase 11), so a source change re-evaluates the scheduler — not just window boundaries. Works
+   * for the pumps' own `telemetry.temperature` and for external OIDs (e.g. a weather adapter).
+   */
+  async subscribeScheduleSources() {
+    const wanted = /* @__PURE__ */ new Set();
+    for (const cfg of Object.values(this.schedules)) {
+      if (cfg == null ? void 0 : cfg.enabled) {
+        for (const id of (0, import_schedule.collectSourceOids)(cfg)) {
+          wanted.add(id);
+        }
+      }
+    }
+    for (const id of this.scheduleSourceOids) {
+      if (!wanted.has(id)) {
+        await this.unsubscribeForeignStatesAsync(id);
+        this.scheduleSourceOids.delete(id);
+      }
+    }
+    for (const id of wanted) {
+      if (!this.scheduleSourceOids.has(id)) {
+        await this.subscribeForeignStatesAsync(id);
+        this.scheduleSourceOids.add(id);
+      }
+    }
+    if (this.scheduleSourceOids.size) {
+      this.log.info(`[schedule] watching ${this.scheduleSourceOids.size} condition source(s): ${[...this.scheduleSourceOids].join(", ")}`);
+    }
+  }
+  /** Read the current numeric value of every subscribed condition source (booleans as 1/0). */
+  async readScheduleSources() {
+    const sources = {};
+    for (const id of this.scheduleSourceOids) {
+      try {
+        const state = await this.getForeignStateAsync(id);
+        const val = state == null ? void 0 : state.val;
+        if (typeof val === "number" && Number.isFinite(val)) {
+          sources[id] = val;
+        } else if (typeof val === "boolean") {
+          sources[id] = val ? 1 : 0;
+        } else if (typeof val === "string" && val.trim() !== "" && Number.isFinite(Number(val))) {
+          sources[id] = Number(val);
+        }
+      } catch (e) {
+        this.log.debug(`[schedule] cannot read condition source ${id}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+    return sources;
+  }
+  /** A watched condition source changed → re-evaluate soon (debounced to coalesce bursts). */
+  onScheduleSourceChange() {
+    if (this.stopping || !this.scheduleStarted || this.scheduleReevalTimer) {
+      return;
+    }
+    this.scheduleReevalTimer = this.setTimeout(() => {
+      this.scheduleReevalTimer = void 0;
+      if (this.scheduleTimer) {
+        this.clearTimeout(this.scheduleTimer);
+        this.scheduleTimer = void 0;
+      }
+      void this.runScheduler();
+    }, 2e3);
   }
   /**
    * Evaluate every scheduled pump for the current wall-clock time, apply any changed target via the
@@ -725,6 +794,7 @@ class Pondpump extends utils.Adapter {
     const now = /* @__PURE__ */ new Date();
     const nowMin = now.getHours() * 60 + now.getMinutes();
     let nextChange = 60;
+    const sources = await this.readScheduleSources();
     for (const [dnStr, cfg] of Object.entries(this.schedules)) {
       if (!(cfg == null ? void 0 : cfg.enabled) || !(0, import_schedule.validatePlans)(cfg.plans || []).valid) {
         continue;
@@ -733,7 +803,7 @@ class Pondpump extends utils.Adapter {
       if (!this.pumpControl.has(deviceNumber)) {
         continue;
       }
-      await this.applyScheduleTarget(deviceNumber, (0, import_schedule.targetForConfig)(cfg, nowMin));
+      await this.applyScheduleTarget(deviceNumber, (0, import_schedule.targetForConfig)(cfg, nowMin, sources));
       nextChange = Math.min(nextChange, (0, import_schedule.minutesUntilNextChange)(cfg.plans || [], nowMin));
     }
     const delayMs = Math.max(1, nextChange) * 6e4 + 2e3;
@@ -781,6 +851,10 @@ class Pondpump extends utils.Adapter {
         this.clearTimeout(this.scheduleTimer);
         this.scheduleTimer = void 0;
       }
+      if (this.scheduleReevalTimer) {
+        this.clearTimeout(this.scheduleReevalTimer);
+        this.scheduleReevalTimer = void 0;
+      }
       (_a = this.cloud) == null ? void 0 : _a.reset();
       this.cloud = void 0;
       (_b = this.local) == null ? void 0 : _b.reset();
@@ -799,6 +873,9 @@ class Pondpump extends utils.Adapter {
    * @param state - State object
    */
   onStateChange(id, state) {
+    if (state && this.scheduleSourceOids.has(id)) {
+      this.onScheduleSourceChange();
+    }
     if (!state || state.ack) {
       return;
     }

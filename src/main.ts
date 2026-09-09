@@ -43,6 +43,7 @@ import { LocalClient } from "./lib/local/client";
 import { fetchLocalInventory, toDomainInventory } from "./lib/local/inventory";
 import { DEFAULT_TLS_PORT } from "./lib/local/protocol";
 import {
+    collectSourceOids,
     minutesUntilNextChange,
     type ScheduleTarget,
     type SchedulesConfig,
@@ -141,6 +142,10 @@ class Pondpump extends utils.Adapter {
     private scheduleStarted = false;
     /** Last target the scheduler applied per pump device number, to only send commands on change. */
     private readonly lastScheduleTarget = new Map<number, string>();
+    /** State ids the schedules read for their temperature/weather conditions (Phase 11); subscribed. */
+    private readonly scheduleSourceOids = new Set<string>();
+    /** Debounce timer coalescing bursts of source-state changes before re-evaluating. */
+    private scheduleReevalTimer?: ioBroker.Timeout;
 
     public constructor(options: Partial<utils.AdapterOptions> = {}) {
         super({
@@ -862,7 +867,79 @@ class Pondpump extends utils.Adapter {
         }
         this.scheduleStarted = true;
         this.log.info("[schedule] starting the pump scheduler");
+        void this.subscribeScheduleSources();
         void this.runScheduler();
+    }
+
+    /**
+     * Subscribe to every state id the schedules read for their temperature/weather conditions
+     * (Phase 11), so a source change re-evaluates the scheduler — not just window boundaries. Works
+     * for the pumps' own `telemetry.temperature` and for external OIDs (e.g. a weather adapter).
+     */
+    private async subscribeScheduleSources(): Promise<void> {
+        const wanted = new Set<string>();
+        for (const cfg of Object.values(this.schedules)) {
+            if (cfg?.enabled) {
+                for (const id of collectSourceOids(cfg)) {
+                    wanted.add(id);
+                }
+            }
+        }
+        for (const id of this.scheduleSourceOids) {
+            if (!wanted.has(id)) {
+                await this.unsubscribeForeignStatesAsync(id);
+                this.scheduleSourceOids.delete(id);
+            }
+        }
+        for (const id of wanted) {
+            if (!this.scheduleSourceOids.has(id)) {
+                await this.subscribeForeignStatesAsync(id);
+                this.scheduleSourceOids.add(id);
+            }
+        }
+        if (this.scheduleSourceOids.size) {
+            this.log.info(
+                `[schedule] watching ${this.scheduleSourceOids.size} condition source(s): ${[...this.scheduleSourceOids].join(", ")}`,
+            );
+        }
+    }
+
+    /** Read the current numeric value of every subscribed condition source (booleans as 1/0). */
+    private async readScheduleSources(): Promise<Record<string, number>> {
+        const sources: Record<string, number> = {};
+        for (const id of this.scheduleSourceOids) {
+            try {
+                const state = await this.getForeignStateAsync(id);
+                const val = state?.val;
+                if (typeof val === "number" && Number.isFinite(val)) {
+                    sources[id] = val;
+                } else if (typeof val === "boolean") {
+                    sources[id] = val ? 1 : 0;
+                } else if (typeof val === "string" && val.trim() !== "" && Number.isFinite(Number(val))) {
+                    sources[id] = Number(val);
+                }
+            } catch (e) {
+                this.log.debug(
+                    `[schedule] cannot read condition source ${id}: ${e instanceof Error ? e.message : String(e)}`,
+                );
+            }
+        }
+        return sources;
+    }
+
+    /** A watched condition source changed → re-evaluate soon (debounced to coalesce bursts). */
+    private onScheduleSourceChange(): void {
+        if (this.stopping || !this.scheduleStarted || this.scheduleReevalTimer) {
+            return;
+        }
+        this.scheduleReevalTimer = this.setTimeout(() => {
+            this.scheduleReevalTimer = undefined;
+            if (this.scheduleTimer) {
+                this.clearTimeout(this.scheduleTimer);
+                this.scheduleTimer = undefined;
+            }
+            void this.runScheduler();
+        }, 2_000);
     }
 
     /**
@@ -878,6 +955,9 @@ class Pondpump extends utils.Adapter {
         const nowMin = now.getHours() * 60 + now.getMinutes();
         let nextChange = 60;
 
+        // Phase 11: current values of the temperature/weather sources feed the condition evaluation.
+        const sources = await this.readScheduleSources();
+
         for (const [dnStr, cfg] of Object.entries(this.schedules)) {
             if (!cfg?.enabled || !validatePlans(cfg.plans || []).valid) {
                 continue;
@@ -886,7 +966,7 @@ class Pondpump extends utils.Adapter {
             if (!this.pumpControl.has(deviceNumber)) {
                 continue; // pump not discovered yet — will be picked up on a later tick
             }
-            await this.applyScheduleTarget(deviceNumber, targetForConfig(cfg, nowMin));
+            await this.applyScheduleTarget(deviceNumber, targetForConfig(cfg, nowMin, sources));
             nextChange = Math.min(nextChange, minutesUntilNextChange(cfg.plans || [], nowMin));
         }
 
@@ -938,6 +1018,10 @@ class Pondpump extends utils.Adapter {
                 this.clearTimeout(this.scheduleTimer);
                 this.scheduleTimer = undefined;
             }
+            if (this.scheduleReevalTimer) {
+                this.clearTimeout(this.scheduleReevalTimer);
+                this.scheduleReevalTimer = undefined;
+            }
             this.cloud?.reset();
             this.cloud = undefined;
             this.local?.reset();
@@ -957,6 +1041,10 @@ class Pondpump extends utils.Adapter {
      * @param state - State object
      */
     private onStateChange(id: string, state: ioBroker.State | null | undefined): void {
+        // Phase 11: a watched temperature/weather source changed (these arrive ack:true) → re-evaluate.
+        if (state && this.scheduleSourceOids.has(id)) {
+            this.onScheduleSourceChange();
+        }
         if (!state || state.ack) {
             // ack=true values are confirmations from the device (or deletions) — not commands, ignore them
             return;

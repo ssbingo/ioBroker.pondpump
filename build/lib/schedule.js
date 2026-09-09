@@ -21,6 +21,10 @@ __export(schedule_exports, {
   MINUTES_PER_DAY: () => MINUTES_PER_DAY,
   activeWindow: () => activeWindow,
   clampPercent: () => clampPercent,
+  collectSourceOids: () => collectSourceOids,
+  compareValue: () => compareValue,
+  evaluateConditions: () => evaluateConditions,
+  interpolateCurve: () => interpolateCurve,
   minutesUntilNextChange: () => minutesUntilNextChange,
   parseHhmm: () => parseHhmm,
   targetForConfig: () => targetForConfig,
@@ -85,7 +89,90 @@ function activeWindow(plans, nowMin) {
   }
   return void 0;
 }
-function targetForConfig(config, nowMin) {
+function compareValue(value, cmp, threshold) {
+  switch (cmp) {
+    case "lt":
+      return value < threshold;
+    case "lte":
+      return value <= threshold;
+    case "gt":
+      return value > threshold;
+    case "gte":
+      return value >= threshold;
+    case "eq":
+      return value === threshold;
+    case "ne":
+      return value !== threshold;
+    default:
+      return false;
+  }
+}
+function interpolateCurve(points, temp) {
+  const pts = points.filter((p) => Number.isFinite(p.temp) && Number.isFinite(p.power)).slice().sort((a, b) => a.temp - b.temp);
+  if (!pts.length) {
+    return null;
+  }
+  if (temp <= pts[0].temp) {
+    return clampPercent(pts[0].power);
+  }
+  if (temp >= pts[pts.length - 1].temp) {
+    return clampPercent(pts[pts.length - 1].power);
+  }
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1];
+    const b = pts[i];
+    if (temp <= b.temp) {
+      const span = b.temp - a.temp;
+      const frac = span === 0 ? 0 : (temp - a.temp) / span;
+      return clampPercent(a.power + frac * (b.power - a.power));
+    }
+  }
+  return clampPercent(pts[pts.length - 1].power);
+}
+function effectTarget(rule, basePower) {
+  var _a;
+  if (rule.effect === "sfc") {
+    return { sfc: rule.sfc === true, power: basePower };
+  }
+  if (rule.effect === "off") {
+    return { sfc: false, power: 0 };
+  }
+  return { sfc: false, power: clampPercent((_a = rule.power) != null ? _a : basePower) };
+}
+function evaluateConditions(config, sources) {
+  var _a, _b, _c;
+  const basePower = clampPercent(config.basePower);
+  for (const rule of (_a = config.rules) != null ? _a : []) {
+    const value = sources[rule.source];
+    if (value !== void 0 && Number.isFinite(value) && compareValue(value, rule.cmp, rule.threshold)) {
+      return effectTarget(rule, basePower);
+    }
+  }
+  if ((_b = config.curve) == null ? void 0 : _b.enabled) {
+    const temp = sources[config.curve.source];
+    if (temp !== void 0 && Number.isFinite(temp)) {
+      const power = interpolateCurve((_c = config.curve.points) != null ? _c : [], temp);
+      if (power !== null) {
+        return { sfc: false, power };
+      }
+    }
+  }
+  return void 0;
+}
+function collectSourceOids(config) {
+  var _a, _b;
+  const ids = /* @__PURE__ */ new Set();
+  if (((_a = config.curve) == null ? void 0 : _a.enabled) && config.curve.source) {
+    ids.add(config.curve.source);
+  }
+  for (const rule of (_b = config.rules) != null ? _b : []) {
+    if (rule.source) {
+      ids.add(rule.source);
+    }
+  }
+  return [...ids];
+}
+function windowTarget(config, nowMin) {
   var _a;
   const basePower = clampPercent(config.basePower);
   const window = activeWindow(config.plans, nowMin);
@@ -96,6 +183,19 @@ function targetForConfig(config, nowMin) {
     return { sfc: window.sfc === true, power: basePower };
   }
   return { sfc: false, power: clampPercent((_a = window.power) != null ? _a : basePower) };
+}
+function targetForConfig(config, nowMin, sources = {}) {
+  var _a;
+  const window = activeWindow(config.plans, nowMin);
+  const conditionTarget = evaluateConditions(config, sources);
+  const priority = (_a = config.conditionPriority) != null ? _a : "override";
+  if (priority === "outsideOnly") {
+    if (window) {
+      return windowTarget(config, nowMin);
+    }
+    return conditionTarget != null ? conditionTarget : { sfc: false, power: clampPercent(config.basePower) };
+  }
+  return conditionTarget != null ? conditionTarget : windowTarget(config, nowMin);
 }
 function minutesUntilNextChange(plans, nowMin) {
   const boundaries = /* @__PURE__ */ new Set();
@@ -124,6 +224,10 @@ function minutesUntilNextChange(plans, nowMin) {
   MINUTES_PER_DAY,
   activeWindow,
   clampPercent,
+  collectSourceOids,
+  compareValue,
+  evaluateConditions,
+  interpolateCurve,
   minutesUntilNextChange,
   parseHhmm,
   targetForConfig,
