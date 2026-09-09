@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.2.1",
+        "version": "0.2.2",
         "news": {
-            "0.2.1": {
-                "en": "Maintenance: synced auto-merged repository updates — Dependabot bumps (@iobroker/json-config, @iobroker/gui-components, @module-federation/vite) with the admin and widget bundles rebuilt to match, plus ioBroker template updates.",
-                "de": "Wartung: automatisch gemergte Repository-Updates übernommen — Dependabot-Bumps (@iobroker/json-config, @iobroker/gui-components, @module-federation/vite) mit neu gebauten Admin- und Widget-Bundles, plus ioBroker-Template-Updates.",
-                "ru": "Обслуживание: синхронизированы автоматически смерженные обновления репозитория — обновления Dependabot (@iobroker/json-config, @iobroker/gui-components, @module-federation/vite) с пересобранными бандлами admin и виджетов, плюс обновления шаблона ioBroker.",
-                "pt": "Manutenção: atualizações do repositório mescladas automaticamente — bumps do Dependabot (@iobroker/json-config, @iobroker/gui-components, @module-federation/vite) com os bundles do admin e dos widgets reconstruídos, além de atualizações do modelo ioBroker.",
-                "nl": "Onderhoud: automatisch samengevoegde repository-updates verwerkt — Dependabot-bumps (@iobroker/json-config, @iobroker/gui-components, @module-federation/vite) met opnieuw gebouwde admin- en widget-bundels, plus ioBroker-sjabloonupdates.",
-                "fr": "Maintenance : mises à jour du dépôt fusionnées automatiquement — bumps Dependabot (@iobroker/json-config, @iobroker/gui-components, @module-federation/vite) avec les bundles admin et widgets reconstruits, ainsi que des mises à jour du modèle ioBroker.",
-                "it": "Manutenzione: aggiornamenti del repository uniti automaticamente — bump di Dependabot (@iobroker/json-config, @iobroker/gui-components, @module-federation/vite) con i bundle admin e widget ricostruiti, oltre agli aggiornamenti del modello ioBroker.",
-                "es": "Mantenimiento: actualizaciones del repositorio combinadas automáticamente — subidas de Dependabot (@iobroker/json-config, @iobroker/gui-components, @module-federation/vite) con los paquetes de admin y widgets reconstruidos, además de actualizaciones de la plantilla ioBroker.",
-                "pl": "Konserwacja: zsynchronizowano automatycznie scalone aktualizacje repozytorium — aktualizacje Dependabot (@iobroker/json-config, @iobroker/gui-components, @module-federation/vite) z przebudowanymi pakietami admin i widgetów oraz aktualizacje szablonu ioBroker.",
-                "uk": "Обслуговування: синхронізовано автоматично злиті оновлення репозиторію — оновлення Dependabot (@iobroker/json-config, @iobroker/gui-components, @module-federation/vite) з перезібраними бандлами admin і віджетів, а також оновлення шаблону ioBroker.",
-                "zh-cn": "维护：同步了自动合并的仓库更新 — Dependabot 依赖升级（@iobroker/json-config、@iobroker/gui-components、@module-federation/vite），并重新构建了 admin 和小部件包，以及 ioBroker 模板更新。"
+            "0.2.2": {
+                "en": "Minimum ioBroker admin lowered to 7.8.23 (was 8.0.0) so the adapter installs on the current stable admin. Note: the per-pump scheduler UI requires admin >= 8 (React 19 / MUI 9). Plus processed the open Dependabot updates (gui-components, json-config, MUI, module-federation/vite, types-vis-2, tsconfig/node22).",
+                "de": "Mindest-admin auf 7.8.23 gesenkt (war 8.0.0), damit der Adapter mit dem aktuellen stable-admin installierbar ist. Hinweis: Die Zeitplan-UI pro Pumpe benötigt admin >= 8 (React 19 / MUI 9). Außerdem die offenen Dependabot-Updates abgearbeitet (gui-components, json-config, MUI, module-federation/vite, types-vis-2, tsconfig/node22).",
+                "ru": "Минимальный admin понижен до 7.8.23 (было 8.0.0), чтобы адаптер устанавливался на текущий stable-admin. Примечание: интерфейс расписаний для каждого насоса требует admin >= 8 (React 19 / MUI 9). Также обработаны открытые обновления Dependabot (gui-components, json-config, MUI, module-federation/vite, types-vis-2, tsconfig/node22).",
+                "pt": "admin mínimo reduzido para 7.8.23 (era 8.0.0) para o adaptador instalar no admin stable atual. Nota: a interface de agendamento por bomba requer admin >= 8 (React 19 / MUI 9). Também processadas as atualizações abertas do Dependabot (gui-components, json-config, MUI, module-federation/vite, types-vis-2, tsconfig/node22).",
+                "nl": "Minimale admin verlaagd naar 7.8.23 (was 8.0.0) zodat de adapter op de huidige stable-admin installeert. Let op: de planner-UI per pomp vereist admin >= 8 (React 19 / MUI 9). Daarnaast de openstaande Dependabot-updates verwerkt (gui-components, json-config, MUI, module-federation/vite, types-vis-2, tsconfig/node22).",
+                "fr": "admin minimum abaissé à 7.8.23 (était 8.0.0) pour que l adaptateur s installe sur l admin stable actuel. Remarque : l interface de planification par pompe nécessite admin >= 8 (React 19 / MUI 9). De plus, les mises à jour Dependabot ouvertes ont été traitées (gui-components, json-config, MUI, module-federation/vite, types-vis-2, tsconfig/node22).",
+                "it": "admin minimo abbassato a 7.8.23 (era 8.0.0) affinché l adattatore si installi sull admin stable attuale. Nota: l interfaccia di pianificazione per pompa richiede admin >= 8 (React 19 / MUI 9). Inoltre elaborati gli aggiornamenti Dependabot aperti (gui-components, json-config, MUI, module-federation/vite, types-vis-2, tsconfig/node22).",
+                "es": "admin mínimo reducido a 7.8.23 (era 8.0.0) para que el adaptador se instale en el admin stable actual. Nota: la interfaz de programación por bomba requiere admin >= 8 (React 19 / MUI 9). Además, se procesaron las actualizaciones abiertas de Dependabot (gui-components, json-config, MUI, module-federation/vite, types-vis-2, tsconfig/node22).",
+                "pl": "Minimalny admin obniżony do 7.8.23 (było 8.0.0), aby adapter instalował się na obecnym stabilnym adminie. Uwaga: interfejs harmonogramów dla każdej pompy wymaga admin >= 8 (React 19 / MUI 9). Ponadto przetworzono otwarte aktualizacje Dependabot (gui-components, json-config, MUI, module-federation/vite, types-vis-2, tsconfig/node22).",
+                "uk": "Мінімальний admin знижено до 7.8.23 (було 8.0.0), щоб адаптер встановлювався на поточному stable-admin. Примітка: інтерфейс розкладів для кожного насоса потребує admin >= 8 (React 19 / MUI 9). Також оброблено відкриті оновлення Dependabot (gui-components, json-config, MUI, module-federation/vite, types-vis-2, tsconfig/node22).",
+                "zh-cn": "最低 admin 降至 7.8.23（原为 8.0.0），以便适配器可在当前 stable 版 admin 上安装。注意：每台水泵的计划界面需要 admin >= 8（React 19 / MUI 9）。此外处理了开放的 Dependabot 更新（gui-components、json-config、MUI、module-federation/vite、types-vis-2、tsconfig/node22）。"
             }
         },
         "titleLang": {
@@ -97,7 +97,7 @@
         ],
         "globalDependencies": [
             {
-                "admin": ">=8.0.0"
+                "admin": ">=7.8.23"
             }
         ]
     },

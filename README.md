@@ -77,6 +77,11 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.2.2 (2026-09-09)
+
+- (ssbingo) Lowered the minimum ioBroker **admin to 7.8.23** (was 8.0.0) so the adapter installs on the current stable admin. **Note:** the per-pump **scheduler UI requires admin ≥ 8** (React 19 / MUI 9) — configure schedules there; the pump control and telemetry work on admin 7.8.23+
+- (ssbingo) Maintenance: processed the open Dependabot updates — `@iobroker/gui-components` 10.2.3, `@iobroker/json-config` 9.1.2, `@mui/material` + `@mui/icons-material` 9.4.0, `@module-federation/vite` 1.21.x, `@iobroker/types-vis-2` 2.20.1, `@tsconfig/node22` 22.0.6 (admin and widget bundles rebuilt to match)
+
 ### 0.2.1 (2026-08-14)
 
 - (ssbingo) Maintenance: synced the auto-merged repository updates — Dependabot bumps (`@iobroker/json-config` 9.0.18, `@iobroker/gui-components` 10.1.0, `@module-federation/vite` 1.20.4) with the admin and widget bundles rebuilt to match, plus ioBroker template updates (`node:` import prefixes, `CHANGELOG_OLD.md`, Dependabot/CI tuning)
