@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.7.1 (2026-09-09)
+
+- (ssbingo) UI: the **location map** is now capped at **50 % of the panel width** (with a sensible minimum) instead of spanning the full width
+
 ### 0.7.0 (2026-09-09)
 
 - (ssbingo) **Phase 13 — astronomical schedule windows + location.** A schedule window's start and end can now be a fixed clock time **or** **sunrise/sunset ± an offset** in minutes; a `sunset → sunrise` night window correctly wraps past midnight. New per-pump **astro states** (`astro.sunrise/sunset/sunriseTs/sunsetTs/isDay`), recomputed daily

@@ -112,7 +112,7 @@ export default function LocationPicker(props: LocationPickerProps): React.JSX.El
     };
 
     return (
-        <Box>
+        <Box sx={{ maxWidth: "50%", minWidth: 320 }}>
             <Box sx={{ display: "flex", gap: 1, mb: 1, flexWrap: "wrap", alignItems: "center" }}>
                 <TextField
                     size="small"
