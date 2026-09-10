@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.10.0",
+        "version": "0.10.1",
         "news": {
-            "0.10.0": {
-                "en": "Debugging: with the log level on debug, the scheduler now logs the complete decision chain per pump (inputs, every step, final power/SFC, ramp/hold, next tick) plus location and geocoding. Secrets are never logged.",
-                "de": "Debugging: Mit Loglevel „debug“ protokolliert der Scheduler jetzt die komplette Entscheidungskette je Pumpe (Eingänge, jeden Schritt, finale Leistung/SFC, Rampe/Halten, nächste Auswertung) sowie Standort und Geocoding. Secrets werden nie geloggt.",
-                "ru": "Отладка: при уровне журнала «debug» планировщик теперь записывает полную цепочку решений по каждому насосу (входы, каждый шаг, итоговую мощность/SFC, рампу/удержание, следующий тик), а также местоположение и геокодирование. Секреты не логируются.",
-                "pt": "Depuração: com o nível de log em «debug», o agendador regista agora toda a cadeia de decisão por bomba (entradas, cada passo, potência/SFC final, rampa/retenção, próximo ciclo) além da localização e geocodificação. Segredos nunca são registados.",
-                "nl": "Debugging: met logniveau „debug” logt de scheduler nu de volledige beslissingsketen per pomp (invoer, elke stap, uiteindelijke vermogen/SFC, ramp/hold, volgende tick) plus locatie en geocodering. Geheimen worden nooit gelogd.",
-                "fr": "Débogage : avec le niveau de log « debug », le planificateur journalise désormais toute la chaîne de décision par pompe (entrées, chaque étape, puissance/SFC finale, rampe/maintien, prochain cycle) ainsi que la localisation et le géocodage. Les secrets ne sont jamais journalisés.",
-                "it": "Debug: con livello di log «debug» lo scheduler registra ora l'intera catena decisionale per pompa (ingressi, ogni passo, potenza/SFC finale, rampa/mantenimento, prossimo tick) oltre a posizione e geocodifica. I segreti non vengono mai registrati.",
-                "es": "Depuración: con nivel de log «debug», el programador registra ahora toda la cadena de decisión por bomba (entradas, cada paso, potencia/SFC final, rampa/retención, próximo ciclo) además de ubicación y geocodificación. Los secretos nunca se registran.",
-                "pl": "Debugowanie: przy poziomie logu „debug” harmonogram zapisuje teraz pełny łańcuch decyzji dla każdej pompy (wejścia, każdy krok, końcowa moc/SFC, rampa/wstrzymanie, następny cykl) oraz lokalizację i geokodowanie. Sekrety nie są nigdy logowane.",
-                "uk": "Налагодження: за рівнем логу «debug» планувальник тепер записує повний ланцюг рішень для кожного насоса (входи, кожен крок, кінцеву потужність/SFC, рампу/утримання, наступний тік), а також розташування та геокодування. Секрети ніколи не логуються.",
-                "zh-cn": "调试：将日志级别设为 debug 后，调度器现在会记录每台水泵的完整决策链（输入、每一步、最终功率/SFC、渐变/保持、下次评估）以及位置和地理编码。绝不记录机密信息。"
+            "0.10.1": {
+                "en": "Fix: telemetry.waterTemperature now reflects the effective curve source — including an external water sensor (e.g. Homematic), not only an on-device sensor. It no longer stays empty when an external source drives the curve.",
+                "de": "Fix: telemetry.waterTemperature spiegelt jetzt die tatsächlich genutzte Kurvenquelle wider — auch einen externen Wassersensor (z. B. Homematic), nicht nur einen geräteeigenen Sensor. Der State bleibt nicht mehr leer, wenn eine externe Quelle die Kurve steuert.",
+                "ru": "Исправление: telemetry.waterTemperature теперь отражает фактический источник кривой — включая внешний датчик воды (например, Homematic), а не только встроенный датчик. Состояние больше не остаётся пустым, когда кривой управляет внешний источник.",
+                "pt": "Correção: telemetry.waterTemperature reflete agora a fonte efetiva da curva — incluindo um sensor de água externo (p. ex. Homematic), não apenas um sensor do dispositivo. Deixa de ficar vazio quando uma fonte externa comanda a curva.",
+                "nl": "Fix: telemetry.waterTemperature weerspiegelt nu de werkelijk gebruikte curvebron — ook een externe watersensor (bijv. Homematic), niet alleen een sensor op het apparaat. De state blijft niet langer leeg wanneer een externe bron de curve aanstuurt.",
+                "fr": "Correctif : telemetry.waterTemperature reflète désormais la source réelle de la courbe — y compris un capteur d'eau externe (p. ex. Homematic), pas seulement un capteur de l'appareil. L'état ne reste plus vide lorsqu'une source externe pilote la courbe.",
+                "it": "Correzione: telemetry.waterTemperature ora riflette la sorgente effettiva della curva — incluso un sensore d'acqua esterno (es. Homematic), non solo un sensore del dispositivo. Lo stato non resta più vuoto quando una sorgente esterna guida la curva.",
+                "es": "Corrección: telemetry.waterTemperature ahora refleja la fuente real de la curva, incluido un sensor de agua externo (p. ej. Homematic), no solo un sensor del dispositivo. El estado ya no queda vacío cuando una fuente externa gobierna la curva.",
+                "pl": "Poprawka: telemetry.waterTemperature odzwierciedla teraz faktyczne źródło krzywej — także zewnętrzny czujnik wody (np. Homematic), a nie tylko czujnik urządzenia. Stan nie pozostaje już pusty, gdy krzywą steruje źródło zewnętrzne.",
+                "uk": "Виправлення: telemetry.waterTemperature тепер відображає фактичне джерело кривої — зокрема зовнішній датчик води (напр. Homematic), а не лише вбудований датчик. Стан більше не залишається порожнім, коли кривою керує зовнішнє джерело.",
+                "zh-cn": "修复：telemetry.waterTemperature 现在反映曲线实际使用的数据源——包括外部水温传感器（如 Homematic），而不仅是设备自带传感器。当外部数据源驱动曲线时，该状态不再保持为空。"
             }
         },
         "titleLang": {

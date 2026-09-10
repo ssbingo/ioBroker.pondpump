@@ -743,8 +743,13 @@ class Pondpump extends utils.Adapter {
             // Mirror the user-picked device sensor into telemetry.waterTemperature (Phase 12). The
             // pump's raw sensors report the device temperature; the user chooses in the admin which
             // one actually reads the water. Only written when that sensor has a value this poll.
-            const waterSensor = this.schedules[String(pump.deviceNumber)]?.waterTempSensor;
-            if (waterSensor) {
+            // When an enabled curve source is configured (possibly an *external* sensor), the scheduler
+            // owns waterTemperature (it mirrors the effective source, external OIDs included); the
+            // on-device sensor here is only the fallback for when no curve source is set.
+            const sched = this.schedules[String(pump.deviceNumber)];
+            const hasCurveSource = !!(sched?.curve?.enabled && sched.curve.source);
+            const waterSensor = sched?.waterTempSensor;
+            if (!hasCurveSource && waterSensor) {
                 const rawWater =
                     waterSensor === "temperature2"
                         ? livePump.sensors[SENSOR_TEMPERATURE2_C]
@@ -1324,6 +1329,24 @@ class Pondpump extends utils.Adapter {
                 `[schedule] pump ${deviceNumber} inputs: ${tempInfo}; astro ${fmtAstro(astro, nowMin)}; ` +
                     `priority=${cfg.conditionPriority ?? "override"} minPower=${cfg.minPower ?? 0} maxPower=${cfg.maxPower ?? 100}`,
             );
+
+            // Mirror the effective water temperature (the curve source's raw value) into
+            // telemetry.waterTemperature. Unlike the poll loop's on-device mirror, this also covers an
+            // *external* curve source (e.g. a Homematic water sensor) — so the state always reflects the
+            // temperature actually driving the curve, not just an on-device sensor.
+            if (curveSrc) {
+                const rawWater = rawSources[curveSrc];
+                if (typeof rawWater === "number" && Number.isFinite(rawWater)) {
+                    await this.setState(`pumps.${deviceNumber}.telemetry.waterTemperature`, {
+                        val: rawWater,
+                        ack: true,
+                    });
+                } else {
+                    this.log.debug(
+                        `[schedule] pump ${deviceNumber}: water temperature source "${curveSrc}" has no finite value — waterTemperature not updated`,
+                    );
+                }
+            }
 
             const trace: string[] = [];
             const decision = decideTarget(cfg, nowMin, sources, astro, trace);

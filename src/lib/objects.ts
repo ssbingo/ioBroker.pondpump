@@ -236,8 +236,10 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
             }),
         },
         {
-            // The water temperature, mirrored from whichever device sensor the user picked in the
-            // admin (native.schedules[dn].waterTempSensor). Empty until a sensor is assigned — the
+            // The effective water temperature driving the curve: mirrored from the curve source
+            // (native.schedules[dn].curve.source — which may be an *external* object, e.g. a Homematic
+            // water sensor), or, when no curve source is set, from the picked on-device sensor
+            // (native.schedules[dn].waterTempSensor). Empty until one of those is configured — the
             // pump's raw sensors are the device temperature, not necessarily the water (Phase 12).
             id: `${base}.telemetry.waterTemperature`,
             obj: stateObj({

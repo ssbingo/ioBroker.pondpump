@@ -544,8 +544,10 @@ class Pondpump extends utils.Adapter {
         );
       }
       await (0, import_objects.writePumpStates)(this, livePump, { includeControl });
-      const waterSensor = (_b = this.schedules[String(pump.deviceNumber)]) == null ? void 0 : _b.waterTempSensor;
-      if (waterSensor) {
+      const sched = this.schedules[String(pump.deviceNumber)];
+      const hasCurveSource = !!(((_b = sched == null ? void 0 : sched.curve) == null ? void 0 : _b.enabled) && sched.curve.source);
+      const waterSensor = sched == null ? void 0 : sched.waterTempSensor;
+      if (!hasCurveSource && waterSensor) {
         const rawWater = waterSensor === "temperature2" ? livePump.sensors[import_inventory.SENSOR_TEMPERATURE2_C] : livePump.sensors[import_inventory.SENSOR_TEMPERATURE_C];
         if (typeof rawWater === "number" && Number.isFinite(rawWater)) {
           await this.setState(`pumps.${pump.deviceNumber}.telemetry.waterTemperature`, {
@@ -1062,6 +1064,19 @@ class Pondpump extends utils.Adapter {
       this.log.debug(
         `[schedule] pump ${deviceNumber} inputs: ${tempInfo}; astro ${fmtAstro(astro, nowMin)}; priority=${(_e = cfg.conditionPriority) != null ? _e : "override"} minPower=${(_f = cfg.minPower) != null ? _f : 0} maxPower=${(_g = cfg.maxPower) != null ? _g : 100}`
       );
+      if (curveSrc) {
+        const rawWater = rawSources[curveSrc];
+        if (typeof rawWater === "number" && Number.isFinite(rawWater)) {
+          await this.setState(`pumps.${deviceNumber}.telemetry.waterTemperature`, {
+            val: rawWater,
+            ack: true
+          });
+        } else {
+          this.log.debug(
+            `[schedule] pump ${deviceNumber}: water temperature source "${curveSrc}" has no finite value \u2014 waterTemperature not updated`
+          );
+        }
+      }
       const trace = [];
       const decision = (0, import_schedule.decideTarget)(cfg, nowMin, sources, astro, trace);
       this.log.debug(`[schedule] pump ${deviceNumber} decision: ${trace.join(" | ")}`);

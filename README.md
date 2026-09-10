@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.10.1 (2026-09-10)
+
+- (ssbingo) **Fix: `telemetry.waterTemperature` reflects the effective curve source.** When the temperature curve reads an **external** object (e.g. a Homematic water sensor picked via the magnifying glass), that value is now mirrored into `telemetry.waterTemperature` — previously the state stayed empty because only the pump's on-device sensor was mirrored. The scheduler now writes the state from the actual curve source (external OIDs included); the on-device sensor picker remains the fallback when no curve source is configured. A debug line is logged when the source has no finite value
+
 ### 0.10.0 (2026-09-10)
 
 - (ssbingo) **Most detailed scheduler debug logging.** With the instance log level on `debug`, every scheduler evaluation now logs the **complete decision chain per pump** — the inputs (raw/smoothed/mapped water temperature, all source states, sunrise/sunset, day/night), each decision step (base from curve/window, the Q_min floor, night protection, every matching weather rule, the actuator windows and the Q_max ceiling) down to the final power/SFC, plus the ramp/hold state and the next re-evaluation time. Location resolution and address geocoding are logged as well. Secrets (passwords/tokens) are never logged. The pure decision core gained an optional decision-trace output for this (covered by unit tests)

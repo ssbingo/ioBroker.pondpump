@@ -462,7 +462,9 @@ Ganz oben wählst du den **Wassertemperatur-Sensor**: Das Dropdown listet die ge
 Temperatursensoren der Pumpe **mit ihrem aktuellen Wert** — vergleiche sie mit einem Thermometer und
 wähle den, der die Wassertemperatur zeigt. Die Auswahl speist den neuen State
 `telemetry.waterTemperature` und **belegt die Kurvenquelle vor**. Einen **externen** Fühler wählst du
-stattdessen auf „keiner" und trägst sein Objekt unten als Kurvenquelle ein (Lupen-Symbol).
+stattdessen auf „keiner" und trägst sein Objekt unten als Kurvenquelle ein (Lupen-Symbol). In beiden
+Fällen spiegelt `telemetry.waterTemperature` die **tatsächlich genutzte Kurvenquelle** — zeigt also auch
+den Wert deines externen Sensors, nicht nur einen geräteeigenen.
 
 So aktivierst du die Kurve:
 

@@ -445,7 +445,8 @@ At the top, pick the **water temperature sensor**: the dropdown lists the pump's
 **with their current value** — compare them against a thermometer you trust and pick the one that reads
 the water. Your choice feeds the new `telemetry.waterTemperature` state and **pre-fills the curve source**.
 For an **external** probe, leave this on "none" and enter its object as the curve source below (magnifier
-icon).
+icon). Either way, `telemetry.waterTemperature` mirrors the **effective curve source** — so it shows your
+external sensor's value too, not only an on-device sensor.
 
 To turn on the curve:
 
