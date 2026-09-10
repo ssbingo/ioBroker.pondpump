@@ -132,5 +132,6 @@
     "The flow is not reduced below this at night. Default 100 %.": "Ночью поток не опускается ниже этого. По умолчанию 100 %.",
     "Actuator": "Исполнитель",
     "On value": "Значение вкл.",
-    "Off value (blank = leave)": "Значение выкл. (пусто = не трогать)"
+    "Off value (blank = leave)": "Значение выкл. (пусто = не трогать)",
+    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Не удалось загрузить тайлы карты (админка может блокировать внешний сервер тайлов). Вы всё равно можете задать местоположение щелчком/перетаскиванием маркера или через координаты и поиск по адресу ниже."
 }

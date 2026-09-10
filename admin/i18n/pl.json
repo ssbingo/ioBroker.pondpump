@@ -132,5 +132,6 @@
     "The flow is not reduced below this at night. Default 100 %.": "Przepływ nie spada poniżej tego w nocy. Domyślnie 100 %.",
     "Actuator": "Element wykonawczy",
     "On value": "Wartość wł.",
-    "Off value (blank = leave)": "Wartość wył. (puste = zostaw)"
+    "Off value (blank = leave)": "Wartość wył. (puste = zostaw)",
+    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Nie udało się załadować kafelków mapy (admin może blokować zewnętrzny serwer kafelków). Nadal możesz ustawić lokalizację, klikając/przeciągając znacznik lub poprzez współrzędne i wyszukiwanie adresu poniżej."
 }

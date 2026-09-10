@@ -48,6 +48,8 @@ export default function LocationPicker(props: LocationPickerProps): React.JSX.El
     const markerRef = useRef<L.Marker | null>(null);
     const [address, setAddress] = useState("");
     const [status, setStatus] = useState("");
+    // True once the OSM tiles fail to load (usually the admin CSP blocking the external tile host).
+    const [tilesFailed, setTilesFailed] = useState(false);
 
     // Create the map exactly once.
     useEffect(() => {
@@ -61,7 +63,9 @@ export default function LocationPicker(props: LocationPickerProps): React.JSX.El
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19,
-        }).addTo(map);
+        })
+            .on("tileerror", () => setTilesFailed(true))
+            .addTo(map);
         const marker = L.marker(center, { draggable: true, icon: PIN_ICON }).addTo(map);
         marker.on("dragend", () => {
             const p = marker.getLatLng();
@@ -143,10 +147,31 @@ export default function LocationPicker(props: LocationPickerProps): React.JSX.El
                 ) : null}
             </Box>
             {status ? <Typography sx={{ mb: 1, color: "text.secondary", fontSize: 12 }}>{status}</Typography> : null}
-            <div
-                ref={mapDiv}
-                style={{ height: 260, width: "100%", borderRadius: 4, overflow: "hidden" }}
-            />
+            <Box sx={{ position: "relative" }}>
+                <div
+                    ref={mapDiv}
+                    style={{ height: 260, width: "100%", borderRadius: 4, overflow: "hidden" }}
+                />
+                {tilesFailed ? (
+                    <Typography
+                        sx={{
+                            position: "absolute",
+                            left: 8,
+                            right: 8,
+                            bottom: 8,
+                            p: 1,
+                            borderRadius: 1,
+                            bgcolor: "rgba(0,0,0,0.65)",
+                            color: "#fff",
+                            fontSize: 12,
+                        }}
+                    >
+                        {I18n.t(
+                            "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.",
+                        )}
+                    </Typography>
+                ) : null}
+            </Box>
             <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
                 <TextField
                     size="small"

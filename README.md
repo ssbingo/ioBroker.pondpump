@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.9.1 (2026-09-10)
+
+- (ssbingo) UI robustness: the location map now shows a **clear hint when its map tiles fail to load** (e.g. the admin CSP blocking the external tile host) — the location stays fully settable by clicking/dragging the marker or via the coordinate fields and address search
+
 ### 0.9.0 (2026-09-09)
 
 - (ssbingo) **Phase 13 — actuator schedule windows.** A window's mode can now be **"Actuator"**: it drives an external state (waterfall, UVC, aerator, …) to an **on-value** while active and an **off-value** while outside (blank off-value → left untouched). Combine it with the **astro** (sunrise/sunset) bounds for e.g. a waterfall from 09:00 to sunset. Actuator windows may overlap and don't affect the pump's power/SFC. This completes the four astro building blocks (astro windows, night protection, PV-boost via the raise-only weather rules, and now actuator windows)

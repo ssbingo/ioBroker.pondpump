@@ -132,5 +132,6 @@
     "The flow is not reduced below this at night. Default 100 %.": "O caudal não é reduzido abaixo disto à noite. Predefinição 100 %.",
     "Actuator": "Atuador",
     "On value": "Valor ligado",
-    "Off value (blank = leave)": "Valor desligado (vazio = deixar)"
+    "Off value (blank = leave)": "Valor desligado (vazio = deixar)",
+    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Não foi possível carregar os mosaicos do mapa (o admin pode bloquear o servidor externo). Ainda podes definir a localização clicando/arrastando o marcador, ou pelas coordenadas e pesquisa de endereço abaixo."
 }
