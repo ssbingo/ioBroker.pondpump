@@ -47,13 +47,16 @@ import { fetchLocalInventory, toDomainInventory } from "./lib/local/inventory";
 import { DEFAULT_TLS_PORT } from "./lib/local/protocol";
 import {
     type ActuatorWrite,
+    activeWindow,
     type AstroTimes,
     collectSourceOids,
     decideTarget,
     minutesUntilNextChange,
     NO_ASTRO,
+    type PumpSchedule,
     type PumpScheduleConfig,
     rampTowards,
+    resolveBound,
     type ScheduleDecision,
     type SchedulesConfig,
     updateEma,
@@ -182,6 +185,22 @@ function minuteToTodayTs(minute: number | null): number {
     const d = new Date();
     d.setHours(Math.floor(minute / 60), minute % 60, 0, 0);
     return d.getTime();
+}
+
+/**
+ * A short "HH:MM–HH:MM" label for a resolved schedule window (astro bounds resolved to today's
+ * sunrise/sunset), for the schedule.window status state. Empty when no window is passed.
+ *
+ * @param win - the active window plan, or null
+ * @param astro - resolved astro times (for sunrise/sunset bounds)
+ */
+function windowLabelOf(win: PumpSchedule | null | undefined, astro: AstroTimes): string {
+    if (!win) {
+        return "";
+    }
+    const s = resolveBound(win.startMode, win.start, win.startOffset, astro);
+    const e = resolveBound(win.endMode, win.end, win.endOffset, astro);
+    return `${s === null ? "?" : minuteToHhmm(s)}–${e === null ? "?" : minuteToHhmm(e)}`;
 }
 
 /**
@@ -1308,6 +1327,11 @@ class Pondpump extends utils.Adapter {
 
         for (const [dnStr, cfg] of Object.entries(this.schedules)) {
             if (!cfg?.enabled || !validatePlans(cfg.plans || []).valid) {
+                // Reflect "scheduler not steering this pump" (Phase 14) for the status widget.
+                const dn0 = Number(dnStr);
+                if (this.pumpControl.has(dn0)) {
+                    await this.setState(`pumps.${dn0}.schedule.controlled`, { val: false, ack: true });
+                }
                 continue;
             }
             const deviceNumber = Number(dnStr);
@@ -1393,6 +1417,7 @@ class Pondpump extends utils.Adapter {
                 `[schedule] pump ${deviceNumber}: next window boundary in ${pumpNext} min ` +
                     `(≈ ${minuteToHhmm((nowMin + pumpNext) % 1440)})`,
             );
+            await this.writeScheduleStatus(deviceNumber, cfg, decision, astro, nowMin, nowMs, pumpNext, rt);
             nextChange = Math.min(nextChange, pumpNext);
         }
 
@@ -1404,6 +1429,51 @@ class Pondpump extends utils.Adapter {
             this.scheduleTimer = undefined;
             void this.runScheduler();
         }, delayMs);
+    }
+
+    /**
+     * Publish the scheduler's decision into the per-pump `schedule.*` status states (Phase 14) so the
+     * PumpScheduler vis widget (and scripts/history) can show what the built-in scheduler is doing and
+     * why. All states are read-only (ack:true).
+     *
+     * @param deviceNumber - the pump device number
+     * @param cfg - the pump's scheduling configuration
+     * @param decision - the decision just computed for this pump
+     * @param astro - resolved astro times for this pump
+     * @param nowMin - current minute-of-day
+     * @param nowMs - current wall-clock time (ms)
+     * @param nextChangeMin - minutes until the next window boundary
+     * @param rt - the pump's runtime state (for the held power when "hold")
+     */
+    private async writeScheduleStatus(
+        deviceNumber: number,
+        cfg: PumpScheduleConfig,
+        decision: ScheduleDecision,
+        astro: AstroTimes,
+        nowMin: number,
+        nowMs: number,
+        nextChangeMin: number,
+        rt: PumpScheduleRuntime,
+    ): Promise<void> {
+        const base = `pumps.${deviceNumber}.schedule`;
+        const targetPower = typeof decision.power === "number" ? decision.power : rt.appliedPower;
+        const win = activeWindow(
+            (cfg.plans || []).filter(p => p.mode !== "actuator"),
+            nowMin,
+            astro,
+        );
+        await this.setState(`${base}.controlled`, { val: true, ack: true });
+        if (targetPower !== undefined && Number.isFinite(targetPower)) {
+            await this.setState(`${base}.targetPower`, { val: Math.round(targetPower), ack: true });
+        }
+        await this.setState(`${base}.sfc`, { val: decision.sfc, ack: true });
+        await this.setState(`${base}.source`, { val: decision.source, ack: true });
+        await this.setState(`${base}.raised`, { val: decision.raised, ack: true });
+        await this.setState(`${base}.nightProtection`, { val: decision.nightProtected, ack: true });
+        await this.setState(`${base}.hold`, { val: decision.hold, ack: true });
+        await this.setState(`${base}.failSafe`, { val: decision.failSafe, ack: true });
+        await this.setState(`${base}.window`, { val: windowLabelOf(win, astro), ack: true });
+        await this.setState(`${base}.nextChangeTs`, { val: nowMs + nextChangeMin * 60_000, ack: true });
     }
 
     /**

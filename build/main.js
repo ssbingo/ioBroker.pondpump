@@ -68,6 +68,14 @@ function minuteToTodayTs(minute) {
   d.setHours(Math.floor(minute / 60), minute % 60, 0, 0);
   return d.getTime();
 }
+function windowLabelOf(win, astro) {
+  if (!win) {
+    return "";
+  }
+  const s = (0, import_schedule.resolveBound)(win.startMode, win.start, win.startOffset, astro);
+  const e = (0, import_schedule.resolveBound)(win.endMode, win.end, win.endOffset, astro);
+  return `${s === null ? "?" : minuteToHhmm(s)}\u2013${e === null ? "?" : minuteToHhmm(e)}`;
+}
 function activeWindowIsDay(astro, nowMin) {
   const { sunriseMin: sr, sunsetMin: ss } = astro;
   if (sr === null || ss === null) {
@@ -1049,6 +1057,10 @@ class Pondpump extends utils.Adapter {
     );
     for (const [dnStr, cfg] of Object.entries(this.schedules)) {
       if (!(cfg == null ? void 0 : cfg.enabled) || !(0, import_schedule.validatePlans)(cfg.plans || []).valid) {
+        const dn0 = Number(dnStr);
+        if (this.pumpControl.has(dn0)) {
+          await this.setState(`pumps.${dn0}.schedule.controlled`, { val: false, ack: true });
+        }
         continue;
       }
       const deviceNumber = Number(dnStr);
@@ -1114,6 +1126,7 @@ class Pondpump extends utils.Adapter {
       this.log.debug(
         `[schedule] pump ${deviceNumber}: next window boundary in ${pumpNext} min (\u2248 ${minuteToHhmm((nowMin + pumpNext) % 1440)})`
       );
+      await this.writeScheduleStatus(deviceNumber, cfg, decision, astro, nowMin, nowMs, pumpNext, rt);
       nextChange = Math.min(nextChange, pumpNext);
     }
     this.log.debug(`[schedule] tick done \u2014 next re-evaluation in ${Math.max(1, nextChange)} min`);
@@ -1122,6 +1135,41 @@ class Pondpump extends utils.Adapter {
       this.scheduleTimer = void 0;
       void this.runScheduler();
     }, delayMs);
+  }
+  /**
+   * Publish the scheduler's decision into the per-pump `schedule.*` status states (Phase 14) so the
+   * PumpScheduler vis widget (and scripts/history) can show what the built-in scheduler is doing and
+   * why. All states are read-only (ack:true).
+   *
+   * @param deviceNumber - the pump device number
+   * @param cfg - the pump's scheduling configuration
+   * @param decision - the decision just computed for this pump
+   * @param astro - resolved astro times for this pump
+   * @param nowMin - current minute-of-day
+   * @param nowMs - current wall-clock time (ms)
+   * @param nextChangeMin - minutes until the next window boundary
+   * @param rt - the pump's runtime state (for the held power when "hold")
+   */
+  async writeScheduleStatus(deviceNumber, cfg, decision, astro, nowMin, nowMs, nextChangeMin, rt) {
+    const base = `pumps.${deviceNumber}.schedule`;
+    const targetPower = typeof decision.power === "number" ? decision.power : rt.appliedPower;
+    const win = (0, import_schedule.activeWindow)(
+      (cfg.plans || []).filter((p) => p.mode !== "actuator"),
+      nowMin,
+      astro
+    );
+    await this.setState(`${base}.controlled`, { val: true, ack: true });
+    if (targetPower !== void 0 && Number.isFinite(targetPower)) {
+      await this.setState(`${base}.targetPower`, { val: Math.round(targetPower), ack: true });
+    }
+    await this.setState(`${base}.sfc`, { val: decision.sfc, ack: true });
+    await this.setState(`${base}.source`, { val: decision.source, ack: true });
+    await this.setState(`${base}.raised`, { val: decision.raised, ack: true });
+    await this.setState(`${base}.nightProtection`, { val: decision.nightProtected, ack: true });
+    await this.setState(`${base}.hold`, { val: decision.hold, ack: true });
+    await this.setState(`${base}.failSafe`, { val: decision.failSafe, ack: true });
+    await this.setState(`${base}.window`, { val: windowLabelOf(win, astro), ack: true });
+    await this.setState(`${base}.nextChangeTs`, { val: nowMs + nextChangeMin * 6e4, ack: true });
   }
   /**
    * Warn (once per episode) when the temperature curve is regulating but its source is missing.

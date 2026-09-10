@@ -276,11 +276,20 @@ function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO, trace) {
     const curveStr = curve ? curve.failSafe ? "curve FAIL-SAFE 100% (source missing)" : `curve ${curve.target.power}%` : "no curve";
     trace.push(`base=${base.power}% sfc=${base.sfc} (priority=${priority}, ${from}, ${curveStr})`);
   }
+  let source;
+  if (failSafe) {
+    source = "failSafe";
+  } else if (priority === "outsideOnly") {
+    source = window ? "window" : curve ? "curve" : "base";
+  } else {
+    source = curve ? "curve" : window ? "window" : "base";
+  }
   let sfc = base.sfc;
   let power = Math.max(base.power, clampPercent(config.minPower));
   if (trace && config.minPower !== void 0 && power !== base.power) {
     trace.push(`minPower floor \u2192 ${power}%`);
   }
+  let nightProtected = false;
   const np = config.nightProtection;
   if ((np == null ? void 0 : np.enabled) && isAstroDay(astro, nowMin) === false) {
     const temp = ((_d = config.curve) == null ? void 0 : _d.source) ? sources[config.curve.source] : void 0;
@@ -288,6 +297,7 @@ function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO, trace) {
     if (warmEnough) {
       const before = power;
       power = Math.max(power, np.floorPower === void 0 ? 100 : clampPercent(np.floorPower));
+      nightProtected = true;
       if (trace) {
         trace.push(
           `night protection active (temp=${temp != null ? temp : "n/a"} \u2265 ${(_f = np.minWaterTemp) != null ? _f : 18}): ${before}% \u2192 ${power}%`
@@ -344,11 +354,12 @@ function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO, trace) {
     trace.push(`maxPower cap ${maxPower}% (was ${power}%)`);
   }
   power = Math.min(power, maxPower);
-  const finalPower = hold && !raised ? "hold" : power;
+  const frozen = hold && !raised;
+  const finalPower = frozen ? "hold" : power;
   if (trace) {
     trace.push(`\u2192 power=${finalPower} sfc=${sfc}${failSafe ? " FAIL-SAFE" : ""}`);
   }
-  return { sfc, power: finalPower, actuators, failSafe };
+  return { sfc, power: finalPower, actuators, failSafe, source, raised, nightProtected, hold: frozen };
 }
 function rampTowards(current, target, maxStep) {
   if (!(maxStep > 0)) {

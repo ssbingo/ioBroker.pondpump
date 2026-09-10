@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.10.1",
+        "version": "0.11.0",
         "news": {
-            "0.10.1": {
-                "en": "Fix: telemetry.waterTemperature now reflects the effective curve source — including an external water sensor (e.g. Homematic), not only an on-device sensor. It no longer stays empty when an external source drives the curve.",
-                "de": "Fix: telemetry.waterTemperature spiegelt jetzt die tatsächlich genutzte Kurvenquelle wider — auch einen externen Wassersensor (z. B. Homematic), nicht nur einen geräteeigenen Sensor. Der State bleibt nicht mehr leer, wenn eine externe Quelle die Kurve steuert.",
-                "ru": "Исправление: telemetry.waterTemperature теперь отражает фактический источник кривой — включая внешний датчик воды (например, Homematic), а не только встроенный датчик. Состояние больше не остаётся пустым, когда кривой управляет внешний источник.",
-                "pt": "Correção: telemetry.waterTemperature reflete agora a fonte efetiva da curva — incluindo um sensor de água externo (p. ex. Homematic), não apenas um sensor do dispositivo. Deixa de ficar vazio quando uma fonte externa comanda a curva.",
-                "nl": "Fix: telemetry.waterTemperature weerspiegelt nu de werkelijk gebruikte curvebron — ook een externe watersensor (bijv. Homematic), niet alleen een sensor op het apparaat. De state blijft niet langer leeg wanneer een externe bron de curve aanstuurt.",
-                "fr": "Correctif : telemetry.waterTemperature reflète désormais la source réelle de la courbe — y compris un capteur d'eau externe (p. ex. Homematic), pas seulement un capteur de l'appareil. L'état ne reste plus vide lorsqu'une source externe pilote la courbe.",
-                "it": "Correzione: telemetry.waterTemperature ora riflette la sorgente effettiva della curva — incluso un sensore d'acqua esterno (es. Homematic), non solo un sensore del dispositivo. Lo stato non resta più vuoto quando una sorgente esterna guida la curva.",
-                "es": "Corrección: telemetry.waterTemperature ahora refleja la fuente real de la curva, incluido un sensor de agua externo (p. ej. Homematic), no solo un sensor del dispositivo. El estado ya no queda vacío cuando una fuente externa gobierna la curva.",
-                "pl": "Poprawka: telemetry.waterTemperature odzwierciedla teraz faktyczne źródło krzywej — także zewnętrzny czujnik wody (np. Homematic), a nie tylko czujnik urządzenia. Stan nie pozostaje już pusty, gdy krzywą steruje źródło zewnętrzne.",
-                "uk": "Виправлення: telemetry.waterTemperature тепер відображає фактичне джерело кривої — зокрема зовнішній датчик води (напр. Homematic), а не лише вбудований датчик. Стан більше не залишається порожнім, коли кривою керує зовнішнє джерело.",
-                "zh-cn": "修复：telemetry.waterTemperature 现在反映曲线实际使用的数据源——包括外部水温传感器（如 Homematic），而不仅是设备自带传感器。当外部数据源驱动曲线时，该状态不再保持为空。"
+            "0.11.0": {
+                "en": "New 'Scheduler status' vis-2 widget: shows per pump what the built-in scheduler is doing (target, reason, active window, next change, sunrise/sunset, water temperature) with on/off, power and SFC controls. PumpVisual now shows the water temperature with a thermometer when a value is present. New read-only schedule.* status states per pump.",
+                "de": "Neues vis-2-Widget „Scheduler-Status“: zeigt je Pumpe, was der eingebaute Scheduler tut (Ziel, Grund, aktives Fenster, nächste Änderung, Sonnenauf-/-untergang, Wassertemperatur) samt An/Aus-, Leistungs- und SFC-Steuerung. PumpVisual zeigt jetzt die Wassertemperatur mit Thermometer, wenn ein Wert vorhanden ist. Neue read-only schedule.*-Status-States je Pumpe.",
+                "ru": "Новый виджет vis-2 «Статус планировщика»: показывает по каждому насосу, что делает встроенный планировщик (цель, причина, активное окно, следующее изменение, восход/закат, температура воды) с управлением вкл/выкл, мощностью и SFC. PumpVisual теперь показывает температуру воды с термометром, если значение есть. Новые состояния schedule.* (только чтение) на насос.",
+                "pt": "Novo widget vis-2 'Estado do agendador': mostra por bomba o que o agendador integrado faz (alvo, motivo, janela ativa, próxima alteração, nascer/pôr do sol, temperatura da água) com controlos on/off, potência e SFC. O PumpVisual mostra agora a temperatura da água com termómetro quando há valor. Novos estados schedule.* (só leitura) por bomba.",
+                "nl": "Nieuw vis-2-widget 'Scheduler-status': toont per pomp wat de ingebouwde scheduler doet (doel, reden, actief venster, volgende wijziging, zonsopkomst/-ondergang, watertemperatuur) met aan/uit-, vermogen- en SFC-bediening. PumpVisual toont nu de watertemperatuur met een thermometer als er een waarde is. Nieuwe alleen-lezen schedule.*-statusstates per pomp.",
+                "fr": "Nouveau widget vis-2 « État du planificateur » : montre par pompe ce que fait le planificateur intégré (cible, raison, plage active, prochain changement, lever/coucher du soleil, température de l'eau) avec commandes marche/arrêt, puissance et SFC. PumpVisual affiche désormais la température de l'eau avec un thermomètre lorsqu'une valeur existe. Nouveaux états schedule.* (lecture seule) par pompe.",
+                "it": "Nuovo widget vis-2 'Stato dello scheduler': mostra per pompa cosa fa lo scheduler integrato (obiettivo, motivo, finestra attiva, prossima modifica, alba/tramonto, temperatura acqua) con comandi on/off, potenza e SFC. PumpVisual ora mostra la temperatura dell'acqua con un termometro quando è presente un valore. Nuovi stati schedule.* (sola lettura) per pompa.",
+                "es": "Nuevo widget vis-2 'Estado del programador': muestra por bomba qué hace el programador integrado (objetivo, motivo, ventana activa, próximo cambio, amanecer/atardecer, temperatura del agua) con controles on/off, potencia y SFC. PumpVisual ahora muestra la temperatura del agua con un termómetro cuando hay valor. Nuevos estados schedule.* (solo lectura) por bomba.",
+                "pl": "Nowy widget vis-2 „Status harmonogramu”: pokazuje dla każdej pompy, co robi wbudowany harmonogram (cel, powód, aktywne okno, następna zmiana, wschód/zachód słońca, temperatura wody) ze sterowaniem wł/wył, mocą i SFC. PumpVisual pokazuje teraz temperaturę wody z termometrem, gdy wartość jest dostępna. Nowe stany schedule.* (tylko odczyt) na pompę.",
+                "uk": "Новий віджет vis-2 «Статус планувальника»: показує для кожного насоса, що робить вбудований планувальник (ціль, причина, активне вікно, наступна зміна, схід/захід сонця, температура води) з керуванням увімк/вимк, потужністю та SFC. PumpVisual тепер показує температуру води з термометром, коли є значення. Нові стани schedule.* (лише читання) на насос.",
+                "zh-cn": "新增 vis-2 组件『调度器状态』：按水泵显示内置调度器的运行情况（目标、原因、活动窗口、下次变更、日出/日落、水温），并带开关、功率与 SFC 控制。当有水温值时，PumpVisual 现在会用温度计显示水温。每台水泵新增只读的 schedule.* 状态。"
             }
         },
         "titleLang": {
@@ -83,7 +83,8 @@
                 "bundlerType": "module",
                 "components": [
                     "PumpVisual",
-                    "PumpControl"
+                    "PumpControl",
+                    "PumpScheduler"
                 ]
             }
         },

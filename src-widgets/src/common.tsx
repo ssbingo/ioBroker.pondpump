@@ -49,6 +49,29 @@ export function pumpChannelOf(rx: { instance?: string; pumpId?: string }): strin
     return pid ? `${ADAPTER}.${instanceNumber(rx)}.pumps.${pid}` : "";
 }
 
+/** Extracts a friendly name from a (possibly multilingual) common.name value, or "". */
+function nameOf(common: { name?: ioBroker.StringOrTranslated } | undefined): string {
+    const name = common?.name;
+    if (typeof name === "string") {
+        return name;
+    }
+    if (name && typeof name === "object") {
+        const rec = name as Record<string, string>;
+        return rec.en || Object.values(rec)[0] || "";
+    }
+    return "";
+}
+
+/** Reads the friendly name of a pump device channel (for a widget card title), or "" on any error. */
+export async function pumpDeviceName(socket: { getObject: SocketLike["getObject"] }, channel: string): Promise<string> {
+    try {
+        const obj = await socket.getObject(channel);
+        return nameOf((obj?.common || {}) as { name?: ioBroker.StringOrTranslated });
+    } catch {
+        return "";
+    }
+}
+
 /** Reads the detected pumps (device objects below `<instance>.pumps.`) with their friendly names. */
 async function readPumps(socket: SocketLike, instance: string): Promise<PumpDef[]> {
     const root = `${ADAPTER}.${instance}.pumps.`;

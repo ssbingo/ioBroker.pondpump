@@ -300,7 +300,7 @@ connect back to.
 
 ## 9. vis-2 widgets
 
-The adapter ships **two ready-made vis-2 widgets** — there is nothing extra to install. As soon as the
+The adapter ships **three ready-made vis-2 widgets** — there is nothing extra to install. As soon as the
 adapter is installed, vis-2 restarts automatically and the widgets appear in the vis-2 editor under the
 widget group **"Pond Pump"**.
 
@@ -326,6 +326,9 @@ This widget shows the pump graphically:
 - When the pump is **off**, the impeller stands still with a **red cross** over it.
 - When **Seasonal Flow Control (SFC)** is active, a rotating **ice crystal** replaces the impeller.
 - Below the graphic are the live values: **power** (W), **speed** (rpm) and **Power** (the setpoint in %).
+- When a **water temperature** is available (state `telemetry.waterTemperature`), the impeller shifts
+  left and a **filled thermometer** with the reading appears on the right; the fill is colour-coded by
+  temperature (cold blue → warm amber). Without a value the display is unchanged.
 
 A coloured badge in the top-right shows the state: **Running**, **Off** or **Seasonal mode**.
 
@@ -344,11 +347,31 @@ This widget controls the pump:
 > when SFC is active the pump automatically reduces its flow rate and delivery head (by up to −50 %),
 > adapting to the pond biology over the year. It is **not** frost protection.
 
-### 9.4 Adjusting the appearance
+### 9.4 The "Scheduler status" widget (PumpScheduler)
+
+This widget shows at a glance **what the built-in schedule/rule scheduler** (chapters 10–11) is doing
+with the pump right now — and **why**:
+
+- A **status badge**: **Scheduler active**, **Manual / off** (no valid schedule) or **Fail-safe**
+  (sensor loss).
+- The current **output** in % shown large, plus the running state (Running/Off/Seasonal mode),
+  **day/night**, and the scheduler's **target power**.
+- **Reason chips**: where the base comes from (**temperature curve**, **time window** or **base
+  power**) and which modifiers apply right now (**night protection**, **weather boost**, **frost
+  hold**).
+- The **active window**, the **next change** time and the pump's **sunrise/sunset**.
+- **Water temperature** (colour-coded), **power** (W) and **speed** (rpm).
+- A **control bar** with the basic functions (on/off, quick power, SFC). A hint reminds you that the
+  scheduler may re-apply its target on the next run.
+
+The values come from new read-only `pumps.<n>.schedule.*` states the scheduler keeps up to date on
+every evaluation — you can also use them in your own scripts or in history.
+
+### 9.5 Adjusting the appearance
 
 In the widget settings under **Appearance** you can, among other things, choose the **accent colour**,
 hide the **card background**, turn off the **animation**, or show/hide individual parts (values,
-on/off buttons, quick buttons, SFC).
+on/off buttons, quick buttons, SFC, control bar, telemetry).
 
 ## 10. Schedules (running pumps on a timetable)
 

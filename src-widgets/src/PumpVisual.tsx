@@ -12,6 +12,7 @@ const REL_IDS = [
     "control.sfc",
     "telemetry.power",
     "telemetry.speed",
+    "telemetry.waterTemperature",
     "status.fcStatus",
     "status.fcMode",
 ];
@@ -302,6 +303,76 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
         return v === null ? "–" : v.toFixed(digits);
     }
 
+    /** Water-temperature colour on a pond-relevant 0–30 °C scale (cold blue → warm amber). */
+    // eslint-disable-next-line class-methods-use-this
+    private tempColor(t: number): string {
+        if (t < 8) {
+            return "#4aa8ff";
+        }
+        if (t < 14) {
+            return "#35c4c4";
+        }
+        if (t < 20) {
+            return "#63c76a";
+        }
+        if (t < 26) {
+            return "#ffca3a";
+        }
+        return "#ff8c42";
+    }
+
+    /** A filled, colour-coded thermometer whose mercury level reflects the temperature (0–30 °C scale). */
+    private renderThermometer(tempC: number): React.JSX.Element {
+        const frac = Math.max(0, Math.min(1, tempC / 30));
+        const color = this.tempColor(tempC);
+        const tubeTop = 16;
+        const tubeBottom = 84;
+        const fillTop = tubeBottom - frac * (tubeBottom - tubeTop);
+        return (
+            <svg
+                className="pp-thermo-svg"
+                viewBox="0 0 44 122"
+                role="img"
+                aria-label="water temperature"
+            >
+                {/* tube + bulb outline */}
+                <rect
+                    x="15"
+                    y="8"
+                    width="14"
+                    height="84"
+                    rx="7"
+                    fill="rgba(255,255,255,.05)"
+                    stroke="rgba(255,255,255,.22)"
+                    strokeWidth="2"
+                />
+                <circle
+                    cx="22"
+                    cy="101"
+                    r="14"
+                    fill="rgba(255,255,255,.05)"
+                    stroke="rgba(255,255,255,.22)"
+                    strokeWidth="2"
+                />
+                {/* mercury: bulb, stem up to the level */}
+                <circle
+                    cx="22"
+                    cy="101"
+                    r="10"
+                    fill={color}
+                />
+                <rect
+                    x="18"
+                    y={fillTop}
+                    width="8"
+                    height={101 - fillTop}
+                    rx="4"
+                    fill={color}
+                />
+            </svg>
+        );
+    }
+
     renderWidgetBody(props: RxRenderWidgetProps): React.JSX.Element {
         super.renderWidgetBody(props);
 
@@ -344,6 +415,9 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
         const badgeClass = !running ? "pp-badge--off" : sfc ? "pp-badge--sfc" : "pp-badge--on";
         const badgeText = !running ? t("state_off") : sfc ? t("state_sfc") : t("state_running");
 
+        const waterTemp = this.num("telemetry.waterTemperature");
+        const hasTemp = waterTemp !== null && Number.isFinite(waterTemp);
+
         return (
             <div
                 className={`pp-card${noCard ? "" : " pp-bg"}`}
@@ -354,7 +428,19 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
                     <div className={`pp-badge ${badgeClass}`}>{badgeText}</div>
                 </div>
 
-                <div className="pp-stage">{graphic}</div>
+                <div className={`pp-stage${hasTemp ? " pp-stage--temp" : ""}`}>
+                    <div className="pp-graphic">{graphic}</div>
+                    {hasTemp ? (
+                        <div className="pp-thermo">
+                            {this.renderThermometer(waterTemp)}
+                            <div className="pp-thermo-val">
+                                <span className="n">{waterTemp.toFixed(1)}</span>
+                                <span className="u">°C</span>
+                            </div>
+                            <div className="pp-thermo-k">{t("lbl_water_temp")}</div>
+                        </div>
+                    ) : null}
+                </div>
 
                 {showValues ? (
                     <div className="pp-values">

@@ -15,7 +15,17 @@ const CSS = `
 
 /* graphic stage */
 .pp-stage{flex:1 1 auto;display:flex;align-items:center;justify-content:center;position:relative;min-height:96px;margin:4px 0}
-.pp-stage svg{display:block;height:100%;width:auto;max-height:220px;max-width:100%}
+.pp-stage .pp-graphic{flex:1 1 auto;display:flex;align-items:center;justify-content:center;height:100%;min-width:0}
+.pp-stage .pp-graphic svg{display:block;height:100%;width:auto;max-height:220px;max-width:100%}
+/* with a water-temperature reading: impeller left, thermometer right */
+.pp-stage--temp{gap:12px}
+.pp-stage--temp .pp-graphic{flex:1 1 62%}
+.pp-thermo{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:56px}
+.pp-thermo-svg{display:block;height:auto;width:auto;max-height:150px;filter:drop-shadow(0 0 8px rgba(0,0,0,.35))}
+.pp-thermo-val{display:flex;align-items:baseline;gap:2px;font-variant-numeric:tabular-nums;line-height:1}
+.pp-thermo-val .n{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.pp-thermo-val .u{font-size:11px;color:#8fa0b6;font-weight:600}
+.pp-thermo-k{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8fa0b6;font-weight:700}
 .pp-spin{transform-origin:50% 50%;animation:pp-rot var(--pp-dur,2s) linear infinite}
 .pp-spin.pp-ccw{animation-direction:reverse}
 @keyframes pp-rot{from{transform:rotate(0)}to{transform:rotate(360deg)}}
@@ -73,7 +83,46 @@ const CSS = `
   vertical-align:-1px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;
   animation:pp-rot .7s linear infinite}
 
-@media (prefers-reduced-motion:reduce){.pp-spin,.pp-sfc button.pp-busy::after{animation:none}}
+/* ---- scheduler widget ---- */
+.pp-badge--idle{background:rgba(143,160,182,.16);color:#a7b4c6}
+.pp-hero{display:flex;align-items:center;gap:12px;margin:6px 0 8px}
+.pp-hero-main{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.05);
+  border-radius:14px;padding:8px 14px;min-width:96px}
+.pp-hero-pct{font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em;
+  color:var(--pp-accent,#38aaff)}
+.pp-hero-pct .u{font-size:15px;color:#8fa0b6;font-weight:700;margin-left:2px}
+.pp-hero-k{font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:#8fa0b6;font-weight:700;margin-top:4px}
+.pp-hero-side{flex:1 1 auto;display:flex;flex-direction:column;gap:5px;align-items:flex-start;min-width:0}
+.pp-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.pp-pill--on{background:rgba(76,175,80,.16);color:#5ac36a}
+.pp-pill--off{background:rgba(244,67,54,.16);color:#f0645a}
+.pp-pill--sfc{background:rgba(56,170,255,.18);color:#59b6ff}
+.pp-pill--muted{background:rgba(255,255,255,.06);color:#a7b4c6}
+.pp-target{font-size:12px;color:#cdd7e4}
+.pp-target b{color:#eef2f7;font-variant-numeric:tabular-nums}
+.pp-chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}
+.pp-chip{font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:3px 9px;border-radius:8px;
+  background:rgba(255,255,255,.06);color:#cdd7e4}
+.pp-chip--base{background:rgba(56,170,255,.14);color:#7cc2ff}
+.pp-chip--night{background:rgba(126,120,255,.16);color:#9d97ff}
+.pp-chip--raise{background:rgba(255,193,58,.16);color:#ffcf5a}
+.pp-chip--hold{background:rgba(120,180,255,.14);color:#9fc6ff}
+.pp-chip--warn{background:rgba(244,67,54,.18);color:#f0645a}
+.pp-info{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;margin-bottom:8px}
+.pp-info-i{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;
+  border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:3px;min-width:0}
+.pp-info-i .k{color:#8fa0b6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-info-i .v{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pp-note{font-size:10.5px;color:#8fa0b6;margin-top:8px;line-height:1.35}
+.pp-onoff .pp-sfc-btn{background:#2b7fc0;color:#fff}
+.pp-onoff .pp-sfc-btn.pp-active-sfc{background:#0f6fd6;box-shadow:0 0 10px rgba(56,170,255,.5)}
+.pp-onoff .pp-sfc-btn:disabled{background:rgba(255,255,255,.10);color:#6b7a8d;cursor:not-allowed;box-shadow:none}
+.pp-onoff .pp-sfc-btn.pp-busy{opacity:.85;cursor:progress}
+.pp-onoff .pp-sfc-btn.pp-busy::after{content:"";display:inline-block;width:11px;height:11px;margin-left:8px;
+  vertical-align:-1px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;
+  animation:pp-rot .7s linear infinite}
+
+@media (prefers-reduced-motion:reduce){.pp-spin,.pp-sfc button.pp-busy::after,.pp-onoff .pp-sfc-btn.pp-busy::after{animation:none}}
 `;
 
 /** Injects the shared stylesheet once (idempotent). */

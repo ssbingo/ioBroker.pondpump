@@ -167,6 +167,10 @@ describe("schedule core", () => {
                 power: 25,
                 actuators: [],
                 failSafe: false,
+                source: "base",
+                raised: false,
+                nightProtected: false,
+                hold: false,
             });
             expect(decideTarget(config, at(19))).to.include({ sfc: false, power: 25 });
         });
@@ -330,6 +334,38 @@ describe("schedule conditions (Phase 11)", () => {
         it("wins over a higher minPower, and defaults to 100 when unset", () => {
             expect(decideTarget(cfg({ minPower: 80, maxPower: 60 }), at(12)).power).to.equal(60);
             expect(decideTarget(cfg({}), at(12)).power).to.equal(50); // no maxPower → base 50 unaffected
+        });
+    });
+
+    describe("decideTarget — status fields (Phase 14)", () => {
+        const astroDay: AstroTimes = { sunriseMin: at(6), sunsetMin: at(20) };
+        it("reports the base source", () => {
+            const plan: PumpSchedule = { start: "08:00", end: "20:00", mode: "power", power: 70 };
+            expect(decideTarget(cfg({}), at(12)).source).to.equal("base"); // no window, no curve
+            expect(decideTarget(cfg({ plans: [plan] }), at(12)).source).to.equal("window"); // inside window
+            const curve = {
+                enabled: true,
+                source: TEMP,
+                points: [
+                    { temp: 0, power: 30 },
+                    { temp: 30, power: 90 },
+                ],
+            };
+            expect(decideTarget(cfg({ curve }), at(12), { [TEMP]: 15 }).source).to.equal("curve");
+            expect(decideTarget(cfg({ curve }), at(12), {}).source).to.equal("failSafe"); // source missing
+        });
+        it("reports raised, nightProtected and hold", () => {
+            const raiseCfg = cfg({ rules: [{ source: RAIN, cmp: "eq", threshold: 1, effect: "boostMax" }] });
+            expect(decideTarget(raiseCfg, at(12), { [RAIN]: 1 }).raised).to.equal(true);
+            expect(decideTarget(raiseCfg, at(12), { [RAIN]: 0 }).raised).to.equal(false);
+
+            const npCfg = cfg({ basePower: 40, nightProtection: { enabled: true, minWaterTemp: 18 } });
+            expect(decideTarget(npCfg, at(22), {}, astroDay).nightProtected).to.equal(true); // warm night → protected
+            expect(decideTarget(npCfg, at(12), {}, astroDay).nightProtected).to.equal(false); // daytime → not
+
+            const holdCfg = cfg({ rules: [{ source: RAIN, cmp: "eq", threshold: 1, effect: "hold" }] });
+            expect(decideTarget(holdCfg, at(12), { [RAIN]: 1 }).hold).to.equal(true);
+            expect(decideTarget(holdCfg, at(12), { [RAIN]: 1 }).power).to.equal("hold");
         });
     });
 

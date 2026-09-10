@@ -309,7 +309,7 @@ der Controller sich zurückverbinden soll.
 
 ## 9. vis-2-Widgets
 
-Der Adapter bringt **zwei fertige vis-2-Widgets** mit — du musst nichts extra installieren. Sobald der
+Der Adapter bringt **drei fertige vis-2-Widgets** mit — du musst nichts extra installieren. Sobald der
 Adapter installiert ist, wird vis-2 automatisch neu gestartet, und die Widgets stehen im vis-2-Editor
 unter der Widget-Gruppe **„Pond Pump"** bereit.
 
@@ -338,6 +338,9 @@ Dieses Widget stellt die Pumpe grafisch dar:
 - Ist die **Saisonale Durchflussregelung (SFC)** aktiv, dreht sich statt des Flügelrads ein
   **Eiskristall**.
 - Darunter stehen die Live-Werte: **Leistung** (W), **Drehzahl** (rpm) und **Power** (Sollwert in %).
+- Liegt eine **Wassertemperatur** vor (State `telemetry.waterTemperature`), rückt das Flügelrad nach
+  links und rechts erscheint ein **gefülltes Thermometer** samt Wert; die Füllung ist je nach
+  Temperatur eingefärbt (kalt = blau bis warm = bernstein). Ohne Wert bleibt die Darstellung wie bisher.
 
 Oben rechts zeigt ein farbiges Abzeichen den Zustand: **Läuft**, **Aus** oder **Saison-Modus**.
 
@@ -356,11 +359,32 @@ Mit diesem Widget steuerst du die Pumpe:
 > Durchflussregelung: Bei aktivem SFC senkt die Pumpe Fördermenge und Förderhöhe automatisch
 > (bis zu −50 %) und passt sich so übers Jahr an die Teichbiologie an. Es ist **kein Frostschutz**.
 
-### 9.4 Aussehen anpassen
+### 9.4 Widget „Scheduler-Status" (PumpScheduler)
+
+Dieses Widget zeigt auf einen Blick, **was der eingebaute Zeitplan-/Regel-Scheduler** (Kapitel 10–11)
+gerade mit der Pumpe macht — und **warum**:
+
+- Ein **Status-Abzeichen**: **Scheduler aktiv**, **Manuell / aus** (keine gültige Planung) oder
+  **Notlauf** (Sensorausfall).
+- Die aktuelle **Ausgabe** in % groß dargestellt, dazu der Betriebszustand (Läuft/Aus/Saison-Modus),
+  **Tag/Nacht** und die **Zielleistung** des Schedulers.
+- **Begründungs-Chips**: woraus die Basis kommt (**Temperaturkurve**, **Zeitfenster** oder
+  **Grundlast**) und welche Modifikatoren gerade greifen (**Nachtschutz**, **Wetter-Boost**,
+  **Frost-Halt**).
+- Das **aktive Fenster**, der Zeitpunkt der **nächsten Änderung** sowie **Sonnenauf-/-untergang**.
+- **Wassertemperatur** (farbig), **Leistung** (W) und **Drehzahl** (rpm).
+- Eine **Steuerleiste** mit den Grundfunktionen (An/Aus, Leistungs-Schnellwahl, SFC). Ein Hinweis
+  erinnert daran, dass der Scheduler manuelle Eingriffe beim nächsten Durchlauf wieder überschreiben
+  kann.
+
+Die Werte kommen aus neuen, schreibgeschützten States `pumps.<Nr>.schedule.*`, die der Scheduler bei
+jeder Auswertung pflegt — sie lassen sich auch in eigenen Skripten oder der History nutzen.
+
+### 9.5 Aussehen anpassen
 
 In den Widget-Einstellungen unter **Darstellung** kannst du u. a. die **Akzentfarbe** wählen, den
 **Kartenhintergrund** ausblenden, die **Animation** abschalten oder einzelne Bereiche (Werte,
-Ein/Aus-Tasten, Schnellwahl, SFC) ein- und ausblenden.
+Ein/Aus-Tasten, Schnellwahl, SFC, Steuerleiste, Telemetrie) ein- und ausblenden.
 
 ## 10. Zeitpläne (Pumpen nach Zeitplan betreiben)
 

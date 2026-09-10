@@ -15,6 +15,7 @@ const config = {
             exposes: {
                 './PumpVisual': './src/PumpVisual', // List of all widgets in this package
                 './PumpControl': './src/PumpControl',
+                './PumpScheduler': './src/PumpScheduler',
                 './translations': './src/translations',
             },
             remotes: {},

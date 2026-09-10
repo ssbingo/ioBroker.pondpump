@@ -77,6 +77,12 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.11.0 (2026-09-10)
+
+- (ssbingo) **New "Scheduler status" vis-2 widget (`PumpScheduler`).** Select a pump and the widget shows, at a glance, what the built-in scheduler is doing with it: the current output and **target power**, a status badge (active / manual / fail-safe), **reason chips** (temperature curve, time window, base power, night protection, weather boost, frost hold, fail-safe), the **active window**, the **next change** time and the pump's **sunrise/sunset** and **water temperature** — plus live power/rpm and a control bar with on/off, quick power and SFC. Fed by new read-only `pumps.<n>.schedule.*` status states the scheduler publishes each tick (`controlled`, `targetPower`, `sfc`, `source`, `raised`, `nightProtection`, `hold`, `failSafe`, `window`, `nextChangeTs`)
+- (ssbingo) **PumpVisual now shows the water temperature.** When `telemetry.waterTemperature` has a value, the animated impeller shifts left and a **filled, colour-coded thermometer** (cold blue → warm amber) with the reading appears on the right; without a value the widget is unchanged
+- (ssbingo) The pure decision core now also reports its base **source** and the **raised / nightProtected / hold** flags (covered by unit tests), used both by the status states and the widget
+
 ### 0.10.1 (2026-09-10)
 
 - (ssbingo) **Fix: `telemetry.waterTemperature` reflects the effective curve source.** When the temperature curve reads an **external** object (e.g. a Homematic water sensor picked via the magnifying glass), that value is now mirrored into `telemetry.waterTemperature` — previously the state stayed empty because only the pump's on-device sensor was mirrored. The scheduler now writes the state from the actual curve source (external OIDs included); the on-device sensor picker remains the fallback when no curve source is configured. A debug line is logged when the source has no finite value

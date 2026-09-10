@@ -284,6 +284,92 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
             id: `${base}.astro.isDay`,
             obj: stateObj({ name: "Daytime", type: "boolean", role: "indicator", read: true, write: false }),
         },
+        // Schedule status (Phase 14): what the built-in scheduler currently does with this pump — for the
+        // PumpScheduler vis widget and for scripts/history. All read-only; runScheduler keeps them fresh.
+        { id: `${base}.schedule`, obj: channel("Scheduler status") },
+        {
+            id: `${base}.schedule.controlled`,
+            obj: stateObj({
+                name: "Scheduler controlling",
+                type: "boolean",
+                role: "indicator",
+                read: true,
+                write: false,
+            }),
+        },
+        {
+            id: `${base}.schedule.targetPower`,
+            obj: stateObj({
+                name: "Scheduler target power",
+                type: "number",
+                role: "value",
+                unit: "%",
+                read: true,
+                write: false,
+            }),
+        },
+        {
+            id: `${base}.schedule.sfc`,
+            obj: stateObj({
+                name: "Scheduler SFC target",
+                type: "boolean",
+                role: "indicator",
+                read: true,
+                write: false,
+            }),
+        },
+        {
+            id: `${base}.schedule.source`,
+            obj: stateObj({ name: "Scheduler base source", type: "string", role: "text", read: true, write: false }),
+        },
+        {
+            id: `${base}.schedule.raised`,
+            obj: stateObj({
+                name: "Weather rule raised power",
+                type: "boolean",
+                role: "indicator",
+                read: true,
+                write: false,
+            }),
+        },
+        {
+            id: `${base}.schedule.nightProtection`,
+            obj: stateObj({
+                name: "Night protection active",
+                type: "boolean",
+                role: "indicator",
+                read: true,
+                write: false,
+            }),
+        },
+        {
+            id: `${base}.schedule.hold`,
+            obj: stateObj({ name: "Frost hold active", type: "boolean", role: "indicator", read: true, write: false }),
+        },
+        {
+            id: `${base}.schedule.failSafe`,
+            obj: stateObj({
+                name: "Sensor-loss fail-safe",
+                type: "boolean",
+                role: "indicator",
+                read: true,
+                write: false,
+            }),
+        },
+        {
+            id: `${base}.schedule.window`,
+            obj: stateObj({ name: "Active window", type: "string", role: "text", read: true, write: false }),
+        },
+        {
+            id: `${base}.schedule.nextChangeTs`,
+            obj: stateObj({
+                name: "Next change timestamp",
+                type: "number",
+                role: "value.time",
+                read: true,
+                write: false,
+            }),
+        },
     ];
 
     // Diagnostic: expose still-unmapped RDM sensor values so their meaning can be

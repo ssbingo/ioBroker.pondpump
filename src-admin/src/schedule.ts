@@ -186,6 +186,9 @@ export interface ActuatorWrite {
     value: number | boolean;
 }
 
+/** Where the base target came from — for status display (Phase 14). */
+export type ScheduleSource = "curve" | "window" | "base" | "failSafe";
+
 /** The scheduler's full decision for a pump at a moment in time. */
 export interface ScheduleDecision {
     /** Desired SFC state. */
@@ -196,6 +199,14 @@ export interface ScheduleDecision {
     actuators: ActuatorWrite[];
     /** True when the curve was enabled but its temperature source was missing → fail-safe 100 %. */
     failSafe: boolean;
+    /** Where the base target came from (curve / active window / base power / fail-safe). */
+    source: ScheduleSource;
+    /** A weather rule raised the power (raisePower/boostMax) above the base this tick. */
+    raised: boolean;
+    /** Night protection floored the flow this tick (warm astronomical night). */
+    nightProtected: boolean;
+    /** A frost "hold" rule froze the pump this tick. */
+    hold: boolean;
 }
 
 /**
@@ -627,6 +638,16 @@ export function decideTarget(
         trace.push(`base=${base.power}% sfc=${base.sfc} (priority=${priority}, ${from}, ${curveStr})`);
     }
 
+    // Where the base came from — mirrors the base-selection logic above (for status display).
+    let source: ScheduleSource;
+    if (failSafe) {
+        source = "failSafe";
+    } else if (priority === "outsideOnly") {
+        source = window ? "window" : curve ? "curve" : "base";
+    } else {
+        source = curve ? "curve" : window ? "window" : "base";
+    }
+
     let sfc = base.sfc;
     let power = Math.max(base.power, clampPercent(config.minPower));
     if (trace && config.minPower !== undefined && power !== base.power) {
@@ -635,6 +656,7 @@ export function decideTarget(
 
     // Night protection (research): during the astronomical night, if the water is warm enough, do not
     // let the flow drop below the floor — the oxygen minimum is at night.
+    let nightProtected = false;
     const np = config.nightProtection;
     if (np?.enabled && isAstroDay(astro, nowMin) === false) {
         const temp = config.curve?.source ? sources[config.curve.source] : undefined;
@@ -642,6 +664,7 @@ export function decideTarget(
         if (warmEnough) {
             const before = power;
             power = Math.max(power, np.floorPower === undefined ? 100 : clampPercent(np.floorPower));
+            nightProtected = true; // protection is in effect (holding the floor), whether or not it raised
             if (trace) {
                 trace.push(
                     `night protection active (temp=${temp ?? "n/a"} ≥ ${np.minWaterTemp ?? 18}): ${before}% → ${power}%`,
@@ -706,11 +729,12 @@ export function decideTarget(
     power = Math.min(power, maxPower);
 
     // A frost "hold" freezes the pump — but an explicit raise/boost still wins (raising is the safe error).
-    const finalPower = hold && !raised ? "hold" : power;
+    const frozen = hold && !raised;
+    const finalPower = frozen ? "hold" : power;
     if (trace) {
         trace.push(`→ power=${finalPower} sfc=${sfc}${failSafe ? " FAIL-SAFE" : ""}`);
     }
-    return { sfc, power: finalPower, actuators, failSafe };
+    return { sfc, power: finalPower, actuators, failSafe, source, raised, nightProtected, hold: frozen };
 }
 
 /**
