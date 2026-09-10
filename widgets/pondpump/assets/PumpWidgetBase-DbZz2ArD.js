@@ -1,4 +1,4 @@
-import{b as f,a as v}from"./_virtual_mf___mfe_internal__pondpump__mf_owner__169659973448624__loadShare__react_mf_1_jsx_mf_2_runtime__loadShare__.js-WvFV32sY.js";import{_ as x,a as w}from"./_virtual_mf___mfe_internal__pondpump__mf_owner__169659973448624__loadShare__react__loadShare__.js-DS23sZkI.js";import{a as k,b as _,c as S,d as h,e as z,f as I,g as P,h as A}from"./_virtual_mf___mfe_internal__pondpump__mf_owner__169659973448624__loadShare___mf_0_mui_mf_1_material__loadShare__.js-CbbIjVza.js";import b from"./translations-DixMiAFq.js";const M=`
+import{b as f,a as v}from"./_virtual_mf___mfe_internal__pondpump__mf_owner__169659973448624__loadShare__react_mf_1_jsx_mf_2_runtime__loadShare__.js-WvFV32sY.js";import{_ as x,a as w}from"./_virtual_mf___mfe_internal__pondpump__mf_owner__169659973448624__loadShare__react__loadShare__.js-DS23sZkI.js";import{a as k,b as _,c as S,d as h,e as z,f as I,g as P,h as A}from"./_virtual_mf___mfe_internal__pondpump__mf_owner__169659973448624__loadShare___mf_0_mui_mf_1_material__loadShare__.js-CbbIjVza.js";import b from"./translations-8lhnQtWM.js";const M=`
 .pp-card{box-sizing:border-box;height:100%;width:100%;display:flex;flex-direction:column;position:relative;
   font-family:Arial,Helvetica,sans-serif;color:#eef2f7;border-radius:16px;padding:14px 16px;overflow:hidden}
 .pp-card.pp-bg{background:linear-gradient(160deg,#243244 0%,#1a2431 60%,#151d28 100%);box-shadow:0 6px 20px rgba(0,0,0,.35)}
@@ -95,8 +95,8 @@ import{b as f,a as v}from"./_virtual_mf___mfe_internal__pondpump__mf_owner__1696
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pp-act-wheel{flex:0 0 auto;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .pp-act-wheel svg{width:100%;height:100%;display:block}
-.pp-act-off{opacity:.35;filter:grayscale(.5)}
-.pp-act-on{filter:drop-shadow(0 0 4px rgba(140,224,120,.6))}
+.pp-act-off{opacity:.7}
+.pp-act-on{filter:drop-shadow(0 0 4px rgba(140,224,120,.55))}
 .pp-hero-main{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.05);
   border-radius:14px;padding:8px 14px;min-width:96px}
 .pp-hero-pct{font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em;

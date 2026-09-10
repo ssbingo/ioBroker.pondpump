@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.12.1",
+        "version": "0.12.2",
         "news": {
-            "0.12.1": {
-                "en": "Scheduler status widget: each actuator can now be shown or hidden individually in the widget settings (Actuators section).",
-                "de": "Scheduler-Status-Widget: Jeder Aktor lässt sich jetzt in den Widget-Einstellungen (Bereich „Aktoren“) einzeln ein- oder ausblenden.",
-                "ru": "Виджет статуса планировщика: каждый актор теперь можно показать или скрыть по отдельности в настройках виджета (раздел «Акторы»).",
-                "pt": "Widget de estado do agendador: cada atuador pode agora ser mostrado ou ocultado individualmente nas definições do widget (secção Atuadores).",
-                "nl": "Scheduler-statuswidget: elke actuator kan nu afzonderlijk worden getoond of verborgen in de widgetinstellingen (sectie Actuatoren).",
-                "fr": "Widget d'état du planificateur : chaque actionneur peut désormais être affiché ou masqué individuellement dans les réglages du widget (section Actionneurs).",
-                "it": "Widget di stato dello scheduler: ogni attuatore può ora essere mostrato o nascosto singolarmente nelle impostazioni del widget (sezione Attuatori).",
-                "es": "Widget de estado del programador: cada actuador ahora se puede mostrar u ocultar individualmente en los ajustes del widget (sección Actuadores).",
-                "pl": "Widget statusu harmonogramu: każdy siłownik można teraz pojedynczo pokazać lub ukryć w ustawieniach widgetu (sekcja Siłowniki).",
-                "uk": "Віджет статусу планувальника: кожен актор тепер можна показати або приховати окремо в налаштуваннях віджета (розділ «Актори»).",
-                "zh-cn": "调度器状态组件：现在可以在组件设置（执行器部分）中单独显示或隐藏每个执行器。"
+            "0.12.2": {
+                "en": "Scheduler status widget: the actuator wheel colour is now configurable in the widget settings — one colour for the on state and one for off (defaults match the previous look).",
+                "de": "Scheduler-Status-Widget: Die Farbe des Aktor-Flügelrads ist jetzt in den Widget-Einstellungen wählbar – je eine Farbe für den Status an und für aus (Voreinstellung wie bisher).",
+                "ru": "Виджет статуса планировщика: цвет крыльчатки актора теперь настраивается в настройках виджета — отдельный цвет для состояния вкл. и выкл. (по умолчанию как прежде).",
+                "pt": "Widget de estado do agendador: a cor da hélice do atuador é agora configurável nas definições do widget — uma cor para ligado e outra para desligado (predefinições iguais ao aspeto anterior).",
+                "nl": "Scheduler-statuswidget: de kleur van het actuator-schoepenwiel is nu instelbaar in de widgetinstellingen — een kleur voor aan en een voor uit (standaard zoals voorheen).",
+                "fr": "Widget d'état du planificateur : la couleur de la turbine d'actionneur est désormais configurable dans les réglages du widget — une couleur pour l'état marche et une pour arrêt (valeurs par défaut identiques à l'aspect précédent).",
+                "it": "Widget di stato dello scheduler: il colore della girante dell'attuatore è ora configurabile nelle impostazioni del widget — un colore per lo stato acceso e uno per spento (predefiniti come prima).",
+                "es": "Widget de estado del programador: el color del impulsor del actuador ahora es configurable en los ajustes del widget — un color para encendido y otro para apagado (valores por defecto como antes).",
+                "pl": "Widget statusu harmonogramu: kolor wirnika siłownika można teraz ustawić w ustawieniach widgetu — osobny kolor dla stanu wł. i wył. (domyślnie jak dotychczas).",
+                "uk": "Віджет статусу планувальника: колір крильчатки актора тепер налаштовується в параметрах віджета — окремий колір для стану увімк. і вимк. (типово як раніше).",
+                "zh-cn": "调度器状态组件：执行器叶轮的颜色现在可在组件设置中配置——开启和关闭状态各一种颜色（默认与之前一致）。"
             }
         },
         "titleLang": {

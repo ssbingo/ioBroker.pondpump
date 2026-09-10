@@ -54,5 +54,7 @@
     "sched_override_hint": "Der Scheduler kann sein Ziel beim nächsten Durchlauf erneut anwenden.",
     "group_actuators": "Aktoren",
     "actuators_visibility": "Aktoren anzeigen",
-    "no_actuators": "Für diese Pumpe sind keine Aktoren konfiguriert."
+    "no_actuators": "Für diese Pumpe sind keine Aktoren konfiguriert.",
+    "act_color_on": "Aktorfarbe (an)",
+    "act_color_off": "Aktorfarbe (aus)"
 }

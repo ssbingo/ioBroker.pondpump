@@ -54,5 +54,7 @@
     "sched_override_hint": "El programador puede volver a aplicar su objetivo en la próxima ejecución.",
     "group_actuators": "Actuadores",
     "actuators_visibility": "Mostrar actuadores",
-    "no_actuators": "No hay actuadores configurados para esta bomba."
+    "no_actuators": "No hay actuadores configurados para esta bomba.",
+    "act_color_on": "Color del actuador (encendido)",
+    "act_color_off": "Color del actuador (apagado)"
 }

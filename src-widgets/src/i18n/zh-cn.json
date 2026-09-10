@@ -54,5 +54,7 @@
     "sched_override_hint": "调度器可能在下次运行时重新应用其目标。",
     "group_actuators": "执行器",
     "actuators_visibility": "显示执行器",
-    "no_actuators": "未为此水泵配置执行器。"
+    "no_actuators": "未为此水泵配置执行器。",
+    "act_color_on": "执行器颜色（开）",
+    "act_color_off": "执行器颜色（关）"
 }

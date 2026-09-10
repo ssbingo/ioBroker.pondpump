@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.12.2 (2026-09-10)
+
+- (ssbingo) **Configurable actuator wheel colours.** The Scheduler widget's actuator status impeller now has two colour pickers in the widget settings — one for the **on** state and one for **off** — each with its darker gradient shade derived automatically. Defaults reproduce the previous look (light green on, muted green-grey off)
+
 ### 0.12.1 (2026-09-10)
 
 - (ssbingo) **Per-actuator visibility in the Scheduler widget.** A new **"Actuators"** section in the widget settings lists the selected pump's actuators (read from its schedule) with a checkbox each, so you can **show or hide every actuator individually** in that widget. Hidden actuators are stored per widget (`hiddenActuators`); all are shown by default

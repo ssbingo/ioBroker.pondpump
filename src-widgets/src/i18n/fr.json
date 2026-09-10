@@ -54,5 +54,7 @@
     "sched_override_hint": "Le planificateur peut réappliquer sa cible au prochain passage.",
     "group_actuators": "Actionneurs",
     "actuators_visibility": "Afficher les actionneurs",
-    "no_actuators": "Aucun actionneur configuré pour cette pompe."
+    "no_actuators": "Aucun actionneur configuré pour cette pompe.",
+    "act_color_on": "Couleur actionneur (marche)",
+    "act_color_off": "Couleur actionneur (arrêt)"
 }

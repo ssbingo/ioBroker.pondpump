@@ -378,7 +378,8 @@ gerade mit der Pumpe macht — und **warum**:
   Flügelrad** angezeigt. Name und Icon vergibst du im Zeitplan-Editor (Modus „Aktor"); ohne Namen
   steht „Aktor 1", „Aktor 2" … Das kleine **hellgrüne Flügelrad** dreht sich (optional animiert),
   solange der Aktor **an** ist, und steht still (gedimmt), wenn er aus ist. In den Widget-Einstellungen
-  (Bereich **„Aktoren"**) lässt sich **jeder Aktor einzeln** ein- oder ausblenden.
+  (Bereich **„Aktoren"**) lässt sich **jeder Aktor einzeln** ein- oder ausblenden, und die **Farbe des
+  Flügelrads** für „an" und „aus" ist frei wählbar (Voreinstellung wie bisher).
 - **Wassertemperatur** (farbig), **Leistung** (W) und **Drehzahl** (rpm).
 - Eine **Steuerleiste** mit den Grundfunktionen (An/Aus, Leistungs-Schnellwahl, SFC). Ein Hinweis
   erinnert daran, dass der Scheduler manuelle Eingriffe beim nächsten Durchlauf wieder überschreiben

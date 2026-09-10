@@ -54,5 +54,7 @@
     "sched_override_hint": "Lo scheduler può riapplicare il suo obiettivo alla prossima esecuzione.",
     "group_actuators": "Attuatori",
     "actuators_visibility": "Mostra attuatori",
-    "no_actuators": "Nessun attuatore configurato per questa pompa."
+    "no_actuators": "Nessun attuatore configurato per questa pompa.",
+    "act_color_on": "Colore attuatore (acceso)",
+    "act_color_off": "Colore attuatore (spento)"
 }

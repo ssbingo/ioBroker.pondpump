@@ -11,7 +11,11 @@ import {
     pumpChannelOf,
     pumpDeviceName,
 } from "./common";
-import { renderImpeller, tempColor } from "./graphics";
+import { darken, renderImpeller, tempColor } from "./graphics";
+
+/** Default actuator wheel colours (current look): light green when on, muted green-grey when off. */
+const ACT_ON_DEFAULT = "#a6e77d";
+const ACT_OFF_DEFAULT = "#6b7669";
 
 // Sub-states (relative to the pump device channel) this widget reads/commands.
 const REL_IDS = [
@@ -57,6 +61,9 @@ interface PumpSchedulerRxData extends PumpBaseRxData {
     noCard: boolean;
     /** JSON array of actuator keys to hide (per-actuator visibility toggle). */
     hiddenActuators?: string;
+    /** Actuator wheel colour while the actuator is on / off. */
+    actColorOn?: string;
+    actColorOff?: string;
 }
 
 interface PumpSchedulerState extends PumpBaseState {
@@ -108,7 +115,11 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
                 {
                     name: "actuators",
                     label: "group_actuators",
-                    fields: [actuatorVisibilityField()],
+                    fields: [
+                        { name: "actColorOn", type: "color", label: "act_color_on", default: ACT_ON_DEFAULT },
+                        { name: "actColorOff", type: "color", label: "act_color_off", default: ACT_OFF_DEFAULT },
+                        actuatorVisibilityField(),
+                    ],
                 },
             ],
             visDefaultStyle: { width: 320, height: 380 },
@@ -300,20 +311,25 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
         if (!list.length) {
             return null;
         }
+        const colorOn = this.state.rxData.actColorOn || ACT_ON_DEFAULT;
+        const colorOff = this.state.rxData.actColorOff || ACT_OFF_DEFAULT;
         return (
             <div className="pp-actuators">
-                {list.map((a, i) => (
-                    <div
-                        className="pp-act"
-                        key={`${a.target}:${i}`}
-                    >
-                        <span className="pp-act-icon">{a.icon || "⚙️"}</span>
-                        <span className="pp-act-name">{a.name}</span>
-                        <span className={`pp-act-wheel${a.on ? " pp-act-on" : " pp-act-off"}`}>
-                            {renderImpeller(a.on && animate, a.on ? 1.4 : 0, "#a6e77d", false, "#4fae3a")}
-                        </span>
-                    </div>
-                ))}
+                {list.map((a, i) => {
+                    const color = a.on ? colorOn : colorOff;
+                    return (
+                        <div
+                            className="pp-act"
+                            key={`${a.target}:${i}`}
+                        >
+                            <span className="pp-act-icon">{a.icon || "⚙️"}</span>
+                            <span className="pp-act-name">{a.name}</span>
+                            <span className={`pp-act-wheel${a.on ? " pp-act-on" : " pp-act-off"}`}>
+                                {renderImpeller(a.on && animate, a.on ? 1.4 : 0, color, false, darken(color))}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
         );
     }

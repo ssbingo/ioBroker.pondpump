@@ -54,5 +54,7 @@
     "sched_override_hint": "Harmonogram może ponownie zastosować swój cel przy następnym przebiegu.",
     "group_actuators": "Siłowniki",
     "actuators_visibility": "Pokaż siłowniki",
-    "no_actuators": "Brak skonfigurowanych siłowników dla tej pompy."
+    "no_actuators": "Brak skonfigurowanych siłowników dla tej pompy.",
+    "act_color_on": "Kolor siłownika (wł.)",
+    "act_color_off": "Kolor siłownika (wył.)"
 }

@@ -96,8 +96,8 @@ const CSS = `
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pp-act-wheel{flex:0 0 auto;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .pp-act-wheel svg{width:100%;height:100%;display:block}
-.pp-act-off{opacity:.35;filter:grayscale(.5)}
-.pp-act-on{filter:drop-shadow(0 0 4px rgba(140,224,120,.6))}
+.pp-act-off{opacity:.7}
+.pp-act-on{filter:drop-shadow(0 0 4px rgba(140,224,120,.55))}
 .pp-hero-main{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.05);
   border-radius:14px;padding:8px 14px;min-width:96px}
 .pp-hero-pct{font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em;

@@ -54,5 +54,7 @@
     "sched_override_hint": "De scheduler kan zijn doel bij de volgende ronde opnieuw toepassen.",
     "group_actuators": "Actuatoren",
     "actuators_visibility": "Actuatoren tonen",
-    "no_actuators": "Geen actuatoren geconfigureerd voor deze pomp."
+    "no_actuators": "Geen actuatoren geconfigureerd voor deze pomp.",
+    "act_color_on": "Actuatorkleur (aan)",
+    "act_color_off": "Actuatorkleur (uit)"
 }

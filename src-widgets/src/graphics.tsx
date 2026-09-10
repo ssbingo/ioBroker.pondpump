@@ -5,6 +5,19 @@ import React from "react";
  * water-temperature thermometer. Kept in one place so PumpVisual and PumpScheduler stay in sync.
  */
 
+/** Darken a "#rrggbb" colour by factor `f` (0..1) — used to derive an impeller's outer gradient stop. */
+export function darken(hex: string, f = 0.55): string {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+    if (!m) {
+        return hex;
+    }
+    const n = parseInt(m[1], 16);
+    const r = Math.round(((n >> 16) & 255) * f);
+    const g = Math.round(((n >> 8) & 255) * f);
+    const b = Math.round((n & 255) * f);
+    return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
 /** Water-temperature colour on a pond-relevant 0–30 °C scale (cold blue → warm amber). */
 export function tempColor(t: number): string {
     if (t < 8) {

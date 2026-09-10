@@ -54,5 +54,7 @@
     "sched_override_hint": "O agendador pode reaplicar o seu alvo na próxima execução.",
     "group_actuators": "Atuadores",
     "actuators_visibility": "Mostrar atuadores",
-    "no_actuators": "Nenhum atuador configurado para esta bomba."
+    "no_actuators": "Nenhum atuador configurado para esta bomba.",
+    "act_color_on": "Cor do atuador (ligado)",
+    "act_color_off": "Cor do atuador (desligado)"
 }
