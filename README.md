@@ -77,6 +77,12 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.12.3 (2026-09-10)
+
+- (ssbingo) **Koi-biology water-temperature colour scale.** The thermometer (PumpVisual) and the temperature readout (PumpScheduler) are no longer a neutral cold→warm gradient. They now follow the koi temperature bands from the research: strong **green at the growth optimum 23–26 °C**, teal/blue when colder, amber/red when hotter — and the cold **8–13 °C "Aeromonas window"** is deliberately **amber (caution)**, because pathogens are active there while the koi immune system is not. Both extremes go red
+- (ssbingo) **Per-actuator wheel colours.** The Scheduler widget's "Actuators" settings now offer an **on** and **off** colour picker **for each actuator individually** (stored per actuator), replacing the single global pair
+- (ssbingo) **Research + handbook appendices.** Added the full koi-temperature research as [doc/research/wassertemperaturen-im-koiteich.md](doc/research/wassertemperaturen-im-koiteich.md); the German handbook now carries both research papers as **Anhang 1 & Anhang 2** (appended at build time — single source of truth in `doc/research/`)
+
 ### 0.12.2 (2026-09-10)
 
 - (ssbingo) **Configurable actuator wheel colours.** The Scheduler widget's actuator status impeller now has two colour pickers in the widget settings — one for the **on** state and one for **off** — each with its darker gradient shade derived automatically. Defaults reproduce the previous look (light green on, muted green-grey off)

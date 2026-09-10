@@ -18,21 +18,48 @@ export function darken(hex: string, f = 0.55): string {
     return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
 }
 
-/** Water-temperature colour on a pond-relevant 0–30 °C scale (cold blue → warm amber). */
+/**
+ * Water-temperature colour keyed to the **koi biology bands** from the research
+ * (doc/research/wassertemperaturen-im-koiteich.md), not a neutral cold→warm gradient. The growth
+ * optimum (23–26 °C) is the strongest green; the cold **8–13 °C "Aeromonas window"** — where
+ * pathogens are active but the koi immune system is not — is deliberately flagged amber (caution),
+ * even though it is cold. Both temperature extremes go red.
+ *
+ * Bands: <2 life-threatening · 2–4 borderline · 4–8 winter rest · 8–13 Aeromonas window (caution) ·
+ * 13–17 transition · 17–23 normal · 23–26 growth optimum · 26–28 upper normal · 28–30 heat stress ·
+ * ≥30 danger.
+ *
+ * @param t - water temperature in °C
+ */
 export function tempColor(t: number): string {
+    if (t < 2) {
+        return "#f0645a"; // life-threatening cold
+    }
+    if (t < 4) {
+        return "#ff8c42"; // borderline (cold safety margin)
+    }
     if (t < 8) {
-        return "#4aa8ff";
+        return "#4aa8ff"; // winter rest (the wintering target band)
     }
-    if (t < 14) {
-        return "#35c4c4";
+    if (t < 13) {
+        return "#ffca3a"; // Aeromonas window — pathogens active, immune system not → caution
     }
-    if (t < 20) {
-        return "#63c76a";
+    if (t < 17) {
+        return "#35c4c4"; // transition
+    }
+    if (t < 23) {
+        return "#8ed081"; // normal range
     }
     if (t < 26) {
-        return "#ffca3a";
+        return "#3fbf5a"; // growth optimum (ideal, 23–26 °C)
     }
-    return "#ff8c42";
+    if (t < 28) {
+        return "#8ed081"; // upper normal range
+    }
+    if (t < 30) {
+        return "#ff8c42"; // heat stress (oxygen limiting)
+    }
+    return "#f0645a"; // danger — dangerously warm, low oxygen
 }
 
 /**

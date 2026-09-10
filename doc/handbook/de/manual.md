@@ -339,8 +339,11 @@ Dieses Widget stellt die Pumpe grafisch dar:
   **Eiskristall**.
 - Darunter stehen die Live-Werte: **Leistung** (W), **Drehzahl** (rpm) und **Power** (Sollwert in %).
 - Liegt eine **Wassertemperatur** vor (State `telemetry.waterTemperature`), rückt das Flügelrad nach
-  links und rechts erscheint ein **gefülltes Thermometer** samt Wert; die Füllung ist je nach
-  Temperatur eingefärbt (kalt = blau bis warm = bernstein). Ohne Wert bleibt die Darstellung wie bisher.
+  links und rechts erscheint ein **gefülltes Thermometer** samt Wert. Die Farbe folgt dem
+  **Koi-Wohlfühlbereich** (nicht nur kalt→warm): das **Wachstumsoptimum 23–26 °C** ist kräftig **grün**,
+  kälter wird es türkis/blau, wärmer gelb/rot – und das kalte **8–13 °C-„Aeromonas-Fenster"** ist bewusst
+  **gelb (Vorsicht)**, weil dort Erreger aktiv sind, das Immunsystem aber nicht. Grundlage: **Anhang 2**.
+  Ohne Wert bleibt die Darstellung wie bisher.
 
 Oben rechts zeigt ein farbiges Abzeichen den Zustand: **Läuft**, **Aus** oder **Saison-Modus**.
 
@@ -587,5 +590,18 @@ So verrät eine einzige `[schedule] pump 1 decision: …`-Zeile die komplette Be
   verbunden.
 
 ---
+
+## 14. Wissenschaftliche Grundlagen (Anhänge)
+
+Die temperatur-/wetterabhängige Steuerung und die **Koi-Temperatur-Farbskala** der Widgets beruhen auf zwei
+ausführlichen Recherchen, die diesem Handbuch als **Anhang 1** und **Anhang 2** vollständig beigefügt sind (siehe die
+folgenden Seiten). Sie liegen auch als durchsuchbare Markdown-Dateien im Projekt (`doc/research/`) und als
+Original-PDFs (`doc/`):
+
+- **Anhang 1 — Teichpumpen-Durchfluss nach Wassertemperatur und Wetter:** Grundlage der Kurve, der Wetterregeln
+  und der Tag/Nacht-Logik (Sauerstoff, Ammonium, Nitrifikation, SFC-Vergleich).
+- **Anhang 2 — Wassertemperaturen im Koiteich:** biologische Temperaturbänder, Krankheitsfenster, Jahres-/Tagesgang,
+  Wärmephysik und die Grundlage der **Farbskala** (Wachstumsoptimum 23–26 °C = Grün, „Aeromonas-Fenster"
+  8–13 °C = Gelb/Vorsicht).
 
 *Fragen oder Probleme? Öffne ein Issue im GitHub-Repository des Projekts. Viel Freude am Teich!* 🐟

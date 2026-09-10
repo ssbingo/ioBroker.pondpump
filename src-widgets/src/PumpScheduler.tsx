@@ -4,18 +4,16 @@ import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetProps } from "@iobro
 
 import PumpWidgetBase, { type PumpBaseRxData, type PumpBaseState } from "./PumpWidgetBase";
 import {
+    actuatorColor,
     actuatorKey,
     actuatorVisibilityField,
     hiddenActuatorSet,
+    parseActuatorColors,
     pondpumpCommonGroup,
     pumpChannelOf,
     pumpDeviceName,
 } from "./common";
 import { darken, renderImpeller, tempColor } from "./graphics";
-
-/** Default actuator wheel colours (current look): light green when on, muted green-grey when off. */
-const ACT_ON_DEFAULT = "#a6e77d";
-const ACT_OFF_DEFAULT = "#6b7669";
 
 // Sub-states (relative to the pump device channel) this widget reads/commands.
 const REL_IDS = [
@@ -61,9 +59,8 @@ interface PumpSchedulerRxData extends PumpBaseRxData {
     noCard: boolean;
     /** JSON array of actuator keys to hide (per-actuator visibility toggle). */
     hiddenActuators?: string;
-    /** Actuator wheel colour while the actuator is on / off. */
-    actColorOn?: string;
-    actColorOff?: string;
+    /** JSON object of per-actuator wheel colours: { <key>: { on, off } }. */
+    actuatorColors?: string;
 }
 
 interface PumpSchedulerState extends PumpBaseState {
@@ -115,11 +112,7 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
                 {
                     name: "actuators",
                     label: "group_actuators",
-                    fields: [
-                        { name: "actColorOn", type: "color", label: "act_color_on", default: ACT_ON_DEFAULT },
-                        { name: "actColorOff", type: "color", label: "act_color_off", default: ACT_OFF_DEFAULT },
-                        actuatorVisibilityField(),
-                    ],
+                    fields: [actuatorVisibilityField()],
                 },
             ],
             visDefaultStyle: { width: 320, height: 380 },
@@ -305,22 +298,23 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
      */
     private renderActuators(animate: boolean): React.JSX.Element | null {
         const hidden = hiddenActuatorSet(this.state.rxData.hiddenActuators);
-        // Key each actuator like the settings editor (target OID, else "#<ordinal>") so per-actuator
-        // hide toggles line up, then drop the hidden ones.
-        const list = this.actuators().filter((a, i) => !hidden.has(actuatorKey(a.target, i + 1)));
+        const colors = parseActuatorColors(this.state.rxData.actuatorColors);
+        // Attach the stable key (target OID, else "#<ordinal>") from the ORIGINAL position so per-actuator
+        // hide toggles and colours line up with the settings editor, then drop the hidden ones.
+        const list = this.actuators()
+            .map((a, i) => ({ ...a, key: actuatorKey(a.target, i + 1) }))
+            .filter(a => !hidden.has(a.key));
         if (!list.length) {
             return null;
         }
-        const colorOn = this.state.rxData.actColorOn || ACT_ON_DEFAULT;
-        const colorOff = this.state.rxData.actColorOff || ACT_OFF_DEFAULT;
         return (
             <div className="pp-actuators">
-                {list.map((a, i) => {
-                    const color = a.on ? colorOn : colorOff;
+                {list.map(a => {
+                    const color = actuatorColor(colors, a.key, a.on);
                     return (
                         <div
                             className="pp-act"
-                            key={`${a.target}:${i}`}
+                            key={a.key}
                         >
                             <span className="pp-act-icon">{a.icon || "⚙️"}</span>
                             <span className="pp-act-name">{a.name}</span>

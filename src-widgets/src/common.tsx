@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
+    Box,
     Checkbox,
     FormControl,
-    FormControlLabel,
-    FormGroup,
     InputLabel,
     MenuItem,
     Select,
@@ -243,6 +242,32 @@ export function hiddenActuatorSet(value: unknown): Set<string> {
     }
 }
 
+/** Default actuator wheel colours (current look): light green when on, muted green-grey when off. */
+export const ACT_ON_DEFAULT = "#a6e77d";
+export const ACT_OFF_DEFAULT = "#6b7669";
+
+/** Per-actuator wheel colour overrides, keyed like {@link actuatorKey}. */
+type ActColorMap = Record<string, { on?: string; off?: string }>;
+
+/** Parse the widget's `actuatorColors` data (a JSON object of per-actuator colours); tolerant of junk. */
+export function parseActuatorColors(value: unknown): ActColorMap {
+    if (typeof value !== "string" || !value.trim()) {
+        return {};
+    }
+    try {
+        const obj = JSON.parse(value) as unknown;
+        return obj && typeof obj === "object" && !Array.isArray(obj) ? (obj as ActColorMap) : {};
+    } catch {
+        return {};
+    }
+}
+
+/** Resolve one actuator's on/off wheel colour: its per-actuator override, else the shared default. */
+export function actuatorColor(colors: ActColorMap, key: string, on: boolean): string {
+    const c = colors[key];
+    return (on ? c?.on : c?.off) || (on ? ACT_ON_DEFAULT : ACT_OFF_DEFAULT);
+}
+
 interface ActuatorDef {
     key: string;
     name: string;
@@ -278,8 +303,26 @@ async function readPumpActuators(socket: SocketLike, instance: string, pumpId: s
     }
 }
 
-/** Per-actuator show/hide switches for the widget settings (data.hiddenActuators = JSON array of keys). */
-function ActuatorVisibility(props: {
+/** A compact per-actuator wheel-colour swatch (native colour input with a tooltip title). */
+function ColorSwatch(props: { title: string; value: string; onChange: (v: string) => void }): React.JSX.Element {
+    return (
+        <input
+            type="color"
+            title={props.title}
+            aria-label={props.title}
+            value={props.value}
+            onChange={e => props.onChange(e.target.value)}
+            style={{ width: 26, height: 22, padding: 0, border: "none", background: "none", cursor: "pointer" }}
+        />
+    );
+}
+
+/**
+ * Per-actuator settings for the widget: for each actuator window of the selected pump, a show/hide
+ * checkbox plus its own **on / off wheel colours**. Writes `hiddenActuators` (JSON array of keys) and
+ * `actuatorColors` (JSON object keyed by actuator).
+ */
+function ActuatorSettings(props: {
     socket: SocketLike;
     data: WidgetData;
     onDataChange: (newData: WidgetData) => void;
@@ -298,6 +341,7 @@ function ActuatorVisibility(props: {
     }, [socket, instance, pumpId]);
 
     const hidden = hiddenActuatorSet(data.hiddenActuators);
+    const colors = parseActuatorColors(data.actuatorColors);
     const toggle = (key: string, show: boolean): void => {
         const next = new Set(hidden);
         if (show) {
@@ -307,32 +351,49 @@ function ActuatorVisibility(props: {
         }
         onDataChange({ ...data, hiddenActuators: JSON.stringify([...next]) });
     };
+    const setColor = (key: string, which: "on" | "off", value: string): void => {
+        const next: ActColorMap = { ...colors, [key]: { ...colors[key], [which]: value } };
+        onDataChange({ ...data, actuatorColors: JSON.stringify(next) });
+    };
 
     if (!acts.length) {
-        return (
-            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>{tr("no_actuators")}</Typography>
-        );
+        return <Typography sx={{ fontSize: 12, color: "text.secondary" }}>{tr("no_actuators")}</Typography>;
     }
     return (
-        <FormGroup>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
             {acts.map(a => (
-                <FormControlLabel
+                <Box
                     key={a.key}
-                    control={
-                        <Checkbox
-                            size="small"
-                            checked={!hidden.has(a.key)}
-                            onChange={e => toggle(a.key, e.target.checked)}
-                        />
-                    }
-                    label={`${a.icon} ${a.name}`}
-                />
+                    sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                >
+                    <Checkbox
+                        size="small"
+                        sx={{ p: 0.5 }}
+                        checked={!hidden.has(a.key)}
+                        onChange={e => toggle(a.key, e.target.checked)}
+                    />
+                    <Box
+                        sx={{ flex: 1, minWidth: 0, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    >
+                        {a.icon} {a.name}
+                    </Box>
+                    <ColorSwatch
+                        title={tr("act_color_on")}
+                        value={actuatorColor(colors, a.key, true)}
+                        onChange={v => setColor(a.key, "on", v)}
+                    />
+                    <ColorSwatch
+                        title={tr("act_color_off")}
+                        value={actuatorColor(colors, a.key, false)}
+                        onChange={v => setColor(a.key, "off", v)}
+                    />
+                </Box>
             ))}
-        </FormGroup>
+        </Box>
     );
 }
 
-/** A widget visAttrs field (type custom) rendering the per-actuator visibility switches. */
+/** A widget visAttrs field (type custom) rendering the per-actuator show/colour settings. */
 export function actuatorVisibilityField(): RxWidgetInfoAttributesField {
     return {
         name: "hiddenActuators",
@@ -344,7 +405,7 @@ export function actuatorVisibilityField(): RxWidgetInfoAttributesField {
             onDataChange: (newData: WidgetData) => void,
             compProps: RxWidgetInfoCustomComponentProperties,
         ): React.JSX.Element => (
-            <ActuatorVisibility
+            <ActuatorSettings
                 socket={compProps.context.socket as unknown as SocketLike}
                 data={data}
                 onDataChange={onDataChange}
