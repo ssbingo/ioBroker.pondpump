@@ -45,6 +45,21 @@ function minuteToHhmm(minute) {
   const m = minute % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
+function fmtNum(v) {
+  return v === void 0 || !Number.isFinite(v) ? "n/a" : String(Math.round(v * 100) / 100);
+}
+function fmtSources(sources) {
+  const entries = Object.entries(sources);
+  if (!entries.length) {
+    return "(none)";
+  }
+  return entries.map(([id, v]) => `${id}=${fmtNum(v)}`).join(", ");
+}
+function fmtAstro(astro, nowMin) {
+  const sr = astro.sunriseMin === null ? "n/a" : minuteToHhmm(astro.sunriseMin);
+  const ss = astro.sunsetMin === null ? "n/a" : minuteToHhmm(astro.sunsetMin);
+  return `sunrise=${sr} sunset=${ss} isDay=${activeWindowIsDay(astro, nowMin)}`;
+}
 function minuteToTodayTs(minute) {
   if (minute === null) {
     return 0;
@@ -761,9 +776,14 @@ class Pondpump extends utils.Adapter {
       const sys = await this.getForeignObjectAsync("system.config");
       const common = (_a = sys == null ? void 0 : sys.common) != null ? _a : {};
       this.systemCoords = (0, import_astro.toCoordinates)(common.latitude, common.longitude);
-    } catch {
+    } catch (e) {
       this.systemCoords = null;
+      this.log.debug(
+        `[astro] could not read system.config coordinates: ${e instanceof Error ? e.message : String(e)}`
+      );
     }
+    const sysStr = this.systemCoords ? `${this.systemCoords.lat.toFixed(5)}, ${this.systemCoords.lon.toFixed(5)}` : "(not set)";
+    this.log.debug(`[astro] location mode = ${this.locationMode}; system coords = ${sysStr}`);
     await this.recomputeAstro();
     this.scheduleMidnightRecalc();
   }
@@ -802,6 +822,10 @@ class Pondpump extends utils.Adapter {
       await this.setState(`${base}.sunset`, { val: sunset, ack: true });
       await this.setState(`${base}.sunriseTs`, { val: minuteToTodayTs(astro.sunriseMin), ack: true });
       await this.setState(`${base}.sunsetTs`, { val: minuteToTodayTs(astro.sunsetMin), ack: true });
+      const locStr = coords ? `${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}` : "(unresolved \u2192 astro windows inactive)";
+      this.log.debug(
+        `[astro] pump ${deviceNumber}: location = ${locStr}; sunrise=${sunrise || "n/a"} sunset=${sunset || "n/a"}`
+      );
     }
     if (this.pumpControl.size) {
       this.log.debug(`[astro] recomputed sunrise/sunset for ${this.pumpControl.size} pump(s)`);
@@ -837,17 +861,20 @@ class Pondpump extends utils.Adapter {
     const rawQuery = (_a = obj.message) == null ? void 0 : _a.query;
     const query = typeof rawQuery === "string" ? rawQuery.trim() : "";
     if (!query) {
+      this.log.debug("[geocode] rejected an empty query");
       this.sendTo(obj.from, obj.command, { error: "empty query" }, obj.callback);
       return;
     }
     try {
       const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+      this.log.debug(`[geocode] resolving "${query}" via Nominatim (timeout ${GEOCODE_TIMEOUT_MS} ms)`);
       const res = await fetch(url, {
         headers: { "User-Agent": `ioBroker.pondpump/${this.version || "0"}` },
         signal: AbortSignal.timeout(GEOCODE_TIMEOUT_MS)
       });
       const data = await res.json();
       if (Array.isArray(data) && data.length) {
+        this.log.debug(`[geocode] "${query}" \u2192 ${data[0].lat}, ${data[0].lon} (${data[0].display_name})`);
         this.sendTo(
           obj.from,
           obj.command,
@@ -855,9 +882,11 @@ class Pondpump extends utils.Adapter {
           obj.callback
         );
       } else {
+        this.log.debug(`[geocode] "${query}" \u2192 no result from Nominatim`);
         this.sendTo(obj.from, obj.command, { error: "no location found" }, obj.callback);
       }
     } catch (e) {
+      this.log.warn(`[geocode] lookup for "${query}" failed: ${e instanceof Error ? e.message : String(e)}`);
       this.sendTo(obj.from, obj.command, { error: e instanceof Error ? e.message : String(e) }, obj.callback);
     }
   }
@@ -1004,7 +1033,7 @@ class Pondpump extends utils.Adapter {
    * When a pump is still ramping (Phase 12) the tick is shortened so the ramp continues promptly.
    */
   async runScheduler() {
-    var _a, _b;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     if (this.stopping) {
       return;
     }
@@ -1013,18 +1042,29 @@ class Pondpump extends utils.Adapter {
     const nowMin = now.getHours() * 60 + now.getMinutes();
     let nextChange = 60;
     const rawSources = await this.readScheduleSources();
+    this.log.debug(
+      `[schedule] tick @ ${minuteToHhmm(nowMin)} (nowMin=${nowMin}) \u2014 raw sources: ${fmtSources(rawSources)}`
+    );
     for (const [dnStr, cfg] of Object.entries(this.schedules)) {
       if (!(cfg == null ? void 0 : cfg.enabled) || !(0, import_schedule.validatePlans)(cfg.plans || []).valid) {
         continue;
       }
       const deviceNumber = Number(dnStr);
       if (!this.pumpControl.has(deviceNumber)) {
+        this.log.debug(`[schedule] pump ${deviceNumber}: not discovered yet \u2014 skipping this tick`);
         continue;
       }
       const rt = this.getScheduleRuntime(deviceNumber);
       const sources = this.smoothedSources(cfg, rawSources, rt, nowMs);
       const astro = (_a = this.pumpAstro.get(deviceNumber)) != null ? _a : import_schedule.NO_ASTRO;
-      const decision = (0, import_schedule.decideTarget)(cfg, nowMin, sources, astro);
+      const curveSrc = ((_b = cfg.curve) == null ? void 0 : _b.enabled) ? cfg.curve.source : void 0;
+      const tempInfo = curveSrc ? `temp[${curveSrc}] raw=${fmtNum(rawSources[curveSrc])} smoothed=${fmtNum(rt.smoothedTemp)} mapped=${fmtNum(rt.mappedTemp)} (\u03C4=${(_c = cfg.smoothingHours) != null ? _c : 0}h, hystK=${(_d = cfg.hysteresisK) != null ? _d : 0})` : "no temperature curve";
+      this.log.debug(
+        `[schedule] pump ${deviceNumber} inputs: ${tempInfo}; astro ${fmtAstro(astro, nowMin)}; priority=${(_e = cfg.conditionPriority) != null ? _e : "override"} minPower=${(_f = cfg.minPower) != null ? _f : 0} maxPower=${(_g = cfg.maxPower) != null ? _g : 100}`
+      );
+      const trace = [];
+      const decision = (0, import_schedule.decideTarget)(cfg, nowMin, sources, astro, trace);
+      this.log.debug(`[schedule] pump ${deviceNumber} decision: ${trace.join(" | ")}`);
       await this.setState(`pumps.${deviceNumber}.astro.isDay`, {
         val: !!activeWindowIsDay(astro, nowMin),
         ack: true
@@ -1032,9 +1072,12 @@ class Pondpump extends utils.Adapter {
       this.warnFailSafe(deviceNumber, cfg, decision, rt);
       await this.warnSfcConflict(deviceNumber, cfg, decision, rt);
       let resolvedPower;
-      const rampPph = (_b = cfg.rampPercentPerHour) != null ? _b : 0;
+      const rampPph = (_h = cfg.rampPercentPerHour) != null ? _h : 0;
       if (decision.power === "hold") {
         resolvedPower = rt.appliedPower;
+        this.log.debug(
+          `[schedule] pump ${deviceNumber}: hold \u2014 freezing at ${fmtNum(rt.appliedPower)}% (a frost rule matched)`
+        );
       } else if (rt.appliedPower === void 0 || !(rampPph > 0)) {
         resolvedPower = decision.power;
       } else {
@@ -1045,12 +1088,20 @@ class Pondpump extends utils.Adapter {
         resolvedPower = Math.round((0, import_schedule.rampTowards)(rt.appliedPower, decision.power, maxStep));
         if (resolvedPower !== decision.power) {
           nextChange = Math.min(nextChange, rampMinutes);
+          this.log.debug(
+            `[schedule] pump ${deviceNumber}: ramping ${rt.appliedPower}% \u2192 ${decision.power}% (${rampPph}%/h, max step ${Math.round(maxStep)}%): applying ${resolvedPower}% this step`
+          );
         }
       }
       await this.applyScheduleTarget(deviceNumber, decision.sfc, resolvedPower, rt, nowMs);
       await this.writeActuators(decision.actuators);
-      nextChange = Math.min(nextChange, (0, import_schedule.minutesUntilNextChange)(cfg.plans || [], nowMin, astro));
+      const pumpNext = (0, import_schedule.minutesUntilNextChange)(cfg.plans || [], nowMin, astro);
+      this.log.debug(
+        `[schedule] pump ${deviceNumber}: next window boundary in ${pumpNext} min (\u2248 ${minuteToHhmm((nowMin + pumpNext) % 1440)})`
+      );
+      nextChange = Math.min(nextChange, pumpNext);
     }
+    this.log.debug(`[schedule] tick done \u2014 next re-evaluation in ${Math.max(1, nextChange)} min`);
     const delayMs = Math.max(1, nextChange) * 6e4 + 2e3;
     this.scheduleTimer = this.setTimeout(() => {
       this.scheduleTimer = void 0;
@@ -1110,6 +1161,7 @@ class Pondpump extends utils.Adapter {
   async writeActuators(actuators) {
     for (const a of actuators) {
       if (this.lastActuatorValue.get(a.target) === a.value) {
+        this.log.debug(`[schedule] actuator ${a.target} unchanged (${a.value}) \u2014 nothing sent`);
         continue;
       }
       try {
@@ -1137,6 +1189,7 @@ class Pondpump extends utils.Adapter {
   async applyScheduleTarget(deviceNumber, sfc, power, rt, nowMs) {
     const key = sfc ? "sfc=true" : `sfc=false;power=${power != null ? power : "hold"}`;
     if (this.lastScheduleTarget.get(deviceNumber) === key) {
+      this.log.debug(`[schedule] pump ${deviceNumber}: target unchanged (${key}) \u2014 nothing sent`);
       return;
     }
     this.lastScheduleTarget.set(deviceNumber, key);

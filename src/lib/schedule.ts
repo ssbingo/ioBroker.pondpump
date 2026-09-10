@@ -583,16 +583,21 @@ export function collectSourceOids(config: PumpScheduleConfig): string[] {
  * rules. With an empty `sources` map and no curve/rules the result equals the plain time-window
  * behaviour. Smoothing, hysteresis and ramping of the applied value are the backend's job.
  *
+ * When a `trace` array is passed, a human-readable step is appended at each decision point (for the
+ * backend's debug log); it does not affect the result.
+ *
  * @param config - the pump's scheduling configuration
  * @param nowMin - current minute-of-day (0..1439)
  * @param sources - current numeric values of the referenced state ids (booleans as 1/0)
  * @param astro - resolved astro times for the day (for sunrise/sunset window bounds)
+ * @param trace - optional array that collects a human-readable breakdown of the decision
  */
 export function decideTarget(
     config: PumpScheduleConfig,
     nowMin: number,
     sources: Record<string, number> = {},
     astro: AstroTimes = NO_ASTRO,
+    trace?: string[],
 ): ScheduleDecision {
     const window = activeWindow(
         config.plans.filter(p => p.mode !== "actuator"),
@@ -612,9 +617,21 @@ export function decideTarget(
         base = curve?.target ?? windowTarget(config, nowMin, astro);
         failSafe = !!curve?.failSafe;
     }
+    if (trace) {
+        const from = window ? `window ${window.start}-${window.end}` : "no window";
+        const curveStr = curve
+            ? curve.failSafe
+                ? "curve FAIL-SAFE 100% (source missing)"
+                : `curve ${curve.target.power}%`
+            : "no curve";
+        trace.push(`base=${base.power}% sfc=${base.sfc} (priority=${priority}, ${from}, ${curveStr})`);
+    }
 
     let sfc = base.sfc;
     let power = Math.max(base.power, clampPercent(config.minPower));
+    if (trace && config.minPower !== undefined && power !== base.power) {
+        trace.push(`minPower floor → ${power}%`);
+    }
 
     // Night protection (research): during the astronomical night, if the water is warm enough, do not
     // let the flow drop below the floor — the oxygen minimum is at night.
@@ -623,7 +640,15 @@ export function decideTarget(
         const temp = config.curve?.source ? sources[config.curve.source] : undefined;
         const warmEnough = temp === undefined || !Number.isFinite(temp) || temp >= (np.minWaterTemp ?? 18);
         if (warmEnough) {
+            const before = power;
             power = Math.max(power, np.floorPower === undefined ? 100 : clampPercent(np.floorPower));
+            if (trace) {
+                trace.push(
+                    `night protection active (temp=${temp ?? "n/a"} ≥ ${np.minWaterTemp ?? 18}): ${before}% → ${power}%`,
+                );
+            }
+        } else if (trace) {
+            trace.push(`night protection skipped (temp=${temp} < ${np.minWaterTemp ?? 18})`);
         }
     }
 
@@ -635,6 +660,9 @@ export function decideTarget(
         const value = sources[rule.source];
         if (value === undefined || !Number.isFinite(value) || !compareValue(value, rule.cmp, rule.threshold)) {
             continue;
+        }
+        if (trace) {
+            trace.push(`rule ${rule.source} ${rule.cmp} ${rule.threshold} (=${value}) → ${rule.effect}`);
         }
         switch (rule.effect) {
             case "raisePower": {
@@ -664,14 +692,25 @@ export function decideTarget(
     }
 
     // "actuator" windows drive external states independently of the pump power/SFC decision.
-    actuators.push(...actuatorWrites(config.plans, nowMin, astro));
+    const windowActuators = actuatorWrites(config.plans, nowMin, astro);
+    actuators.push(...windowActuators);
+    if (trace && windowActuators.length) {
+        trace.push(`actuator windows: ${windowActuators.map(a => `${a.target}=${a.value}`).join(", ")}`);
+    }
 
     // maxPower is a hard ceiling applied last — it caps the curve, every raise/boost and the fail-safe.
     const maxPower = config.maxPower === undefined ? 100 : clampPercent(config.maxPower);
+    if (trace && power > maxPower) {
+        trace.push(`maxPower cap ${maxPower}% (was ${power}%)`);
+    }
     power = Math.min(power, maxPower);
 
     // A frost "hold" freezes the pump — but an explicit raise/boost still wins (raising is the safe error).
-    return { sfc, power: hold && !raised ? "hold" : power, actuators, failSafe };
+    const finalPower = hold && !raised ? "hold" : power;
+    if (trace) {
+        trace.push(`→ power=${finalPower} sfc=${sfc}${failSafe ? " FAIL-SAFE" : ""}`);
+    }
+    return { sfc, power: finalPower, actuators, failSafe };
 }
 
 /**

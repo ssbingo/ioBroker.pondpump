@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.9.1",
+        "version": "0.10.0",
         "news": {
-            "0.9.1": {
-                "en": "UI: the location map now shows a clear hint when its map tiles are blocked (e.g. by the admin CSP) — the location stays settable by clicking/dragging the marker or via coordinates/address search.",
-                "de": "UI: Die Standort-Karte zeigt jetzt einen klaren Hinweis, wenn die Karten-Kacheln blockiert sind (z. B. durch die Admin-CSP) — der Standort bleibt per Klick/Marker-Ziehen oder über Koordinaten/Adress-Suche setzbar.",
-                "ru": "Интерфейс: карта местоположения теперь показывает понятную подсказку, если тайлы заблокированы (например, CSP админки) — местоположение по-прежнему задаётся кликом/перетаскиванием маркера или через координаты/поиск адреса.",
-                "pt": "UI: o mapa de localização mostra agora uma indicação clara quando os mosaicos estão bloqueados (p. ex. pela CSP do admin) — a localização continua definível clicando/arrastando o marcador ou por coordenadas/pesquisa de endereço.",
-                "nl": "UI: de locatiekaart toont nu een duidelijke hint wanneer de kaarttegels geblokkeerd zijn (bijv. door de admin-CSP) — de locatie blijft instelbaar via klikken/slepen of coördinaten/adres zoeken.",
-                "fr": "UI : la carte d'emplacement affiche désormais un message clair si ses tuiles sont bloquées (p. ex. par la CSP de l'admin) — l'emplacement reste définissable par clic/déplacement du marqueur ou via les coordonnées/recherche d'adresse.",
-                "it": "UI: la mappa della posizione mostra ora un chiaro avviso quando le tessere sono bloccate (es. dalla CSP dell'admin) — la posizione resta impostabile cliccando/trascinando il segnaposto o tramite coordinate/ricerca indirizzo.",
-                "es": "UI: el mapa de ubicación ahora muestra un aviso claro cuando sus mosaicos están bloqueados (p. ej. por la CSP del admin) — la ubicación sigue siendo configurable mediante clic/arrastre del marcador o coordenadas/búsqueda de dirección.",
-                "pl": "UI: mapa lokalizacji pokazuje teraz czytelną wskazówkę, gdy kafelki są zablokowane (np. przez CSP admina) — lokalizację nadal można ustawić klikając/przeciągając znacznik lub przez współrzędne/wyszukiwanie adresu.",
-                "uk": "Інтерфейс: карта розташування тепер показує зрозумілу підказку, коли плитки заблоковані (напр., CSP адмінки) — розташування все одно можна задати кліком/перетягуванням маркера або через координати/пошук адреси.",
-                "zh-cn": "界面：当地图瓦片被屏蔽（例如被管理界面的 CSP 阻止）时，位置地图现在会显示清晰提示——仍可通过点击/拖动标记或坐标/地址搜索设置位置。"
+            "0.10.0": {
+                "en": "Debugging: with the log level on debug, the scheduler now logs the complete decision chain per pump (inputs, every step, final power/SFC, ramp/hold, next tick) plus location and geocoding. Secrets are never logged.",
+                "de": "Debugging: Mit Loglevel „debug“ protokolliert der Scheduler jetzt die komplette Entscheidungskette je Pumpe (Eingänge, jeden Schritt, finale Leistung/SFC, Rampe/Halten, nächste Auswertung) sowie Standort und Geocoding. Secrets werden nie geloggt.",
+                "ru": "Отладка: при уровне журнала «debug» планировщик теперь записывает полную цепочку решений по каждому насосу (входы, каждый шаг, итоговую мощность/SFC, рампу/удержание, следующий тик), а также местоположение и геокодирование. Секреты не логируются.",
+                "pt": "Depuração: com o nível de log em «debug», o agendador regista agora toda a cadeia de decisão por bomba (entradas, cada passo, potência/SFC final, rampa/retenção, próximo ciclo) além da localização e geocodificação. Segredos nunca são registados.",
+                "nl": "Debugging: met logniveau „debug” logt de scheduler nu de volledige beslissingsketen per pomp (invoer, elke stap, uiteindelijke vermogen/SFC, ramp/hold, volgende tick) plus locatie en geocodering. Geheimen worden nooit gelogd.",
+                "fr": "Débogage : avec le niveau de log « debug », le planificateur journalise désormais toute la chaîne de décision par pompe (entrées, chaque étape, puissance/SFC finale, rampe/maintien, prochain cycle) ainsi que la localisation et le géocodage. Les secrets ne sont jamais journalisés.",
+                "it": "Debug: con livello di log «debug» lo scheduler registra ora l'intera catena decisionale per pompa (ingressi, ogni passo, potenza/SFC finale, rampa/mantenimento, prossimo tick) oltre a posizione e geocodifica. I segreti non vengono mai registrati.",
+                "es": "Depuración: con nivel de log «debug», el programador registra ahora toda la cadena de decisión por bomba (entradas, cada paso, potencia/SFC final, rampa/retención, próximo ciclo) además de ubicación y geocodificación. Los secretos nunca se registran.",
+                "pl": "Debugowanie: przy poziomie logu „debug” harmonogram zapisuje teraz pełny łańcuch decyzji dla każdej pompy (wejścia, każdy krok, końcowa moc/SFC, rampa/wstrzymanie, następny cykl) oraz lokalizację i geokodowanie. Sekrety nie są nigdy logowane.",
+                "uk": "Налагодження: за рівнем логу «debug» планувальник тепер записує повний ланцюг рішень для кожного насоса (входи, кожен крок, кінцеву потужність/SFC, рампу/утримання, наступний тік), а також розташування та геокодування. Секрети ніколи не логуються.",
+                "zh-cn": "调试：将日志级别设为 debug 后，调度器现在会记录每台水泵的完整决策链（输入、每一步、最终功率/SFC、渐变/保持、下次评估）以及位置和地理编码。绝不记录机密信息。"
             }
         },
         "titleLang": {

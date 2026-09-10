@@ -525,10 +525,22 @@ Nicht vergessen zu **speichern**.
 | Log meldet **AUTH FAILED** | Der Refresh-Token ist ungültig/abgelaufen → einen neuen abfangen. |
 | Keine Pumpen erscheinen | Sind die Pumpen in der **OASE-App** online? Der Adapter spiegelt das Cloud-Inventar. |
 | Befehle bewirken nichts | Warte auf die **erste erfolgreiche Abfrage** (dann lernt der Adapter die Pumpen-Adressierung). Prüfe das Log. |
-| Mehr Details gewünscht | Setze das **Log-Level der Instanz auf `debug`** — jeder Schritt wird mit einem Tag wie `[poll]`, `[cloud/auth]`, `[cloud/cmd]` protokolliert. Geheimnisse werden nie geloggt. |
+| Mehr Details gewünscht | Setze das **Log-Level der Instanz auf `debug`** — jeder Schritt wird mit einem Tag wie `[poll]`, `[cloud/auth]`, `[cloud/cmd]`, `[schedule]`, `[astro]`, `[geocode]` protokolliert. Geheimnisse werden nie geloggt. |
+| Eine Pumpe läuft mit unerwarteter Leistung | Im `debug`-Level protokolliert jeder Scheduler-Durchlauf die **komplette Entscheidungskette** der Pumpe — siehe unten. |
 
 Die Log-Zeilen sind nach Komponente getaggt, sodass sich jedes Problem eindeutig eingrenzen lässt.
 Füge bei einer Fehlermeldung das Debug-Log rund um den Fehler bei.
+
+### Das Scheduler-Entscheidungslog lesen
+
+Im `debug`-Level gibt jede Scheduler-Auswertung je Pumpe exakt aus, warum sie die Leistung/SFC so gewählt hat:
+
+- eine **tick**-Zeile mit der aktuellen Uhrzeit und allen Roh-Quellwerten,
+- eine **inputs**-Zeile: rohe / geglättete / gemappte Wassertemperatur (mit Glättung τ und Hysterese K), der aufgelöste Sonnenauf-/-untergang und Tag/Nacht sowie Priorität / Min / Max-Leistung,
+- eine **decision**-Zeile: die Basis (aus Kurve oder aktivem Fenster), die Q_min-Untergrenze, der Nachtschutz, jede greifende Wetterregel, die Aktor-Fenster und der Q_max-Deckel bis zur finalen Leistung/SFC,
+- der **Rampen-/Halte**-Status und der **nächste Auswertungs**-Zeitpunkt.
+
+So verrät eine einzige `[schedule] pump 1 decision: …`-Zeile die komplette Begründung — kein Rätselraten mehr, warum eine Pumpe auf einem bestimmten Prozentwert steht.
 
 ---
 

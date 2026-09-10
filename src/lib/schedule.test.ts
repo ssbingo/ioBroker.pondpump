@@ -333,6 +333,47 @@ describe("schedule conditions (Phase 11)", () => {
         });
     });
 
+    describe("decideTarget — decision trace (debug logging)", () => {
+        it("records each decision step without changing the result", () => {
+            const c = cfg({
+                minPower: 40,
+                maxPower: 90,
+                curve: {
+                    enabled: true,
+                    source: TEMP,
+                    points: [
+                        { temp: 0, power: 30 },
+                        { temp: 30, power: 100 },
+                    ],
+                },
+                rules: [{ source: RAIN, cmp: "eq", threshold: 1, effect: "boostMax" }],
+            });
+            const trace: string[] = [];
+            const d = decideTarget(c, at(12), { [TEMP]: 30, [RAIN]: 1 }, undefined, trace);
+            expect(d.power).to.equal(90); // curve 100, boost 100, capped at maxPower 90
+            const joined = trace.join(" | ");
+            expect(joined).to.match(/^base=/); // starts with the base line
+            expect(joined).to.include(`rule ${RAIN} eq 1`); // the matching rule is traced
+            expect(joined).to.include("maxPower cap 90%"); // the ceiling is traced
+            expect(joined).to.include("→ power=90"); // ends with the final line
+        });
+        it("traces the fail-safe when the curve source is missing", () => {
+            const c = cfg({
+                curve: {
+                    enabled: true,
+                    source: TEMP,
+                    points: [
+                        { temp: 0, power: 20 },
+                        { temp: 30, power: 100 },
+                    ],
+                },
+            });
+            const trace: string[] = [];
+            decideTarget(c, at(12), {}, undefined, trace);
+            expect(trace.join(" | ")).to.include("FAIL-SAFE");
+        });
+    });
+
     describe("decideTarget — night protection (Phase 13)", () => {
         const astroDay: AstroTimes = { sunriseMin: at(6), sunsetMin: at(20) }; // day 06:00–20:00
         const flatCurve = {

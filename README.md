@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.10.0 (2026-09-10)
+
+- (ssbingo) **Most detailed scheduler debug logging.** With the instance log level on `debug`, every scheduler evaluation now logs the **complete decision chain per pump** — the inputs (raw/smoothed/mapped water temperature, all source states, sunrise/sunset, day/night), each decision step (base from curve/window, the Q_min floor, night protection, every matching weather rule, the actuator windows and the Q_max ceiling) down to the final power/SFC, plus the ramp/hold state and the next re-evaluation time. Location resolution and address geocoding are logged as well. Secrets (passwords/tokens) are never logged. The pure decision core gained an optional decision-trace output for this (covered by unit tests)
+
 ### 0.9.1 (2026-09-10)
 
 - (ssbingo) UI robustness: the location map now shows a **clear hint when its map tiles fail to load** (e.g. the admin CSP blocking the external tile host) — the location stays fully settable by clicking/dragging the marker or via the coordinate fields and address search

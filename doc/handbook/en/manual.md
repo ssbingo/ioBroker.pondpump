@@ -507,10 +507,22 @@ Don't forget to **save**.
 | Log says **AUTH FAILED** | The refresh token is invalid/expired → capture a new one. |
 | No pumps appear | Are the pumps online in the **OASE app**? The adapter mirrors the cloud inventory. |
 | Commands do nothing | Wait for the **first successful poll** (the adapter learns the pump addressing then). Check the log. |
-| Want more detail | Set the instance **log level to `debug`** — every step is logged with a tag like `[poll]`, `[cloud/auth]`, `[cloud/cmd]`. Secrets are never logged. |
+| Want more detail | Set the instance **log level to `debug`** — every step is logged with a tag like `[poll]`, `[cloud/auth]`, `[cloud/cmd]`, `[schedule]`, `[astro]`, `[geocode]`. Secrets are never logged. |
+| A pump runs at an unexpected power | On `debug`, each scheduler tick logs the **full decision chain** for the pump — see below. |
 
 The log lines are tagged by component so any problem can be pinpointed. When reporting an issue,
 include the debug log around the failure.
+
+### Reading the scheduler decision log
+
+On `debug` every scheduler evaluation prints, per pump, exactly why it chose the power/SFC it did:
+
+- a **tick** line with the current time and all raw source values,
+- an **inputs** line: raw / smoothed / mapped water temperature (with the smoothing τ and hysteresis K), the resolved sunrise/sunset and day/night, and the priority / min / max power,
+- a **decision** line: the base (from the curve or the active window), the Q_min floor, night protection, every weather rule that matched, the actuator windows and the Q_max ceiling, ending in the final power/SFC,
+- the **ramp/hold** state and the **next re-evaluation** time.
+
+So a single `[schedule] pump 1 decision: …` line tells you the complete reasoning — no guessing why a pump sits at a given percentage.
 
 ---
 

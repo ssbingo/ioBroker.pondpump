@@ -253,8 +253,8 @@ function collectSourceOids(config) {
   }
   return [...ids];
 }
-function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO) {
-  var _a, _b, _c, _d, _e, _f, _g, _h;
+function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO, trace) {
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
   const window = activeWindow(
     config.plans.filter((p) => p.mode !== "actuator"),
     nowMin,
@@ -271,27 +271,46 @@ function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO) {
     base = (_c = curve == null ? void 0 : curve.target) != null ? _c : windowTarget(config, nowMin, astro);
     failSafe = !!(curve == null ? void 0 : curve.failSafe);
   }
+  if (trace) {
+    const from = window ? `window ${window.start}-${window.end}` : "no window";
+    const curveStr = curve ? curve.failSafe ? "curve FAIL-SAFE 100% (source missing)" : `curve ${curve.target.power}%` : "no curve";
+    trace.push(`base=${base.power}% sfc=${base.sfc} (priority=${priority}, ${from}, ${curveStr})`);
+  }
   let sfc = base.sfc;
   let power = Math.max(base.power, clampPercent(config.minPower));
+  if (trace && config.minPower !== void 0 && power !== base.power) {
+    trace.push(`minPower floor \u2192 ${power}%`);
+  }
   const np = config.nightProtection;
   if ((np == null ? void 0 : np.enabled) && isAstroDay(astro, nowMin) === false) {
     const temp = ((_d = config.curve) == null ? void 0 : _d.source) ? sources[config.curve.source] : void 0;
     const warmEnough = temp === void 0 || !Number.isFinite(temp) || temp >= ((_e = np.minWaterTemp) != null ? _e : 18);
     if (warmEnough) {
+      const before = power;
       power = Math.max(power, np.floorPower === void 0 ? 100 : clampPercent(np.floorPower));
+      if (trace) {
+        trace.push(
+          `night protection active (temp=${temp != null ? temp : "n/a"} \u2265 ${(_f = np.minWaterTemp) != null ? _f : 18}): ${before}% \u2192 ${power}%`
+        );
+      }
+    } else if (trace) {
+      trace.push(`night protection skipped (temp=${temp} < ${(_g = np.minWaterTemp) != null ? _g : 18})`);
     }
   }
   let hold = false;
   let raised = false;
   const actuators = [];
-  for (const rule of (_f = config.rules) != null ? _f : []) {
+  for (const rule of (_h = config.rules) != null ? _h : []) {
     const value = sources[rule.source];
     if (value === void 0 || !Number.isFinite(value) || !compareValue(value, rule.cmp, rule.threshold)) {
       continue;
     }
+    if (trace) {
+      trace.push(`rule ${rule.source} ${rule.cmp} ${rule.threshold} (=${value}) \u2192 ${rule.effect}`);
+    }
     switch (rule.effect) {
       case "raisePower": {
-        const raisedTo = clampPercent((_g = rule.power) != null ? _g : 100);
+        const raisedTo = clampPercent((_i = rule.power) != null ? _i : 100);
         if (raisedTo > power) {
           power = raisedTo;
           raised = true;
@@ -310,15 +329,26 @@ function decideTarget(config, nowMin, sources = {}, astro = NO_ASTRO) {
         break;
       case "setState":
         if (rule.target) {
-          actuators.push({ target: rule.target, value: (_h = rule.value) != null ? _h : true });
+          actuators.push({ target: rule.target, value: (_j = rule.value) != null ? _j : true });
         }
         break;
     }
   }
-  actuators.push(...actuatorWrites(config.plans, nowMin, astro));
+  const windowActuators = actuatorWrites(config.plans, nowMin, astro);
+  actuators.push(...windowActuators);
+  if (trace && windowActuators.length) {
+    trace.push(`actuator windows: ${windowActuators.map((a) => `${a.target}=${a.value}`).join(", ")}`);
+  }
   const maxPower = config.maxPower === void 0 ? 100 : clampPercent(config.maxPower);
+  if (trace && power > maxPower) {
+    trace.push(`maxPower cap ${maxPower}% (was ${power}%)`);
+  }
   power = Math.min(power, maxPower);
-  return { sfc, power: hold && !raised ? "hold" : power, actuators, failSafe };
+  const finalPower = hold && !raised ? "hold" : power;
+  if (trace) {
+    trace.push(`\u2192 power=${finalPower} sfc=${sfc}${failSafe ? " FAIL-SAFE" : ""}`);
+  }
+  return { sfc, power: finalPower, actuators, failSafe };
 }
 function rampTowards(current, target, maxStep) {
   if (!(maxStep > 0)) {
