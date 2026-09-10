@@ -4,6 +4,7 @@ import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetProps } from "@iobro
 
 import PumpWidgetBase, { type PumpBaseRxData, type PumpBaseState } from "./PumpWidgetBase";
 import { pondpumpCommonGroup, pumpChannelOf, pumpDeviceName } from "./common";
+import { renderImpeller, tempColor } from "./graphics";
 
 // Sub-states (relative to the pump device channel) this widget reads/commands.
 const REL_IDS = [
@@ -34,6 +35,7 @@ const QUICK_STEPS = [0, 25, 50, 75, 100];
 
 interface PumpSchedulerRxData extends PumpBaseRxData {
     accent: string;
+    animate: boolean;
     showControls: boolean;
     showTelemetry: boolean;
     noCard: boolean;
@@ -79,6 +81,7 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
                     label: "group_style",
                     fields: [
                         { name: "accent", type: "color", label: "accent", default: "#38aaff" },
+                        { name: "animate", type: "checkbox", label: "animate", default: true },
                         { name: "showControls", type: "checkbox", label: "show_controls", default: true },
                         { name: "showTelemetry", type: "checkbox", label: "show_telemetry", default: true },
                         { name: "noCard", type: "checkbox", label: "no_card", default: false },
@@ -180,24 +183,6 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
         return v === null ? "–" : v.toFixed(digits);
     }
 
-    /** Water-temperature colour on a pond-relevant 0–30 °C scale (cold blue → warm amber). */
-    // eslint-disable-next-line class-methods-use-this
-    private tempColor(t: number): string {
-        if (t < 8) {
-            return "#4aa8ff";
-        }
-        if (t < 14) {
-            return "#35c4c4";
-        }
-        if (t < 20) {
-            return "#63c76a";
-        }
-        if (t < 26) {
-            return "#ffca3a";
-        }
-        return "#ff8c42";
-    }
-
     /** Format a Unix-ms timestamp as local "HH:MM", or "–" when unset/invalid. */
     // eslint-disable-next-line class-methods-use-this
     private fmtTime(ts: number | null): string {
@@ -270,6 +255,7 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
         const t = (k: string): string => PumpScheduler.t(k);
         const accent = this.state.rxData.accent || "#38aaff";
         const noCard = this.state.rxData.noCard === true;
+        const animate = this.state.rxData.animate !== false;
         const showControls = this.state.rxData.showControls !== false;
         const showTelemetry = this.state.rxData.showTelemetry !== false;
         const styleVars = { ["--pp-accent"]: accent } as React.CSSProperties;
@@ -314,8 +300,9 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
                     <div className={`pp-badge ${badgeClass}`}>{badgeText}</div>
                 </div>
 
-                {/* hero: current output + scheduler target + on/off & day-night */}
+                {/* hero: a small (optionally animated) impeller + current output, target, state, day/night */}
                 <div className="pp-hero">
+                    <div className="pp-mini-impeller">{renderImpeller(animate && on, this.spinDuration(), accent, !on)}</div>
                     <div className="pp-hero-main">
                         <div className="pp-hero-pct">
                             {actual}
@@ -363,18 +350,16 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
 
                 {showTelemetry ? (
                     <div className="pp-values">
-                        {hasTemp ? (
-                            <div className="pp-val">
-                                <div
-                                    className="n"
-                                    style={{ color: this.tempColor(waterTemp) }}
-                                >
-                                    {this.fmt(waterTemp, 1)}
-                                    <span className="u">°C</span>
-                                </div>
-                                <div className="k">{t("lbl_water_temp")}</div>
+                        <div className="pp-val">
+                            <div
+                                className="n"
+                                style={hasTemp ? { color: tempColor(waterTemp) } : undefined}
+                            >
+                                {this.fmt(waterTemp, 1)}
+                                <span className="u">°C</span>
                             </div>
-                        ) : null}
+                            <div className="k">{t("lbl_water_temp")}</div>
+                        </div>
                         <div className="pp-val">
                             <div className="n">
                                 {this.fmt(this.num("telemetry.power"))}

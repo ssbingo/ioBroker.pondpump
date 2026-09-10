@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.11.1 (2026-09-10)
+
+- (ssbingo) **Widget refinements (feedback).** PumpVisual's water thermometer is now **smaller and more modern** (a slim, colour-coded design instead of the oversized one). The **Scheduler status** widget now always shows the **water temperature** next to power/speed and a **small, optionally-animated impeller** in the hero, and — importantly — reads its live values **robustly**: it fetches each state's current value first and subscribes per state, so a pump whose newer `schedule.*` states don't exist yet (older backend) no longer leaves the whole widget blank. Shared the impeller/thermometer graphics between both widgets (`graphics.tsx`)
+
 ### 0.11.0 (2026-09-10)
 
 - (ssbingo) **New "Scheduler status" vis-2 widget (`PumpScheduler`).** Select a pump and the widget shows, at a glance, what the built-in scheduler is doing with it: the current output and **target power**, a status badge (active / manual / fail-safe), **reason chips** (temperature curve, time window, base power, night protection, weather boost, frost hold, fail-safe), the **active window**, the **next change** time and the pump's **sunrise/sunset** and **water temperature** — plus live power/rpm and a control bar with on/off, quick power and SFC. Fed by new read-only `pumps.<n>.schedule.*` status states the scheduler publishes each tick (`controlled`, `targetPower`, `sfc`, `source`, `raised`, `nightProtection`, `hold`, `failSafe`, `window`, `nextChangeTs`)

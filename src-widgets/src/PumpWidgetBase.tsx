@@ -97,15 +97,21 @@ export default abstract class PumpWidgetBase<
             return;
         }
         this.subscribedIds = ids;
-        try {
-            await this.props.context.socket.subscribeState(ids, this.onPumpState);
-        } catch {
-            /* ignore */
-        }
+        // Read current values FIRST, each independently, so the widget renders its live values even if a
+        // later subscription is slow, rejected, or the state's object does not exist yet (e.g. the newer
+        // schedule.* states on an older backend). A single bad id must never blank out the whole widget.
         for (const id of ids) {
             try {
                 const st = await this.props.context.socket.getState(id);
                 this.applyState(id, st);
+            } catch {
+                /* a missing/unreadable state just stays null */
+            }
+        }
+        // Subscribe per id (not one array call) so one missing state can't block the others' updates.
+        for (const id of ids) {
+            try {
+                await this.props.context.socket.subscribeState(id, this.onPumpState);
             } catch {
                 /* ignore */
             }
@@ -114,10 +120,12 @@ export default abstract class PumpWidgetBase<
 
     protected unsubscribePump(): void {
         if (this.subscribedIds.length) {
-            try {
-                this.props.context.socket.unsubscribeState(this.subscribedIds, this.onPumpState);
-            } catch {
-                /* ignore */
+            for (const id of this.subscribedIds) {
+                try {
+                    this.props.context.socket.unsubscribeState(id, this.onPumpState);
+                } catch {
+                    /* ignore */
+                }
             }
             this.subscribedIds = [];
         }
@@ -189,5 +197,21 @@ export default abstract class PumpWidgetBase<
             return Math.max(0, Math.min(100, (rpm / this.rpmAt100) * 100));
         }
         return setpoint ?? 0;
+    }
+
+    /**
+     * Impeller rotation duration in seconds from the ACTUAL output (quantised to 10 % steps): faster
+     * pump → faster spin, 0 = standstill. Exponential mapping so neighbouring speeds stay distinct
+     * (10 % → ~3.7 s slow crawl, 50 % → ~1.1 s, 100 % → 0.25 s).
+     */
+    protected spinDuration(): number {
+        const pct = this.actualSpeedPct();
+        const step = Math.round(Math.max(0, Math.min(100, pct)) / 10) * 10; // 0,10,…,100
+        if (step <= 0) {
+            return 0;
+        }
+        const MAX_S = 5;
+        const MIN_S = 0.25;
+        return Math.round(MAX_S * Math.pow(MIN_S / MAX_S, step / 100) * 100) / 100;
     }
 }

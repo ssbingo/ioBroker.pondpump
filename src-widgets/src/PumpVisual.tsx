@@ -4,6 +4,7 @@ import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetProps } from "@iobro
 
 import PumpWidgetBase, { type PumpBaseRxData, type PumpBaseState } from "./PumpWidgetBase";
 import { pondpumpCommonGroup, pumpChannelOf } from "./common";
+import { renderImpeller, renderThermometer } from "./graphics";
 
 // Sub-states (relative to the pump device channel) this widget needs.
 const REL_IDS = [
@@ -124,105 +125,6 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
         return this.bool("control.on") || (this.num("telemetry.speed") ?? 0) > 0;
     }
 
-    /** Rotation duration in seconds, from the ACTUAL pump speed quantised to 10 % steps (0 = standstill). */
-    private spinDuration(): number {
-        // Use the real output (actualSpeedPct), so during SFC — where the device overrides the flow
-        // while the setpoint stays put — the animation still matches how fast the pump really runs.
-        const pct = this.actualSpeedPct();
-        const step = Math.round(Math.max(0, Math.min(100, pct)) / 10) * 10; // 0,10,…,100
-        if (step <= 0) {
-            return 0;
-        }
-        // Exponential mapping: every 10 % step is a constant ~0.74x of the previous duration, so
-        // neighbouring speeds stay clearly distinguishable across the whole range (a linear/inverse
-        // mapping compresses the fast end). 10 % → ~3.7 s (slow crawl), 50 % → ~1.1 s, 100 % → 0.25 s.
-        const MAX_S = 5;
-        const MIN_S = 0.25;
-        return Math.round(MAX_S * Math.pow(MIN_S / MAX_S, step / 100) * 100) / 100;
-    }
-
-    // eslint-disable-next-line class-methods-use-this
-    private renderImpeller(spin: boolean, dur: number, accent: string, crossed: boolean): React.JSX.Element {
-        const blade = "M60 47 C 50 43 48 29 54 15 C 57 11 63 11 66 15 C 72 29 70 43 60 47 Z";
-        const spinning = spin && dur > 0;
-        const style = spinning ? ({ ["--pp-dur"]: `${dur}s` } as React.CSSProperties) : undefined;
-        return (
-            <svg
-                viewBox="0 0 120 120"
-                role="img"
-            >
-                <defs>
-                    <radialGradient
-                        id="ppBlade"
-                        cx="0.5"
-                        cy="0.35"
-                        r="0.75"
-                    >
-                        <stop
-                            offset="0"
-                            stopColor={accent}
-                        />
-                        <stop
-                            offset="1"
-                            stopColor="#1b6fb0"
-                        />
-                    </radialGradient>
-                </defs>
-                <circle
-                    cx="60"
-                    cy="60"
-                    r="52"
-                    fill="rgba(255,255,255,.04)"
-                    stroke="rgba(255,255,255,.08)"
-                    strokeWidth="2"
-                />
-                <g
-                    className={spinning ? "pp-spin" : undefined}
-                    style={style}
-                >
-                    {[0, 60, 120, 180, 240, 300].map(a => (
-                        <path
-                            key={a}
-                            d={blade}
-                            transform={`rotate(${a} 60 60)`}
-                            fill="url(#ppBlade)"
-                            stroke="rgba(0,0,0,.25)"
-                            strokeWidth="1"
-                        />
-                    ))}
-                    <circle
-                        cx="60"
-                        cy="60"
-                        r="13"
-                        fill="#cfe8ff"
-                    />
-                    <circle
-                        cx="60"
-                        cy="60"
-                        r="6"
-                        fill="#7fb4e0"
-                    />
-                </g>
-                {crossed ? (
-                    <g className="pp-crossmark">
-                        <line
-                            x1="28"
-                            y1="28"
-                            x2="92"
-                            y2="92"
-                        />
-                        <line
-                            x1="92"
-                            y1="28"
-                            x2="28"
-                            y2="92"
-                        />
-                    </g>
-                ) : null}
-            </svg>
-        );
-    }
-
     // eslint-disable-next-line class-methods-use-this
     private renderIce(spin: boolean, dur: number): React.JSX.Element {
         // Speed-based like the impeller, so the crystal reflects the (SFC-driven) real pump speed.
@@ -303,76 +205,6 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
         return v === null ? "–" : v.toFixed(digits);
     }
 
-    /** Water-temperature colour on a pond-relevant 0–30 °C scale (cold blue → warm amber). */
-    // eslint-disable-next-line class-methods-use-this
-    private tempColor(t: number): string {
-        if (t < 8) {
-            return "#4aa8ff";
-        }
-        if (t < 14) {
-            return "#35c4c4";
-        }
-        if (t < 20) {
-            return "#63c76a";
-        }
-        if (t < 26) {
-            return "#ffca3a";
-        }
-        return "#ff8c42";
-    }
-
-    /** A filled, colour-coded thermometer whose mercury level reflects the temperature (0–30 °C scale). */
-    private renderThermometer(tempC: number): React.JSX.Element {
-        const frac = Math.max(0, Math.min(1, tempC / 30));
-        const color = this.tempColor(tempC);
-        const tubeTop = 16;
-        const tubeBottom = 84;
-        const fillTop = tubeBottom - frac * (tubeBottom - tubeTop);
-        return (
-            <svg
-                className="pp-thermo-svg"
-                viewBox="0 0 44 122"
-                role="img"
-                aria-label="water temperature"
-            >
-                {/* tube + bulb outline */}
-                <rect
-                    x="15"
-                    y="8"
-                    width="14"
-                    height="84"
-                    rx="7"
-                    fill="rgba(255,255,255,.05)"
-                    stroke="rgba(255,255,255,.22)"
-                    strokeWidth="2"
-                />
-                <circle
-                    cx="22"
-                    cy="101"
-                    r="14"
-                    fill="rgba(255,255,255,.05)"
-                    stroke="rgba(255,255,255,.22)"
-                    strokeWidth="2"
-                />
-                {/* mercury: bulb, stem up to the level */}
-                <circle
-                    cx="22"
-                    cy="101"
-                    r="10"
-                    fill={color}
-                />
-                <rect
-                    x="18"
-                    y={fillTop}
-                    width="8"
-                    height={101 - fillTop}
-                    rx="4"
-                    fill={color}
-                />
-            </svg>
-        );
-    }
-
     renderWidgetBody(props: RxRenderWidgetProps): React.JSX.Element {
         super.renderWidgetBody(props);
 
@@ -405,11 +237,11 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
 
         let graphic: React.JSX.Element;
         if (!running) {
-            graphic = this.renderImpeller(false, 0, accent, true);
+            graphic = renderImpeller(false, 0, accent, true);
         } else if (sfc) {
             graphic = this.renderIce(animate, dur);
         } else {
-            graphic = this.renderImpeller(animate, dur, accent, false);
+            graphic = renderImpeller(animate, dur, accent, false);
         }
 
         const badgeClass = !running ? "pp-badge--off" : sfc ? "pp-badge--sfc" : "pp-badge--on";
@@ -432,7 +264,7 @@ export default class PumpVisual extends PumpWidgetBase<PumpVisualRxData, PumpVis
                     <div className="pp-graphic">{graphic}</div>
                     {hasTemp ? (
                         <div className="pp-thermo">
-                            {this.renderThermometer(waterTemp)}
+                            {renderThermometer(waterTemp)}
                             <div className="pp-thermo-val">
                                 <span className="n">{waterTemp.toFixed(1)}</span>
                                 <span className="u">°C</span>

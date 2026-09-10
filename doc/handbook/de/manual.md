@@ -366,7 +366,8 @@ gerade mit der Pumpe macht — und **warum**:
 
 - Ein **Status-Abzeichen**: **Scheduler aktiv**, **Manuell / aus** (keine gültige Planung) oder
   **Notlauf** (Sensorausfall).
-- Die aktuelle **Ausgabe** in % groß dargestellt, dazu der Betriebszustand (Läuft/Aus/Saison-Modus),
+- Die aktuelle **Ausgabe** in % groß dargestellt — daneben ein **kleines Flügelrad**, das sich (optional
+  animiert) mit der realen Drehzahl dreht — dazu der Betriebszustand (Läuft/Aus/Saison-Modus),
   **Tag/Nacht** und die **Zielleistung** des Schedulers.
 - **Begründungs-Chips**: woraus die Basis kommt (**Temperaturkurve**, **Zeitfenster** oder
   **Grundlast**) und welche Modifikatoren gerade greifen (**Nachtschutz**, **Wetter-Boost**,

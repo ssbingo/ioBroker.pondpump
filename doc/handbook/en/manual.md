@@ -354,8 +354,9 @@ with the pump right now — and **why**:
 
 - A **status badge**: **Scheduler active**, **Manual / off** (no valid schedule) or **Fail-safe**
   (sensor loss).
-- The current **output** in % shown large, plus the running state (Running/Off/Seasonal mode),
-  **day/night**, and the scheduler's **target power**.
+- The current **output** in % shown large — next to a **small impeller** that spins (optionally
+  animated) with the real speed — plus the running state (Running/Off/Seasonal mode), **day/night**,
+  and the scheduler's **target power**.
 - **Reason chips**: where the base comes from (**temperature curve**, **time window** or **base
   power**) and which modifiers apply right now (**night protection**, **weather boost**, **frost
   hold**).
