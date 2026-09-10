@@ -373,6 +373,11 @@ gerade mit der Pumpe macht — und **warum**:
   **Grundlast**) und welche Modifikatoren gerade greifen (**Nachtschutz**, **Wetter-Boost**,
   **Frost-Halt**).
 - Das **aktive Fenster**, der Zeitpunkt der **nächsten Änderung** sowie **Sonnenauf-/-untergang**.
+- **Aktoren:** Ist im Zeitplan ein **Aktor-Fenster** konfiguriert (Wasserfall, Bachlauf,
+  Sauerstoffpumpe …), wird jeder Aktor **über der Telemetrie** zeilenweise als **Icon – Name –
+  Flügelrad** angezeigt. Name und Icon vergibst du im Zeitplan-Editor (Modus „Aktor"); ohne Namen
+  steht „Aktor 1", „Aktor 2" … Das kleine **hellgrüne Flügelrad** dreht sich (optional animiert),
+  solange der Aktor **an** ist, und steht still (gedimmt), wenn er aus ist.
 - **Wassertemperatur** (farbig), **Leistung** (W) und **Drehzahl** (rpm).
 - Eine **Steuerleiste** mit den Grundfunktionen (An/Aus, Leistungs-Schnellwahl, SFC). Ein Hinweis
   erinnert daran, dass der Scheduler manuelle Eingriffe beim nächsten Durchlauf wieder überschreiben

@@ -133,5 +133,7 @@
     "Actuator": "Aktor",
     "On value": "An-Wert",
     "Off value (blank = leave)": "Aus-Wert (leer = lassen)",
-    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Karten-Kacheln konnten nicht geladen werden (der Admin blockiert evtl. den externen Kachel-Server). Du kannst den Standort trotzdem per Klick/Marker-Ziehen oder über die Koordinaten und die Adress-Suche unten setzen."
+    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Karten-Kacheln konnten nicht geladen werden (der Admin blockiert evtl. den externen Kachel-Server). Du kannst den Standort trotzdem per Klick/Marker-Ziehen oder über die Koordinaten und die Adress-Suche unten setzen.",
+    "Actuator name": "Aktor-Name",
+    "Icon": "Icon"
 }

@@ -1170,6 +1170,10 @@ class Pondpump extends utils.Adapter {
     await this.setState(`${base}.failSafe`, { val: decision.failSafe, ack: true });
     await this.setState(`${base}.window`, { val: windowLabelOf(win, astro), ack: true });
     await this.setState(`${base}.nextChangeTs`, { val: nowMs + nextChangeMin * 6e4, ack: true });
+    await this.setState(`${base}.actuators`, {
+      val: JSON.stringify((0, import_schedule.describeActuators)(cfg.plans || [], nowMin, astro)),
+      ack: true
+    });
   }
   /**
    * Warn (once per episode) when the temperature curve is regulating but its source is missing.

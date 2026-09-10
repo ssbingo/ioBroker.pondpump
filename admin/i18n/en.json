@@ -133,5 +133,7 @@
     "Actuator": "Actuator",
     "On value": "On value",
     "Off value (blank = leave)": "Off value (blank = leave)",
-    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below."
+    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.",
+    "Actuator name": "Actuator name",
+    "Icon": "Icon"
 }

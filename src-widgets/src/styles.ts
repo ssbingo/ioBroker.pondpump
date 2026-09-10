@@ -88,6 +88,16 @@ const CSS = `
 .pp-hero{display:flex;align-items:center;gap:10px;margin:6px 0 8px}
 .pp-mini-impeller{flex:0 0 auto;width:50px;height:50px;display:flex;align-items:center;justify-content:center}
 .pp-mini-impeller svg{width:100%;height:100%;display:block}
+/* actuator rows (icon — name — status wheel) */
+.pp-actuators{display:flex;flex-direction:column;gap:4px;margin:2px 0 8px}
+.pp-act{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border-radius:8px;padding:4px 8px}
+.pp-act-icon{flex:0 0 auto;width:22px;text-align:center;font-size:16px;line-height:1}
+.pp-act-name{flex:1 1 auto;min-width:0;font-size:12px;font-weight:600;color:#dbe4ef;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pp-act-wheel{flex:0 0 auto;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.pp-act-wheel svg{width:100%;height:100%;display:block}
+.pp-act-off{opacity:.35;filter:grayscale(.5)}
+.pp-act-on{filter:drop-shadow(0 0 4px rgba(140,224,120,.6))}
 .pp-hero-main{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.05);
   border-radius:14px;padding:8px 14px;min-width:96px}
 .pp-hero-pct{font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em;

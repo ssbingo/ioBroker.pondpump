@@ -361,6 +361,12 @@ export function pumpObjectDefs(pump: PumpInfo): ObjectDef[] {
             obj: stateObj({ name: "Active window", type: "string", role: "text", read: true, write: false }),
         },
         {
+            // JSON array of the pump's actuator windows for the scheduler widget (Phase 15):
+            // [{ name, icon, target, on }].
+            id: `${base}.schedule.actuators`,
+            obj: stateObj({ name: "Actuators", type: "string", role: "json", read: true, write: false }),
+        },
+        {
             id: `${base}.schedule.nextChangeTs`,
             obj: stateObj({
                 name: "Next change timestamp",

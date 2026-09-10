@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.11.1",
+        "version": "0.12.0",
         "news": {
-            "0.11.1": {
-                "en": "Widget refinements: PumpVisual's water thermometer is smaller and more modern; the Scheduler status widget now shows the water temperature next to power/speed and a small (optionally animated) impeller, and reads its live values robustly even when some states do not exist yet.",
-                "de": "Widget-Feinschliff: kleineres, moderneres Wasser-Thermometer in PumpVisual; das Scheduler-Status-Widget zeigt jetzt die Wassertemperatur neben Leistung/Drehzahl und ein kleines (optional animiertes) Flügelrad und liest seine Live-Werte robust, auch wenn einzelne States noch fehlen.",
-                "ru": "Улучшения виджетов: термометр воды в PumpVisual стал меньше и современнее; виджет статуса планировщика теперь показывает температуру воды рядом с мощностью/оборотами и небольшую (при желании анимированную) крыльчатку, а также надёжно читает значения, даже если некоторых состояний ещё нет.",
-                "pt": "Melhorias nos widgets: o termómetro de água do PumpVisual é mais pequeno e moderno; o widget de estado do agendador mostra agora a temperatura da água ao lado da potência/rotação e um pequeno impulsor (opcionalmente animado), e lê os valores de forma robusta mesmo quando alguns estados ainda não existem.",
-                "nl": "Widget-verfijningen: de waterthermometer in PumpVisual is kleiner en moderner; het Scheduler-statuswidget toont nu de watertemperatuur naast vermogen/toerental en een klein (optioneel geanimeerd) schoepenwiel, en leest zijn waarden robuust ook als sommige states nog niet bestaan.",
-                "fr": "Améliorations des widgets : le thermomètre d'eau de PumpVisual est plus petit et moderne ; le widget d'état du planificateur affiche désormais la température de l'eau à côté de la puissance/vitesse et une petite turbine (animée en option), et lit ses valeurs de façon robuste même si certains états n'existent pas encore.",
-                "it": "Rifiniture dei widget: il termometro dell'acqua di PumpVisual è più piccolo e moderno; il widget di stato dello scheduler mostra ora la temperatura dell'acqua accanto a potenza/giri e una piccola girante (opzionalmente animata), e legge i valori in modo robusto anche quando alcuni stati non esistono ancora.",
-                "es": "Mejoras de widgets: el termómetro de agua de PumpVisual es más pequeño y moderno; el widget de estado del programador ahora muestra la temperatura del agua junto a potencia/revoluciones y un pequeño impulsor (opcionalmente animado), y lee sus valores de forma robusta aunque falten algunos estados.",
-                "pl": "Dopracowanie widgetów: termometr wody w PumpVisual jest mniejszy i nowocześniejszy; widget statusu harmonogramu pokazuje teraz temperaturę wody obok mocy/obrotów oraz małe (opcjonalnie animowane) wirnik, a wartości odczytuje niezawodnie, nawet gdy niektórych stanów jeszcze nie ma.",
-                "uk": "Удосконалення віджетів: термометр води в PumpVisual став меншим і сучаснішим; віджет статусу планувальника тепер показує температуру води поряд із потужністю/обертами та невелику (за бажанням анімовану) крильчатку і надійно читає значення, навіть коли деяких станів ще немає.",
-                "zh-cn": "组件优化：PumpVisual 的水温计更小更现代；调度器状态组件现在在功率/转速旁显示水温以及一个小型（可选动画）叶轮，并且即使部分状态尚不存在也能稳健地读取实时值。"
+            "0.12.0": {
+                "en": "Actuator schedule windows can now be given a name and an icon (waterfall, stream, aerator, …). The Scheduler status widget lists each actuator above the telemetry as icon — name — a small light-green impeller that spins while the actuator is on.",
+                "de": "Aktor-Zeitfenster können jetzt einen Namen und ein Icon erhalten (Wasserfall, Bachlauf, Sauerstoffpumpe, …). Das Scheduler-Status-Widget listet jeden Aktor über der Telemetrie als Icon — Name — kleines hellgrünes Flügelrad, das sich dreht, solange der Aktor an ist.",
+                "ru": "Окнам расписания для актора теперь можно задать имя и значок (водопад, ручей, аэратор, …). Виджет статуса планировщика показывает каждый актор над телеметрией как значок — имя — небольшую светло-зелёную крыльчатку, которая вращается, пока актор включён.",
+                "pt": "As janelas de agendamento de atuador podem agora ter um nome e um ícone (cascata, ribeiro, arejador, …). O widget de estado do agendador lista cada atuador acima da telemetria como ícone — nome — um pequeno impulsor verde-claro que gira enquanto o atuador está ligado.",
+                "nl": "Actuator-tijdvensters kunnen nu een naam en pictogram krijgen (waterval, beek, beluchter, …). Het Scheduler-statuswidget toont elke actuator boven de telemetrie als pictogram — naam — een klein lichtgroen schoepenwiel dat draait zolang de actuator aan is.",
+                "fr": "Les plages horaires d'actionneur peuvent désormais recevoir un nom et une icône (cascade, ruisseau, aérateur, …). Le widget d'état du planificateur affiche chaque actionneur au-dessus de la télémétrie sous la forme icône — nom — une petite turbine vert clair qui tourne tant que l'actionneur est actif.",
+                "it": "Le finestre orarie degli attuatori possono ora avere un nome e un'icona (cascata, ruscello, aeratore, …). Il widget di stato dello scheduler elenca ogni attuatore sopra la telemetria come icona — nome — una piccola girante verde chiaro che gira mentre l'attuatore è acceso.",
+                "es": "Las ventanas de programación de actuadores ahora pueden tener nombre e icono (cascada, arroyo, aireador, …). El widget de estado del programador muestra cada actuador sobre la telemetría como icono — nombre — un pequeño impulsor verde claro que gira mientras el actuador está encendido.",
+                "pl": "Okna harmonogramu siłowników mogą teraz mieć nazwę i ikonę (wodospad, strumień, napowietrzacz, …). Widget statusu harmonogramu pokazuje każdy siłownik nad telemetrią jako ikona — nazwa — mały jasnozielony wirnik, który obraca się, gdy siłownik jest włączony.",
+                "uk": "Вікнам розкладу актора тепер можна задати назву та значок (водоспад, струмок, аератор, …). Віджет статусу планувальника показує кожен актор над телеметрією як значок — назва — невелику світло-зелену крильчатку, що обертається, поки актор увімкнений.",
+                "zh-cn": "执行器时间窗口现在可以设置名称和图标（瀑布、溪流、增氧泵……）。调度器状态组件在遥测数据上方以“图标 — 名称 — 一个小的浅绿色叶轮（执行器开启时旋转）”的形式列出每个执行器。"
             }
         },
         "titleLang": {

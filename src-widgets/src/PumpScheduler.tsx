@@ -18,6 +18,7 @@ const REL_IDS = [
     "schedule.failSafe",
     "schedule.window",
     "schedule.nextChangeTs",
+    "schedule.actuators",
     "control.on",
     "control.speed",
     "control.sfc",
@@ -32,6 +33,14 @@ const REL_IDS = [
 ];
 
 const QUICK_STEPS = [0, 25, 50, 75, 100];
+
+/** One actuator window as published by the backend in `schedule.actuators`. */
+interface ActuatorInfo {
+    name: string;
+    icon: string;
+    target: string;
+    on: boolean;
+}
 
 interface PumpSchedulerRxData extends PumpBaseRxData {
     accent: string;
@@ -249,6 +258,49 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
         return chips;
     }
 
+    /** Parse the backend's `schedule.actuators` JSON into a typed list (empty on any problem). */
+    private actuators(): ActuatorInfo[] {
+        const raw = this.str("schedule.actuators");
+        if (!raw) {
+            return [];
+        }
+        try {
+            const arr = JSON.parse(raw) as ActuatorInfo[];
+            return Array.isArray(arr) ? arr.filter(a => a && typeof a === "object") : [];
+        } catch {
+            return [];
+        }
+    }
+
+    /**
+     * The actuator rows shown above the telemetry: "icon — name — impeller". The impeller is a small
+     * light-green wheel that spins while the actuator is on and stands still (dimmed) while off.
+     *
+     * @param animate - whether to animate the on-state wheel
+     */
+    private renderActuators(animate: boolean): React.JSX.Element | null {
+        const list = this.actuators();
+        if (!list.length) {
+            return null;
+        }
+        return (
+            <div className="pp-actuators">
+                {list.map((a, i) => (
+                    <div
+                        className="pp-act"
+                        key={`${a.target}:${i}`}
+                    >
+                        <span className="pp-act-icon">{a.icon || "⚙️"}</span>
+                        <span className="pp-act-name">{a.name}</span>
+                        <span className={`pp-act-wheel${a.on ? " pp-act-on" : " pp-act-off"}`}>
+                            {renderImpeller(a.on && animate, a.on ? 1.4 : 0, "#a6e77d", false, "#4fae3a")}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
     renderWidgetBody(props: RxRenderWidgetProps): React.JSX.Element {
         super.renderWidgetBody(props);
 
@@ -347,6 +399,9 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
                         <span className="v">{this.str("astro.sunset") || "–"}</span>
                     </div>
                 </div>
+
+                {/* actuator windows (Phase 15): icon — name — status impeller, above the telemetry */}
+                {this.renderActuators(animate)}
 
                 {showTelemetry ? (
                     <div className="pp-values">

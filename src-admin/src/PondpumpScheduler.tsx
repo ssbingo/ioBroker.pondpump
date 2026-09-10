@@ -43,6 +43,30 @@ import {
     type WindowBoundMode,
 } from "./schedule";
 
+/**
+ * Selectable actuator icons (emoji) shown in the scheduler editor and the PumpScheduler widget.
+ * Ordered so the common pond actuators come first: waterfall, stream/creek, aerator/oxygen pump.
+ */
+const ACTUATOR_ICONS = [
+    "🌊", // waterfall / Wasserfall
+    "💦", // stream / Bachlauf
+    "🫧", // aerator / oxygen pump / Sauerstoffpumpe
+    "💨", // air / aeration
+    "🌬️", // blower
+    "🚿", // fountain / spray
+    "💧", // water / drip
+    "🏞️", // pond / landscape feature
+    "☀️", // UV-C / sun
+    "💡", // light
+    "🔆", // spotlight
+    "🐟", // feeder / fish
+    "🌿", // plant filter
+    "🌡️", // heater
+    "❄️", // chiller
+    "🔌", // generic socket
+    "⚙️", // generic
+];
+
 /** A pump detected in the object tree. */
 interface PumpEntry {
     /** The object id segment below `pumps.` (the device number, as a string). */
@@ -523,9 +547,47 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                 </Select>
             );
         }
-        // actuator: an external state driven on/off by the window
+        // actuator: an external state driven on/off by the window (with a display name + icon)
+        const actuatorOrdinal = (this.cfgOf(id).plans || [])
+            .slice(0, index + 1)
+            .filter(p => p.mode === "actuator").length;
         return (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, minWidth: 240 }}>
+                <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
+                    <TextField
+                        size="small"
+                        variant="standard"
+                        label={I18n.t("Actuator name")}
+                        placeholder={`${I18n.t("Actuator")} ${actuatorOrdinal}`}
+                        value={plan.actuatorName ?? ""}
+                        onChange={e => this.updatePlan(id, index, { actuatorName: e.target.value })}
+                        sx={{ flex: 1, minWidth: 120 }}
+                    />
+                    <FormControl
+                        size="small"
+                        variant="standard"
+                        sx={{ minWidth: 66 }}
+                    >
+                        <InputLabel shrink>{I18n.t("Icon")}</InputLabel>
+                        <Select
+                            displayEmpty
+                            value={plan.actuatorIcon ?? ""}
+                            renderValue={(v: string) => (v ? <span style={{ fontSize: 18 }}>{v}</span> : "—")}
+                            onChange={e => this.updatePlan(id, index, { actuatorIcon: e.target.value })}
+                        >
+                            <MenuItem value="">—</MenuItem>
+                            {ACTUATOR_ICONS.map(ic => (
+                                <MenuItem
+                                    key={ic}
+                                    value={ic}
+                                    sx={{ fontSize: 18 }}
+                                >
+                                    {ic}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Box>
                 {this.renderOidField(plan.target ?? "", v => this.updatePlan(id, index, { target: v }), {
                     label: I18n.t("Target state id"),
                 })}

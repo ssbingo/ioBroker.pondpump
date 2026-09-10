@@ -133,5 +133,7 @@
     "Actuator": "Attuatore",
     "On value": "Valore acceso",
     "Off value (blank = leave)": "Valore spento (vuoto = lascia)",
-    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Impossibile caricare le tessere della mappa (l'admin potrebbe bloccare il server esterno). Puoi comunque impostare la posizione cliccando/trascinando il segnaposto, o tramite le coordinate e la ricerca indirizzo qui sotto."
+    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Impossibile caricare le tessere della mappa (l'admin potrebbe bloccare il server esterno). Puoi comunque impostare la posizione cliccando/trascinando il segnaposto, o tramite le coordinate e la ricerca indirizzo qui sotto.",
+    "Actuator name": "Nome attuatore",
+    "Icon": "Icona"
 }

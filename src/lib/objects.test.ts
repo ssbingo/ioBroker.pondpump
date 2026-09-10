@@ -53,6 +53,7 @@ const ALLOWED_ROLES = new Set([
     "date.sunrise",
     "date.sunset",
     "indicator",
+    "json",
 ]);
 
 describe("gatewayObjectDefs", () => {

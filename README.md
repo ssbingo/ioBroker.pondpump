@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.12.0 (2026-09-10)
+
+- (ssbingo) **Named actuators with icons.** An **"Actuator"** schedule window can now be given a **name** (default "Actuator N") and a **selectable icon** (waterfall, stream/creek, aerator/oxygen pump, air, spray, UV, light, feeder, plant filter, heater, chiller, …) in the per-pump scheduler editor. The **Scheduler status** widget now lists every actuator **above the telemetry**, one row each in the order **icon — name — status wheel**: a small **light-green impeller** that **spins while the actuator is on** and stands still (dimmed) while off. Backed by a new read-only `pumps.<n>.schedule.actuators` JSON state (`[{name, icon, target, on}]`) the scheduler keeps up to date; the pure core gained `describeActuators()` (unit-tested). Fixed a latent SVG gradient-id collision so multiple impellers on one card keep their own colour
+
 ### 0.11.1 (2026-09-10)
 
 - (ssbingo) **Widget refinements (feedback).** PumpVisual's water thermometer is now **smaller and more modern** (a slim, colour-coded design instead of the oversized one). The **Scheduler status** widget now always shows the **water temperature** next to power/speed and a **small, optionally-animated impeller** in the hero, and — importantly — reads its live values **robustly**: it fetches each state's current value first and subscribes per state, so a pump whose newer `schedule.*` states don't exist yet (older backend) no longer leaves the whole widget blank. Shared the impeller/thermometer graphics between both widgets (`graphics.tsx`)

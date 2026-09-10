@@ -26,6 +26,7 @@ __export(schedule_exports, {
   collectSourceOids: () => collectSourceOids,
   compareValue: () => compareValue,
   decideTarget: () => decideTarget,
+  describeActuators: () => describeActuators,
   interpolateCurve: () => interpolateCurve,
   isAstroDay: () => isAstroDay,
   minutesUntilNextChange: () => minutesUntilNextChange,
@@ -157,6 +158,24 @@ function actuatorWrites(plans, nowMin, astro) {
     }
   }
   return writes;
+}
+function describeActuators(plans, nowMin, astro = NO_ASTRO) {
+  var _a, _b, _c;
+  const out = [];
+  let n = 0;
+  for (const plan of plans) {
+    if (plan.mode !== "actuator") {
+      continue;
+    }
+    n += 1;
+    out.push({
+      name: ((_a = plan.actuatorName) != null ? _a : "").trim() || `Aktor ${n}`,
+      icon: (_b = plan.actuatorIcon) != null ? _b : "",
+      target: (_c = plan.target) != null ? _c : "",
+      on: planActive(plan, nowMin, astro)
+    });
+  }
+  return out;
 }
 function activeWindow(plans, nowMin, astro = NO_ASTRO) {
   for (const plan of plans) {
@@ -410,6 +429,7 @@ function minutesUntilNextChange(plans, nowMin, astro = NO_ASTRO) {
   collectSourceOids,
   compareValue,
   decideTarget,
+  describeActuators,
   interpolateCurve,
   isAstroDay,
   minutesUntilNextChange,

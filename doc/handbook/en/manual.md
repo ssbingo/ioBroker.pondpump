@@ -361,6 +361,11 @@ with the pump right now — and **why**:
   power**) and which modifiers apply right now (**night protection**, **weather boost**, **frost
   hold**).
 - The **active window**, the **next change** time and the pump's **sunrise/sunset**.
+- **Actuators:** if the schedule has **actuator windows** (waterfall, stream, aerator, …), each one is
+  listed **above the telemetry**, one row each in the order **icon — name — impeller**. Set the name
+  and icon in the schedule editor (mode "Actuator"); without a name it shows "Actuator 1", "Actuator 2"
+  … The small **light-green impeller** spins (optionally animated) while the actuator is **on** and
+  stands still (dimmed) while off.
 - **Water temperature** (colour-coded), **power** (W) and **speed** (rpm).
 - A **control bar** with the basic functions (on/off, quick power, SFC). A hint reminds you that the
   scheduler may re-apply its target on the next run.

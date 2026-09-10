@@ -133,5 +133,7 @@
     "Actuator": "Actuador",
     "On value": "Valor encendido",
     "Off value (blank = leave)": "Valor apagado (vacío = dejar)",
-    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "No se pudieron cargar los mosaicos del mapa (el admin puede bloquear el servidor de mosaicos externo). Aun así puedes fijar la ubicación haciendo clic o arrastrando el marcador, o mediante las coordenadas y la búsqueda de dirección de abajo."
+    "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "No se pudieron cargar los mosaicos del mapa (el admin puede bloquear el servidor de mosaicos externo). Aun así puedes fijar la ubicación haciendo clic o arrastrando el marcador, o mediante las coordenadas y la búsqueda de dirección de abajo.",
+    "Actuator name": "Nombre del actuador",
+    "Icon": "Icono"
 }

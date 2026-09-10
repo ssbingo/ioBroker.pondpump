@@ -6,6 +6,7 @@ import {
     compareValue,
     decideTarget,
     DEFAULT_CURVE_POINTS,
+    describeActuators,
     interpolateCurve,
     isAstroDay,
     minutesUntilNextChange,
@@ -478,6 +479,29 @@ describe("schedule conditions (Phase 11)", () => {
                     { start: "09:00", end: "20:00", mode: "actuator", target: AER, onValue: true }, // overlaps → allowed
                 ]).valid,
             ).to.equal(true);
+        });
+    });
+
+    describe("describeActuators (Phase 15)", () => {
+        it("lists actuator windows with name/icon/target and current on-state, defaulting the name", () => {
+            const AER = "sonoff.0.waterfall";
+            const plans: PumpSchedule[] = [
+                { start: "08:00", end: "20:00", mode: "power", power: 70 },
+                {
+                    start: "09:00",
+                    end: "18:00",
+                    mode: "actuator",
+                    target: AER,
+                    actuatorName: "Wasserfall",
+                    actuatorIcon: "🌊",
+                },
+                { start: "20:00", end: "22:00", mode: "actuator", target: "x.y" },
+            ];
+            const list = describeActuators(plans, at(12));
+            expect(list.length).to.equal(2); // only actuator windows
+            expect(list[0]).to.deep.equal({ name: "Wasserfall", icon: "🌊", target: AER, on: true }); // active at 12:00
+            expect(list[1].name).to.equal("Aktor 2"); // no name → "Aktor <ordinal>"
+            expect(list[1].on).to.equal(false); // 12:00 outside 20:00–22:00
         });
     });
 

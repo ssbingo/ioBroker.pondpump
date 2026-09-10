@@ -28,13 +28,23 @@ export function tempColor(t: number): string {
  *
  * @param spin - whether the impeller should rotate
  * @param dur - rotation duration in seconds (0 = standstill)
- * @param accent - blade accent colour
+ * @param accent - blade accent colour (gradient centre)
  * @param crossed - draw a red "off" cross over the impeller
+ * @param endColor - blade gradient outer colour (default a deep blue)
  */
-export function renderImpeller(spin: boolean, dur: number, accent: string, crossed = false): React.JSX.Element {
+export function renderImpeller(
+    spin: boolean,
+    dur: number,
+    accent: string,
+    crossed = false,
+    endColor = "#1b6fb0",
+): React.JSX.Element {
     const blade = "M60 47 C 50 43 48 29 54 15 C 57 11 63 11 66 15 C 72 29 70 43 60 47 Z";
     const spinning = spin && dur > 0;
     const style = spinning ? ({ ["--pp-dur"]: `${dur}s` } as React.CSSProperties) : undefined;
+    // Unique gradient id per colour pair — otherwise several impellers on one card (hero + actuators)
+    // would all reuse the first "ppBlade" definition in the DOM and share its colour.
+    const gradId = `ppBlade_${accent.replace(/[^a-z0-9]/gi, "")}_${endColor.replace(/[^a-z0-9]/gi, "")}`;
     return (
         <svg
             viewBox="0 0 120 120"
@@ -42,7 +52,7 @@ export function renderImpeller(spin: boolean, dur: number, accent: string, cross
         >
             <defs>
                 <radialGradient
-                    id="ppBlade"
+                    id={gradId}
                     cx="0.5"
                     cy="0.35"
                     r="0.75"
@@ -53,7 +63,7 @@ export function renderImpeller(spin: boolean, dur: number, accent: string, cross
                     />
                     <stop
                         offset="1"
-                        stopColor="#1b6fb0"
+                        stopColor={endColor}
                     />
                 </radialGradient>
             </defs>
@@ -74,7 +84,7 @@ export function renderImpeller(spin: boolean, dur: number, accent: string, cross
                         key={a}
                         d={blade}
                         transform={`rotate(${a} 60 60)`}
-                        fill="url(#ppBlade)"
+                        fill={`url(#${gradId})`}
                         stroke="rgba(0,0,0,.25)"
                         strokeWidth="1"
                     />

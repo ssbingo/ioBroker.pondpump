@@ -57,6 +57,10 @@ export interface PumpSchedule {
     onValue?: number | boolean;
     /** Value written to `target` while the window is inactive (omit to leave it untouched outside). */
     offValue?: number | boolean;
+    /** Phase 15 — display name for an "actuator" window (e.g. "Wasserfall"); blank → "Aktor N". */
+    actuatorName?: string;
+    /** Phase 15 — display icon (emoji) for an "actuator" window, shown in the scheduler widget. */
+    actuatorIcon?: string;
 }
 
 /** Comparison operator for a condition rule (source value vs. threshold). */
@@ -433,6 +437,48 @@ function actuatorWrites(plans: PumpSchedule[], nowMin: number, astro: AstroTimes
         }
     }
     return writes;
+}
+
+/** Display descriptor for one "actuator" window (Phase 15), for the scheduler widget. */
+export interface ActuatorStatus {
+    /** Display name; falls back to "Aktor N" when the plan has none. */
+    name: string;
+    /** Display icon (emoji), or "" when unset. */
+    icon: string;
+    /** The driven foreign state id. */
+    target: string;
+    /** Whether the actuator's window is currently active (on). */
+    on: boolean;
+}
+
+/**
+ * Describe every "actuator" window (Phase 15): its name, icon, target and current on/off state, in
+ * config order. Used by the backend to publish `schedule.actuators` for the scheduler widget.
+ *
+ * @param plans - the pump's schedule windows
+ * @param nowMin - current minute-of-day
+ * @param astro - resolved astro times for the day
+ */
+export function describeActuators(
+    plans: PumpSchedule[],
+    nowMin: number,
+    astro: AstroTimes = NO_ASTRO,
+): ActuatorStatus[] {
+    const out: ActuatorStatus[] = [];
+    let n = 0;
+    for (const plan of plans) {
+        if (plan.mode !== "actuator") {
+            continue;
+        }
+        n += 1;
+        out.push({
+            name: (plan.actuatorName ?? "").trim() || `Aktor ${n}`,
+            icon: plan.actuatorIcon ?? "",
+            target: plan.target ?? "",
+            on: planActive(plan, nowMin, astro),
+        });
+    }
+    return out;
 }
 
 /**

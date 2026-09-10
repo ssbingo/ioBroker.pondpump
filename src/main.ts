@@ -51,6 +51,7 @@ import {
     type AstroTimes,
     collectSourceOids,
     decideTarget,
+    describeActuators,
     minutesUntilNextChange,
     NO_ASTRO,
     type PumpSchedule,
@@ -1474,6 +1475,11 @@ class Pondpump extends utils.Adapter {
         await this.setState(`${base}.failSafe`, { val: decision.failSafe, ack: true });
         await this.setState(`${base}.window`, { val: windowLabelOf(win, astro), ack: true });
         await this.setState(`${base}.nextChangeTs`, { val: nowMs + nextChangeMin * 60_000, ack: true });
+        // Phase 15: publish the actuator windows (name/icon/target/on) for the scheduler widget.
+        await this.setState(`${base}.actuators`, {
+            val: JSON.stringify(describeActuators(cfg.plans || [], nowMin, astro)),
+            ack: true,
+        });
     }
 
     /**
