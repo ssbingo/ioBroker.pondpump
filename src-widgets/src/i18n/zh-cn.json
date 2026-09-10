@@ -51,5 +51,8 @@
     "lbl_sunset": "日落",
     "lbl_water_temp": "水温",
     "sfc_short": "SFC",
-    "sched_override_hint": "调度器可能在下次运行时重新应用其目标。"
+    "sched_override_hint": "调度器可能在下次运行时重新应用其目标。",
+    "group_actuators": "执行器",
+    "actuators_visibility": "显示执行器",
+    "no_actuators": "未为此水泵配置执行器。"
 }

@@ -377,7 +377,8 @@ gerade mit der Pumpe macht — und **warum**:
   Sauerstoffpumpe …), wird jeder Aktor **über der Telemetrie** zeilenweise als **Icon – Name –
   Flügelrad** angezeigt. Name und Icon vergibst du im Zeitplan-Editor (Modus „Aktor"); ohne Namen
   steht „Aktor 1", „Aktor 2" … Das kleine **hellgrüne Flügelrad** dreht sich (optional animiert),
-  solange der Aktor **an** ist, und steht still (gedimmt), wenn er aus ist.
+  solange der Aktor **an** ist, und steht still (gedimmt), wenn er aus ist. In den Widget-Einstellungen
+  (Bereich **„Aktoren"**) lässt sich **jeder Aktor einzeln** ein- oder ausblenden.
 - **Wassertemperatur** (farbig), **Leistung** (W) und **Drehzahl** (rpm).
 - Eine **Steuerleiste** mit den Grundfunktionen (An/Aus, Leistungs-Schnellwahl, SFC). Ein Hinweis
   erinnert daran, dass der Scheduler manuelle Eingriffe beim nächsten Durchlauf wieder überschreiben

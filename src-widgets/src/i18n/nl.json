@@ -51,5 +51,8 @@
     "lbl_sunset": "Zonsondergang",
     "lbl_water_temp": "Watertemp.",
     "sfc_short": "SFC",
-    "sched_override_hint": "De scheduler kan zijn doel bij de volgende ronde opnieuw toepassen."
+    "sched_override_hint": "De scheduler kan zijn doel bij de volgende ronde opnieuw toepassen.",
+    "group_actuators": "Actuatoren",
+    "actuators_visibility": "Actuatoren tonen",
+    "no_actuators": "Geen actuatoren geconfigureerd voor deze pomp."
 }

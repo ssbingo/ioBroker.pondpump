@@ -51,5 +51,8 @@
     "lbl_sunset": "Sonnenuntergang",
     "lbl_water_temp": "Wassertemp.",
     "sfc_short": "SFC",
-    "sched_override_hint": "Der Scheduler kann sein Ziel beim nächsten Durchlauf erneut anwenden."
+    "sched_override_hint": "Der Scheduler kann sein Ziel beim nächsten Durchlauf erneut anwenden.",
+    "group_actuators": "Aktoren",
+    "actuators_visibility": "Aktoren anzeigen",
+    "no_actuators": "Für diese Pumpe sind keine Aktoren konfiguriert."
 }

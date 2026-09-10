@@ -51,5 +51,8 @@
     "lbl_sunset": "Atardecer",
     "lbl_water_temp": "Temp. agua",
     "sfc_short": "SFC",
-    "sched_override_hint": "El programador puede volver a aplicar su objetivo en la próxima ejecución."
+    "sched_override_hint": "El programador puede volver a aplicar su objetivo en la próxima ejecución.",
+    "group_actuators": "Actuadores",
+    "actuators_visibility": "Mostrar actuadores",
+    "no_actuators": "No hay actuadores configurados para esta bomba."
 }

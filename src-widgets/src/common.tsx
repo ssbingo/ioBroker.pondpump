@@ -1,11 +1,35 @@
 import React, { useEffect, useState } from "react";
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import {
+    Checkbox,
+    FormControl,
+    FormControlLabel,
+    FormGroup,
+    InputLabel,
+    MenuItem,
+    Select,
+    Typography,
+} from "@mui/material";
 
 import type {
     RxWidgetInfoAttributesField,
     RxWidgetInfoCustomComponentProperties,
     WidgetData,
 } from "@iobroker/types-vis-2";
+
+import translations from "./translations";
+
+/**
+ * Translate a widget i18n key in the vis editor's custom settings components (where the widget's own
+ * `t()` is not available). Uses the shared i18n JSONs and the ioBroker UI language, falling back to en.
+ *
+ * @param key - the i18n key
+ */
+function tr(key: string): string {
+    const lang = (typeof window !== "undefined" && (window as { systemLang?: string }).systemLang) || "en";
+    const dict = (translations as Record<string, Record<string, string>>)[lang];
+    const en = (translations as Record<string, Record<string, string>>).en;
+    return dict?.[key] || en?.[key] || key;
+}
 
 export const ADAPTER = "pondpump";
 
@@ -199,4 +223,132 @@ export function pondpumpCommonGroup(): { name: string; fields: RxWidgetInfoAttri
             },
         ] as RxWidgetInfoAttributesField[],
     };
+}
+
+/** Stable per-actuator key for the widget's per-actuator visibility toggles (target OID, else "#N"). */
+export function actuatorKey(target: string | undefined, ordinal: number): string {
+    return (target && target.trim()) || `#${ordinal}`;
+}
+
+/** Parse the widget's `hiddenActuators` data (a JSON array of keys) into a Set; tolerant of junk. */
+export function hiddenActuatorSet(value: unknown): Set<string> {
+    if (typeof value !== "string" || !value.trim()) {
+        return new Set();
+    }
+    try {
+        const arr = JSON.parse(value) as unknown;
+        return new Set(Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : []);
+    } catch {
+        return new Set();
+    }
+}
+
+interface ActuatorDef {
+    key: string;
+    name: string;
+    icon: string;
+}
+
+/** Read the configured actuator windows of one pump from the instance config (name/icon/key). */
+async function readPumpActuators(socket: SocketLike, instance: string, pumpId: string): Promise<ActuatorDef[]> {
+    if (!pumpId) {
+        return [];
+    }
+    try {
+        const obj = await socket.getObject(`system.adapter.${ADAPTER}.${instance}`);
+        const native = (obj?.native ?? {}) as {
+            schedules?: Record<string, { plans?: Array<Record<string, unknown>> }>;
+        };
+        const plans = native.schedules?.[pumpId]?.plans ?? [];
+        const out: ActuatorDef[] = [];
+        let n = 0;
+        for (const p of plans) {
+            if (p?.mode !== "actuator") {
+                continue;
+            }
+            n += 1;
+            const target = typeof p.target === "string" ? p.target : "";
+            const name = (typeof p.actuatorName === "string" ? p.actuatorName : "").trim() || `Aktor ${n}`;
+            const icon = typeof p.actuatorIcon === "string" && p.actuatorIcon ? p.actuatorIcon : "⚙️";
+            out.push({ key: actuatorKey(target, n), name, icon });
+        }
+        return out;
+    } catch {
+        return [];
+    }
+}
+
+/** Per-actuator show/hide switches for the widget settings (data.hiddenActuators = JSON array of keys). */
+function ActuatorVisibility(props: {
+    socket: SocketLike;
+    data: WidgetData;
+    onDataChange: (newData: WidgetData) => void;
+}): React.JSX.Element {
+    const { socket, data, onDataChange } = props;
+    const [acts, setActs] = useState<ActuatorDef[]>([]);
+    const instance = instanceNumber(data as { instance?: string });
+    const pumpId = (data.pumpId as string) || "";
+
+    useEffect(() => {
+        let active = true;
+        void readPumpActuators(socket, instance, pumpId).then(a => active && setActs(a));
+        return () => {
+            active = false;
+        };
+    }, [socket, instance, pumpId]);
+
+    const hidden = hiddenActuatorSet(data.hiddenActuators);
+    const toggle = (key: string, show: boolean): void => {
+        const next = new Set(hidden);
+        if (show) {
+            next.delete(key);
+        } else {
+            next.add(key);
+        }
+        onDataChange({ ...data, hiddenActuators: JSON.stringify([...next]) });
+    };
+
+    if (!acts.length) {
+        return (
+            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>{tr("no_actuators")}</Typography>
+        );
+    }
+    return (
+        <FormGroup>
+            {acts.map(a => (
+                <FormControlLabel
+                    key={a.key}
+                    control={
+                        <Checkbox
+                            size="small"
+                            checked={!hidden.has(a.key)}
+                            onChange={e => toggle(a.key, e.target.checked)}
+                        />
+                    }
+                    label={`${a.icon} ${a.name}`}
+                />
+            ))}
+        </FormGroup>
+    );
+}
+
+/** A widget visAttrs field (type custom) rendering the per-actuator visibility switches. */
+export function actuatorVisibilityField(): RxWidgetInfoAttributesField {
+    return {
+        name: "hiddenActuators",
+        type: "custom",
+        label: "actuators_visibility",
+        component: (
+            _field: RxWidgetInfoAttributesField,
+            data: WidgetData,
+            onDataChange: (newData: WidgetData) => void,
+            compProps: RxWidgetInfoCustomComponentProperties,
+        ): React.JSX.Element => (
+            <ActuatorVisibility
+                socket={compProps.context.socket as unknown as SocketLike}
+                data={data}
+                onDataChange={onDataChange}
+            />
+        ),
+    } as RxWidgetInfoAttributesField;
 }

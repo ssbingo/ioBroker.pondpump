@@ -51,5 +51,8 @@
     "lbl_sunset": "Tramonto",
     "lbl_water_temp": "Temp. acqua",
     "sfc_short": "SFC",
-    "sched_override_hint": "Lo scheduler può riapplicare il suo obiettivo alla prossima esecuzione."
+    "sched_override_hint": "Lo scheduler può riapplicare il suo obiettivo alla prossima esecuzione.",
+    "group_actuators": "Attuatori",
+    "actuators_visibility": "Mostra attuatori",
+    "no_actuators": "Nessun attuatore configurato per questa pompa."
 }

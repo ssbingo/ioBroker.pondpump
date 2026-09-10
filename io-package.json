@@ -1,20 +1,20 @@
 {
     "common": {
         "name": "pondpump",
-        "version": "0.12.0",
+        "version": "0.12.1",
         "news": {
-            "0.12.0": {
-                "en": "Actuator schedule windows can now be given a name and an icon (waterfall, stream, aerator, …). The Scheduler status widget lists each actuator above the telemetry as icon — name — a small light-green impeller that spins while the actuator is on.",
-                "de": "Aktor-Zeitfenster können jetzt einen Namen und ein Icon erhalten (Wasserfall, Bachlauf, Sauerstoffpumpe, …). Das Scheduler-Status-Widget listet jeden Aktor über der Telemetrie als Icon — Name — kleines hellgrünes Flügelrad, das sich dreht, solange der Aktor an ist.",
-                "ru": "Окнам расписания для актора теперь можно задать имя и значок (водопад, ручей, аэратор, …). Виджет статуса планировщика показывает каждый актор над телеметрией как значок — имя — небольшую светло-зелёную крыльчатку, которая вращается, пока актор включён.",
-                "pt": "As janelas de agendamento de atuador podem agora ter um nome e um ícone (cascata, ribeiro, arejador, …). O widget de estado do agendador lista cada atuador acima da telemetria como ícone — nome — um pequeno impulsor verde-claro que gira enquanto o atuador está ligado.",
-                "nl": "Actuator-tijdvensters kunnen nu een naam en pictogram krijgen (waterval, beek, beluchter, …). Het Scheduler-statuswidget toont elke actuator boven de telemetrie als pictogram — naam — een klein lichtgroen schoepenwiel dat draait zolang de actuator aan is.",
-                "fr": "Les plages horaires d'actionneur peuvent désormais recevoir un nom et une icône (cascade, ruisseau, aérateur, …). Le widget d'état du planificateur affiche chaque actionneur au-dessus de la télémétrie sous la forme icône — nom — une petite turbine vert clair qui tourne tant que l'actionneur est actif.",
-                "it": "Le finestre orarie degli attuatori possono ora avere un nome e un'icona (cascata, ruscello, aeratore, …). Il widget di stato dello scheduler elenca ogni attuatore sopra la telemetria come icona — nome — una piccola girante verde chiaro che gira mentre l'attuatore è acceso.",
-                "es": "Las ventanas de programación de actuadores ahora pueden tener nombre e icono (cascada, arroyo, aireador, …). El widget de estado del programador muestra cada actuador sobre la telemetría como icono — nombre — un pequeño impulsor verde claro que gira mientras el actuador está encendido.",
-                "pl": "Okna harmonogramu siłowników mogą teraz mieć nazwę i ikonę (wodospad, strumień, napowietrzacz, …). Widget statusu harmonogramu pokazuje każdy siłownik nad telemetrią jako ikona — nazwa — mały jasnozielony wirnik, który obraca się, gdy siłownik jest włączony.",
-                "uk": "Вікнам розкладу актора тепер можна задати назву та значок (водоспад, струмок, аератор, …). Віджет статусу планувальника показує кожен актор над телеметрією як значок — назва — невелику світло-зелену крильчатку, що обертається, поки актор увімкнений.",
-                "zh-cn": "执行器时间窗口现在可以设置名称和图标（瀑布、溪流、增氧泵……）。调度器状态组件在遥测数据上方以“图标 — 名称 — 一个小的浅绿色叶轮（执行器开启时旋转）”的形式列出每个执行器。"
+            "0.12.1": {
+                "en": "Scheduler status widget: each actuator can now be shown or hidden individually in the widget settings (Actuators section).",
+                "de": "Scheduler-Status-Widget: Jeder Aktor lässt sich jetzt in den Widget-Einstellungen (Bereich „Aktoren“) einzeln ein- oder ausblenden.",
+                "ru": "Виджет статуса планировщика: каждый актор теперь можно показать или скрыть по отдельности в настройках виджета (раздел «Акторы»).",
+                "pt": "Widget de estado do agendador: cada atuador pode agora ser mostrado ou ocultado individualmente nas definições do widget (secção Atuadores).",
+                "nl": "Scheduler-statuswidget: elke actuator kan nu afzonderlijk worden getoond of verborgen in de widgetinstellingen (sectie Actuatoren).",
+                "fr": "Widget d'état du planificateur : chaque actionneur peut désormais être affiché ou masqué individuellement dans les réglages du widget (section Actionneurs).",
+                "it": "Widget di stato dello scheduler: ogni attuatore può ora essere mostrato o nascosto singolarmente nelle impostazioni del widget (sezione Attuatori).",
+                "es": "Widget de estado del programador: cada actuador ahora se puede mostrar u ocultar individualmente en los ajustes del widget (sección Actuadores).",
+                "pl": "Widget statusu harmonogramu: każdy siłownik można teraz pojedynczo pokazać lub ukryć w ustawieniach widgetu (sekcja Siłowniki).",
+                "uk": "Віджет статусу планувальника: кожен актор тепер можна показати або приховати окремо в налаштуваннях віджета (розділ «Актори»).",
+                "zh-cn": "调度器状态组件：现在可以在组件设置（执行器部分）中单独显示或隐藏每个执行器。"
             }
         },
         "titleLang": {

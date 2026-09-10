@@ -51,5 +51,8 @@
     "lbl_sunset": "Sunset",
     "lbl_water_temp": "Water temp.",
     "sfc_short": "SFC",
-    "sched_override_hint": "The scheduler may re-apply its target on the next run."
+    "sched_override_hint": "The scheduler may re-apply its target on the next run.",
+    "group_actuators": "Actuators",
+    "actuators_visibility": "Show actuators",
+    "no_actuators": "No actuators configured for this pump."
 }

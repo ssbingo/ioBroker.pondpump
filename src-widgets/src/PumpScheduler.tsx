@@ -3,7 +3,14 @@ import React from "react";
 import type { RxRenderWidgetProps, RxWidgetInfo, VisRxWidgetProps } from "@iobroker/types-vis-2";
 
 import PumpWidgetBase, { type PumpBaseRxData, type PumpBaseState } from "./PumpWidgetBase";
-import { pondpumpCommonGroup, pumpChannelOf, pumpDeviceName } from "./common";
+import {
+    actuatorKey,
+    actuatorVisibilityField,
+    hiddenActuatorSet,
+    pondpumpCommonGroup,
+    pumpChannelOf,
+    pumpDeviceName,
+} from "./common";
 import { renderImpeller, tempColor } from "./graphics";
 
 // Sub-states (relative to the pump device channel) this widget reads/commands.
@@ -48,6 +55,8 @@ interface PumpSchedulerRxData extends PumpBaseRxData {
     showControls: boolean;
     showTelemetry: boolean;
     noCard: boolean;
+    /** JSON array of actuator keys to hide (per-actuator visibility toggle). */
+    hiddenActuators?: string;
 }
 
 interface PumpSchedulerState extends PumpBaseState {
@@ -95,6 +104,11 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
                         { name: "showTelemetry", type: "checkbox", label: "show_telemetry", default: true },
                         { name: "noCard", type: "checkbox", label: "no_card", default: false },
                     ],
+                },
+                {
+                    name: "actuators",
+                    label: "group_actuators",
+                    fields: [actuatorVisibilityField()],
                 },
             ],
             visDefaultStyle: { width: 320, height: 380 },
@@ -279,7 +293,10 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
      * @param animate - whether to animate the on-state wheel
      */
     private renderActuators(animate: boolean): React.JSX.Element | null {
-        const list = this.actuators();
+        const hidden = hiddenActuatorSet(this.state.rxData.hiddenActuators);
+        // Key each actuator like the settings editor (target OID, else "#<ordinal>") so per-actuator
+        // hide toggles line up, then drop the hidden ones.
+        const list = this.actuators().filter((a, i) => !hidden.has(actuatorKey(a.target, i + 1)));
         if (!list.length) {
             return null;
         }
