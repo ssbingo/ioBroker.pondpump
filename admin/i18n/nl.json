@@ -135,5 +135,7 @@
     "Off value (blank = leave)": "Uit-waarde (leeg = laten)",
     "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Kaarttegels konden niet laden (de admin blokkeert mogelijk de externe tegelserver). Je kunt de locatie toch instellen door te klikken/de markering te slepen, of via de coördinaten en het adres zoeken hieronder.",
     "Actuator name": "Actuatornaam",
-    "Icon": "Pictogram"
+    "Icon": "Pictogram",
+    "Number": "Getal",
+    "leave untouched": "ongewijzigd laten"
 }

@@ -135,5 +135,7 @@
     "Off value (blank = leave)": "Значення вимк. (порожньо = залишити)",
     "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Не вдалося завантажити плитки карти (адмінка може блокувати зовнішній сервер плиток). Ви все одно можете задати розташування кліком/перетягуванням маркера або через координати та пошук за адресою нижче.",
     "Actuator name": "Назва актора",
-    "Icon": "Значок"
+    "Icon": "Значок",
+    "Number": "Число",
+    "leave untouched": "не змінювати"
 }

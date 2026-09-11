@@ -135,5 +135,7 @@
     "Off value (blank = leave)": "关闭值（留空=保持）",
     "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "无法加载地图瓦片（管理界面可能屏蔽了外部瓦片服务器）。你仍可通过点击/拖动标记，或使用下方的坐标和地址搜索来设置位置。",
     "Actuator name": "执行器名称",
-    "Icon": "图标"
+    "Icon": "图标",
+    "Number": "数值",
+    "leave untouched": "保持不变"
 }

@@ -115,29 +115,73 @@ function effectLabel(effect: RuleEffectType): string {
 }
 
 /**
- * Parse a free-text actuator value into a boolean (true/false/on/off) or a number.
+ * A dropdown for an actuator value: **true / false / a number**, and optionally **"empty"** (leave the
+ * target untouched). This replaces the old free-text field, which re-parsed on every keystroke and fell
+ * back to `true` for any partial input — so "false" could not be typed. `undefined` shows as "empty"
+ * when `allowEmpty` (the off-value default = leave untouched), otherwise as `true` (the on-value default).
  *
- * @param raw - the raw text entered by the user
+ * @param value - the current stored value (`number | boolean | undefined`)
+ * @param setValue - called with the new value
+ * @param label - the field label
+ * @param allowEmpty - offer an "empty = leave untouched" option (for the off-value)
  */
-function parseActuatorValue(raw: string): number | boolean {
-    const t = raw.trim().toLowerCase();
-    if (t === "true" || t === "on") {
-        return true;
-    }
-    if (t === "false" || t === "off") {
-        return false;
-    }
-    const n = Number(raw);
-    return raw.trim() !== "" && Number.isFinite(n) ? n : true;
-}
-
-/**
- * Display string for a stored actuator value.
- *
- * @param value - the stored actuator value
- */
-function actuatorValueText(value: number | boolean | undefined): string {
-    return value === undefined ? "true" : String(value);
+function renderActuatorValueSelect(
+    value: number | boolean | undefined,
+    setValue: (v: number | boolean | undefined) => void,
+    label: string,
+    allowEmpty: boolean,
+): React.JSX.Element {
+    const kind =
+        value === undefined
+            ? allowEmpty
+                ? "empty"
+                : "true"
+            : typeof value === "number"
+              ? "number"
+              : value
+                ? "true"
+                : "false";
+    const onKind = (k: string): void => {
+        if (k === "true") {
+            setValue(true);
+        } else if (k === "false") {
+            setValue(false);
+        } else if (k === "empty") {
+            setValue(undefined);
+        } else {
+            setValue(typeof value === "number" ? value : 0);
+        }
+    };
+    return (
+        <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
+            <FormControl
+                size="small"
+                variant="standard"
+                sx={{ minWidth: 150 }}
+            >
+                <InputLabel>{label}</InputLabel>
+                <Select
+                    value={kind}
+                    onChange={e => onKind(e.target.value)}
+                >
+                    {allowEmpty ? <MenuItem value="empty">{I18n.t("leave untouched")}</MenuItem> : null}
+                    <MenuItem value="true">true</MenuItem>
+                    <MenuItem value="false">false</MenuItem>
+                    <MenuItem value="number">{I18n.t("Number")}…</MenuItem>
+                </Select>
+            </FormControl>
+            {kind === "number" ? (
+                <TextField
+                    size="small"
+                    variant="standard"
+                    type="number"
+                    sx={{ width: 90 }}
+                    value={typeof value === "number" ? value : 0}
+                    onChange={e => setValue(Number(e.target.value))}
+                />
+            ) : null}
+        </Box>
+    );
 }
 
 /**
@@ -591,27 +635,19 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                 {this.renderOidField(plan.target ?? "", v => this.updatePlan(id, index, { target: v }), {
                     label: I18n.t("Target state id"),
                 })}
-                <Box sx={{ display: "flex", gap: 1 }}>
-                    <TextField
-                        size="small"
-                        variant="standard"
-                        label={I18n.t("On value")}
-                        value={actuatorValueText(plan.onValue)}
-                        onChange={e => this.updatePlan(id, index, { onValue: parseActuatorValue(e.target.value) })}
-                        sx={{ width: 110 }}
-                    />
-                    <TextField
-                        size="small"
-                        variant="standard"
-                        label={I18n.t("Off value (blank = leave)")}
-                        value={plan.offValue === undefined ? "" : actuatorValueText(plan.offValue)}
-                        onChange={e =>
-                            this.updatePlan(id, index, {
-                                offValue: e.target.value === "" ? undefined : parseActuatorValue(e.target.value),
-                            })
-                        }
-                        sx={{ width: 150 }}
-                    />
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                    {renderActuatorValueSelect(
+                        plan.onValue,
+                        v => this.updatePlan(id, index, { onValue: v }),
+                        I18n.t("On value"),
+                        false,
+                    )}
+                    {renderActuatorValueSelect(
+                        plan.offValue,
+                        v => this.updatePlan(id, index, { offValue: v }),
+                        I18n.t("Off value (blank = leave)"),
+                        true,
+                    )}
                 </Box>
             </Box>
         );
@@ -852,13 +888,12 @@ class PondpumpScheduler extends ConfigGeneric<ConfigGenericProps, PondpumpSchedu
                     {this.renderOidField(rule.target ?? "", v => this.updateRule(id, index, { target: v }), {
                         label: I18n.t("Target state id"),
                     })}
-                    <TextField
-                        size="small"
-                        variant="standard"
-                        label={I18n.t("Value (true/false or number)")}
-                        value={actuatorValueText(rule.value)}
-                        onChange={e => this.updateRule(id, index, { value: parseActuatorValue(e.target.value) })}
-                    />
+                    {renderActuatorValueSelect(
+                        rule.value,
+                        v => this.updateRule(id, index, { value: v }),
+                        I18n.t("Value (true/false or number)"),
+                        false,
+                    )}
                 </Box>
             );
         }

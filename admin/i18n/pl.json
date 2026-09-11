@@ -135,5 +135,7 @@
     "Off value (blank = leave)": "Wartość wył. (puste = zostaw)",
     "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Nie udało się załadować kafelków mapy (admin może blokować zewnętrzny serwer kafelków). Nadal możesz ustawić lokalizację, klikając/przeciągając znacznik lub poprzez współrzędne i wyszukiwanie adresu poniżej.",
     "Actuator name": "Nazwa siłownika",
-    "Icon": "Ikona"
+    "Icon": "Ikona",
+    "Number": "Liczba",
+    "leave untouched": "nie zmieniać"
 }

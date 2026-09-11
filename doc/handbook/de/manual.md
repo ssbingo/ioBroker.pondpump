@@ -424,7 +424,15 @@ Fensters fällt die Pumpe auf eine einstellbare **Grund-Power** zurück.
     Seasonal Flow Control ein oder aus) oder **Aktor** (das Fenster schaltet einen **externen State**, z. B.
     Bachlauf/Wasserfall/UVC — kombinierbar mit Astro-Grenzen, siehe 10.4).
   - **Wert** — der Leistungsprozentwert bzw. an/aus für SFC; beim **Aktor** die **Ziel-Objekt-ID** plus
-    An-Wert (aktiv) und optionalem Aus-Wert (inaktiv; leer = außerhalb unverändert lassen).
+    **An-Wert** und **Aus-Wert**. Beide sind ein **Auswahlfeld**: `true`, `false`, eine `Zahl` (z. B. für
+    Dimmer) und beim Aus-Wert zusätzlich „unangetastet lassen". Der **An-Wert** wird geschrieben, solange
+    das Fenster **aktiv** ist; der **Aus-Wert**, solange es **inaktiv** ist. Für einen Schaltaktor also
+    typisch **An-Wert = `true`, Aus-Wert = `false`**; „unangetastet lassen" schreibt außerhalb des Fensters
+    nichts.
+
+    > **Nicht verwechseln:** Der Widget-Status-Datenpunkt `pumps.<n>.schedule.actuators` enthält je Aktor
+    > ein Feld `"on"`. Das ist **nicht** dein An-/Aus-Wert, sondern der **Live-Zustand** (ist das Fenster
+    > gerade aktiv?), den das Widget zum Drehen/Abdunkeln des Flügelrads nutzt.
 - Fenster **dürfen sich nicht überschneiden.** Der Editor prüft live und zeigt eine rote Meldung, wenn
   sich zwei Fenster überlappen; der Adapter prüft zusätzlich vor dem Anwenden — ein ungültiger Zeitplan
   wird nie ausgeführt.

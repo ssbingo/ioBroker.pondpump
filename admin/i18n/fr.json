@@ -135,5 +135,7 @@
     "Off value (blank = leave)": "Valeur désactivée (vide = laisser)",
     "Map tiles could not load (the admin may block the external tile server). You can still set the location by clicking/dragging the marker, or via the coordinates and address search below.": "Les tuiles de la carte n'ont pas pu se charger (l'admin bloque peut-être le serveur de tuiles externe). Vous pouvez tout de même définir l'emplacement en cliquant/déplaçant le marqueur, ou via les coordonnées et la recherche d'adresse ci-dessous.",
     "Actuator name": "Nom de l'actionneur",
-    "Icon": "Icône"
+    "Icon": "Icône",
+    "Number": "Nombre",
+    "leave untouched": "ne pas modifier"
 }
