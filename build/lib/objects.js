@@ -262,6 +262,20 @@ function pumpObjectDefs(pump) {
       })
     },
     {
+      // Manual override (Phase 16): while true, the scheduler leaves this pump's power/SFC to the
+      // user (actuator windows still run). Set true automatically on a manual power/SFC change,
+      // cleared by writing false (the widget's "Automatic" button). Writable, so vis can toggle it.
+      id: `${base}.schedule.manual`,
+      obj: stateObj({
+        name: "Manual override (scheduler paused)",
+        type: "boolean",
+        role: "switch",
+        read: true,
+        write: true,
+        def: false
+      })
+    },
+    {
       id: `${base}.schedule.targetPower`,
       obj: stateObj({
         name: "Scheduler target power",

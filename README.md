@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.12.6 (2026-09-25)
+
+- (ssbingo) **Manual/automatic switch in the scheduler widget.** A manual power/SFC change on a scheduled pump now puts it into a **visible "Manual" mode** (amber badge) — the scheduler **pauses** for that pump and your value **stays** (superseding 0.12.5's auto-revert, which made intentional manual control impossible). A prominent green **"▶ Automatic"** button returns control to the scheduler, which re-applies its target immediately. Backed by a new **writable** state `pumps.<n>.schedule.manual` (set automatically on a manual change, cleared by the button/a script), so the mode is scriptable and survives restarts. Actuator windows keep running in manual mode. Widget hint + handbook (9.4) updated
+
 ### 0.12.5 (2026-09-25)
 
 - (ssbingo) **Important fix: the scheduler takes control back after a manual override.** Previously, manually setting a pump's power or SFC (e.g. 100 % in the scheduler widget) while a schedule was active could **stick indefinitely** — `applyScheduleTarget` only re-sent a command when the scheduler's **own decision** changed, so an unchanged decision meant the manual value was never corrected (the reported "ran at 100 % for two days"). Now it compares against the pump's **actual** `control.speed`/`control.sfc` and re-asserts the scheduled target, and a manual change additionally triggers a **prompt re-evaluation (~2 s)** — so the automatic resumes on its own. The command echo of the scheduler's own writes is recognised (via the recorded baseline), so this cannot loop. To drive a pump manually for good, **disable its schedule**. Widget hint + handbook (9.4) clarified

@@ -32,7 +32,7 @@
     "show_controls": "Mostrar barra de controlo",
     "show_telemetry": "Mostrar telemetria",
     "sched_active": "Agendador ativo",
-    "sched_manual": "Manual / desligado",
+    "sched_manual": "Manual",
     "sched_failsafe": "Modo de segurança",
     "lbl_output": "Saída",
     "lbl_target": "Alvo",
@@ -51,10 +51,12 @@
     "lbl_sunset": "Pôr do sol",
     "lbl_water_temp": "Temp. água",
     "sfc_short": "SFC",
-    "sched_override_hint": "O agendador repõe as alterações manuais no seu valor-alvo pouco depois.",
+    "sched_override_hint": "As alterações manuais pausam o agendamento desta bomba — carregue em Automático para devolver o controlo.",
     "group_actuators": "Atuadores",
     "actuators_visibility": "Mostrar atuadores",
     "no_actuators": "Nenhum atuador configurado para esta bomba.",
     "act_color_on": "Cor do atuador (ligado)",
-    "act_color_off": "Cor do atuador (desligado)"
+    "act_color_off": "Cor do atuador (desligado)",
+    "sched_off": "Sem agendamento",
+    "to_automatic": "Automático"
 }

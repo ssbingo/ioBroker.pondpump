@@ -32,7 +32,7 @@
     "show_controls": "Steuerleiste anzeigen",
     "show_telemetry": "Telemetrie anzeigen",
     "sched_active": "Scheduler aktiv",
-    "sched_manual": "Manuell / aus",
+    "sched_manual": "Manuell",
     "sched_failsafe": "Notlauf",
     "lbl_output": "Ausgabe",
     "lbl_target": "Ziel",
@@ -51,10 +51,12 @@
     "lbl_sunset": "Sonnenuntergang",
     "lbl_water_temp": "Wassertemp.",
     "sfc_short": "SFC",
-    "sched_override_hint": "Manuelle Änderungen setzt der Scheduler kurz darauf wieder auf seinen Zielwert zurück.",
+    "sched_override_hint": "Manuelle Änderungen pausieren den Zeitplan dieser Pumpe — mit „Automatik“ gibst du die Kontrolle zurück.",
     "group_actuators": "Aktoren",
     "actuators_visibility": "Aktoren anzeigen",
     "no_actuators": "Für diese Pumpe sind keine Aktoren konfiguriert.",
     "act_color_on": "Aktorfarbe (an)",
-    "act_color_off": "Aktorfarbe (aus)"
+    "act_color_off": "Aktorfarbe (aus)",
+    "sched_off": "Kein Zeitplan",
+    "to_automatic": "Automatik"
 }

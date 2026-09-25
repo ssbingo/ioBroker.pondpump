@@ -85,6 +85,12 @@ const CSS = `
 
 /* ---- scheduler widget ---- */
 .pp-badge--idle{background:rgba(143,160,182,.16);color:#a7b4c6}
+.pp-badge--manual{background:rgba(255,202,58,.18);color:#ffca3a}
+.pp-auto-btn{width:100%;border:0;border-radius:10px;padding:9px 8px;font-size:14px;font-weight:800;cursor:pointer;
+  color:#0b1a10;background:#5ac36a;margin-bottom:8px;box-shadow:0 0 10px rgba(90,195,106,.4);
+  transition:background .15s,transform .08s ease}
+.pp-auto-btn:hover{background:#6bd07b}
+.pp-auto-btn:active{transform:scale(.98)}
 .pp-hero{display:flex;align-items:center;gap:10px;margin:6px 0 8px}
 .pp-mini-impeller{flex:0 0 auto;width:50px;height:50px;display:flex;align-items:center;justify-content:center}
 .pp-mini-impeller svg{width:100%;height:100%;display:block}

@@ -378,10 +378,12 @@ The values come from new read-only `pumps.<n>.schedule.*` states the scheduler k
 every evaluation — you can also use them in your own scripts or in history.
 
 > **Automatic vs. manual:** while a pump has an **enabled schedule/curve**, the scheduler is in charge. A
-> **manual change** of power or SFC (here or in the control widget) only lasts a **moment** — the
-> scheduler notices the mismatch and resets the pump to its target **a few seconds later** (and at the
-> latest on its next regular run). To drive a pump **manually for good**, **disable its schedule** in the
-> instance settings (the pump's "schedule enabled" switch).
+> **manual change** of power or SFC (here or in the control widget) switches the pump to **manual mode**:
+> the scheduler **pauses** for that pump, your value **stays**, and the badge shows **"Manual"**. Press the
+> green **"▶ Automatic"** button to hand control back to the scheduler at any time — it re-applies its
+> target **immediately**. For **permanent** manual control you can also disable the pump's schedule in the
+> instance settings. The mode is also available as the **writable** state `pumps.<n>.schedule.manual`
+> (true = manual), so you can toggle it from a script or widget.
 
 ### 9.5 Adjusting the appearance
 

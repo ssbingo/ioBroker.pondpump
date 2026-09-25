@@ -227,6 +227,7 @@ class Pondpump extends utils.Adapter {
       }
     });
     this.subscribeStates("pumps.*.control.*");
+    this.subscribeStates("pumps.*.schedule.manual");
     this.log.info(
       `[startup] adapter ready in "${mode}" mode \u2014 polling ${baseUrl} every ${this.pollIntervalMs / 1e3}s`
     );
@@ -400,6 +401,7 @@ class Pondpump extends utils.Adapter {
       return;
     }
     this.subscribeStates("pumps.*.control.*");
+    this.subscribeStates("pumps.*.schedule.manual");
     this.log.info("[local] local channel established \u2014 starting poll loop over the LAN");
     void this.poll();
   }
@@ -1041,7 +1043,7 @@ class Pondpump extends utils.Adapter {
    * When a pump is still ramping (Phase 12) the tick is shortened so the ramp continues promptly.
    */
   async runScheduler() {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
     if (this.stopping) {
       return;
     }
@@ -1096,29 +1098,34 @@ class Pondpump extends utils.Adapter {
       });
       this.warnFailSafe(deviceNumber, cfg, decision, rt);
       await this.warnSfcConflict(deviceNumber, cfg, decision, rt);
-      let resolvedPower;
-      const rampPph = (_h = cfg.rampPercentPerHour) != null ? _h : 0;
-      if (decision.power === "hold") {
-        resolvedPower = rt.appliedPower;
-        this.log.debug(
-          `[schedule] pump ${deviceNumber}: hold \u2014 freezing at ${fmtNum(rt.appliedPower)}% (a frost rule matched)`
-        );
-      } else if (rt.appliedPower === void 0 || !(rampPph > 0)) {
-        resolvedPower = decision.power;
+      const manual = ((_h = await this.getStateAsync(`pumps.${deviceNumber}.schedule.manual`)) == null ? void 0 : _h.val) === true;
+      if (manual) {
+        this.log.debug(`[schedule] pump ${deviceNumber}: manual override \u2014 scheduler not applying power/SFC`);
       } else {
-        const rampMinutes = Math.max(1, Math.round(60 / Math.max(rampPph, 1)));
-        const cadenceMs = rampMinutes * 6e4;
-        const dtMs = rt.appliedAt ? Math.min(nowMs - rt.appliedAt, cadenceMs) : cadenceMs;
-        const maxStep = rampPph * dtMs / 36e5;
-        resolvedPower = Math.round((0, import_schedule.rampTowards)(rt.appliedPower, decision.power, maxStep));
-        if (resolvedPower !== decision.power) {
-          nextChange = Math.min(nextChange, rampMinutes);
+        let resolvedPower;
+        const rampPph = (_i = cfg.rampPercentPerHour) != null ? _i : 0;
+        if (decision.power === "hold") {
+          resolvedPower = rt.appliedPower;
           this.log.debug(
-            `[schedule] pump ${deviceNumber}: ramping ${rt.appliedPower}% \u2192 ${decision.power}% (${rampPph}%/h, max step ${Math.round(maxStep)}%): applying ${resolvedPower}% this step`
+            `[schedule] pump ${deviceNumber}: hold \u2014 freezing at ${fmtNum(rt.appliedPower)}% (a frost rule matched)`
           );
+        } else if (rt.appliedPower === void 0 || !(rampPph > 0)) {
+          resolvedPower = decision.power;
+        } else {
+          const rampMinutes = Math.max(1, Math.round(60 / Math.max(rampPph, 1)));
+          const cadenceMs = rampMinutes * 6e4;
+          const dtMs = rt.appliedAt ? Math.min(nowMs - rt.appliedAt, cadenceMs) : cadenceMs;
+          const maxStep = rampPph * dtMs / 36e5;
+          resolvedPower = Math.round((0, import_schedule.rampTowards)(rt.appliedPower, decision.power, maxStep));
+          if (resolvedPower !== decision.power) {
+            nextChange = Math.min(nextChange, rampMinutes);
+            this.log.debug(
+              `[schedule] pump ${deviceNumber}: ramping ${rt.appliedPower}% \u2192 ${decision.power}% (${rampPph}%/h, max step ${Math.round(maxStep)}%): applying ${resolvedPower}% this step`
+            );
+          }
         }
+        await this.applyScheduleTarget(deviceNumber, decision.sfc, resolvedPower, rt, nowMs);
       }
-      await this.applyScheduleTarget(deviceNumber, decision.sfc, resolvedPower, rt, nowMs);
       await this.writeActuators(decision.actuators);
       const pumpNext = (0, import_schedule.minutesUntilNextChange)(cfg.plans || [], nowMin, astro);
       this.log.debug(
@@ -1330,20 +1337,42 @@ class Pondpump extends utils.Adapter {
     if (!state || state.ack) {
       return;
     }
+    const manualFlag = /\.pumps\.(\d+)\.schedule\.manual$/.exec(id);
+    if (manualFlag) {
+      void this.onManualFlagCommand(Number(manualFlag[1]), state.val === true);
+      return;
+    }
     this.log.debug(`[cmd] command received: ${id} = ${JSON.stringify(state.val)} (ack=false)`);
-    this.maybeReassertAfterManual(id, state.val);
+    this.noteManualControlOverride(id, state.val);
     void this.handleCommand(id, state);
   }
   /**
-   * When a `control.speed`/`control.sfc` command is written to a pump that the scheduler steers and the
-   * value differs from what the scheduler last applied, it is a manual override — trigger a prompt
-   * re-evaluation so the scheduler re-asserts its target. The scheduler's own command echoes match the
-   * recorded baseline and are ignored, so this cannot loop.
+   * Handle a write to a pump's `schedule.manual` flag (the widget's manual/automatic switch): confirm
+   * it, and when switched back to automatic (false) re-evaluate promptly so the scheduler re-applies
+   * its target.
+   *
+   * @param deviceNumber - the pump device number
+   * @param manual - the new flag value (true = manual override, false = back to automatic)
+   */
+  async onManualFlagCommand(deviceNumber, manual) {
+    await this.setState(`pumps.${deviceNumber}.schedule.manual`, { val: manual, ack: true });
+    this.log.info(
+      `[schedule] pump ${deviceNumber}: ${manual ? "manual override ON (scheduler paused)" : "back to AUTOMATIC (scheduler resumes)"}`
+    );
+    if (!manual) {
+      this.onScheduleSourceChange();
+    }
+  }
+  /**
+   * A `control.speed`/`control.sfc` command on a scheduler-steered pump whose value differs from what
+   * the scheduler last applied is a **manual override**: switch that pump to manual mode so the value
+   * persists (the scheduler leaves it alone until "Automatic"). The scheduler's own command echoes match
+   * the recorded baseline and are ignored.
    *
    * @param id - the changed state id (full or namespaced)
    * @param val - the new value
    */
-  maybeReassertAfterManual(id, val) {
+  noteManualControlOverride(id, val) {
     if (!this.scheduleStarted || this.stopping) {
       return;
     }
@@ -1364,9 +1393,9 @@ class Pondpump extends utils.Adapter {
       return;
     }
     this.log.info(
-      `[schedule] pump ${deviceNumber}: manual ${m[2]} change (${JSON.stringify(val)}) \u2014 re-asserting scheduler target shortly`
+      `[schedule] pump ${deviceNumber}: manual ${m[2]} change (${JSON.stringify(val)}) \u2192 manual override ON \u2014 press "Automatic" in the widget to resume the schedule`
     );
-    this.onScheduleSourceChange();
+    void this.setState(`pumps.${deviceNumber}.schedule.manual`, { val: true, ack: true });
   }
 }
 if (require.main !== module) {

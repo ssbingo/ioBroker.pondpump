@@ -32,7 +32,7 @@
     "show_controls": "显示控制栏",
     "show_telemetry": "显示遥测",
     "sched_active": "调度器已启用",
-    "sched_manual": "手动 / 关闭",
+    "sched_manual": "手动",
     "sched_failsafe": "故障保护",
     "lbl_output": "输出",
     "lbl_target": "目标",
@@ -51,10 +51,12 @@
     "lbl_sunset": "日落",
     "lbl_water_temp": "水温",
     "sfc_short": "SFC",
-    "sched_override_hint": "调度器会在稍后将手动更改重置为其目标值。",
+    "sched_override_hint": "手动更改会暂停该水泵的计划——按“自动”交回控制权。",
     "group_actuators": "执行器",
     "actuators_visibility": "显示执行器",
     "no_actuators": "未为此水泵配置执行器。",
     "act_color_on": "执行器颜色（开）",
-    "act_color_off": "执行器颜色（关）"
+    "act_color_off": "执行器颜色（关）",
+    "sched_off": "无计划",
+    "to_automatic": "自动"
 }

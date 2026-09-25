@@ -32,7 +32,7 @@
     "show_controls": "Bedieningsbalk tonen",
     "show_telemetry": "Telemetrie tonen",
     "sched_active": "Scheduler actief",
-    "sched_manual": "Handmatig / uit",
+    "sched_manual": "Handmatig",
     "sched_failsafe": "Noodloop",
     "lbl_output": "Uitgang",
     "lbl_target": "Doel",
@@ -51,10 +51,12 @@
     "lbl_sunset": "Zonsondergang",
     "lbl_water_temp": "Watertemp.",
     "sfc_short": "SFC",
-    "sched_override_hint": "De scheduler zet handmatige wijzigingen kort daarna terug naar zijn doelwaarde.",
+    "sched_override_hint": "Handmatige wijzigingen pauzeren het schema voor deze pomp — druk op Automatisch om de controle terug te geven.",
     "group_actuators": "Actuatoren",
     "actuators_visibility": "Actuatoren tonen",
     "no_actuators": "Geen actuatoren geconfigureerd voor deze pomp.",
     "act_color_on": "Actuatorkleur (aan)",
-    "act_color_off": "Actuatorkleur (uit)"
+    "act_color_off": "Actuatorkleur (uit)",
+    "sched_off": "Geen schema",
+    "to_automatic": "Automatisch"
 }

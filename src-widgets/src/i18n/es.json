@@ -32,7 +32,7 @@
     "show_controls": "Mostrar barra de control",
     "show_telemetry": "Mostrar telemetría",
     "sched_active": "Programador activo",
-    "sched_manual": "Manual / apagado",
+    "sched_manual": "Manual",
     "sched_failsafe": "Modo seguro",
     "lbl_output": "Salida",
     "lbl_target": "Objetivo",
@@ -51,10 +51,12 @@
     "lbl_sunset": "Atardecer",
     "lbl_water_temp": "Temp. agua",
     "sfc_short": "SFC",
-    "sched_override_hint": "El programador restablece poco después los cambios manuales a su valor objetivo.",
+    "sched_override_hint": "Los cambios manuales pausan la programación de esta bomba — pulsa Automático para devolver el control.",
     "group_actuators": "Actuadores",
     "actuators_visibility": "Mostrar actuadores",
     "no_actuators": "No hay actuadores configurados para esta bomba.",
     "act_color_on": "Color del actuador (encendido)",
-    "act_color_off": "Color del actuador (apagado)"
+    "act_color_off": "Color del actuador (apagado)",
+    "sched_off": "Sin programación",
+    "to_automatic": "Automático"
 }

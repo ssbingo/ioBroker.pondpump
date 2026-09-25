@@ -32,7 +32,7 @@
     "show_controls": "Afficher la barre de commande",
     "show_telemetry": "Afficher la télémétrie",
     "sched_active": "Planificateur actif",
-    "sched_manual": "Manuel / arrêt",
+    "sched_manual": "Manuel",
     "sched_failsafe": "Mode secours",
     "lbl_output": "Sortie",
     "lbl_target": "Cible",
@@ -51,10 +51,12 @@
     "lbl_sunset": "Coucher du soleil",
     "lbl_water_temp": "Temp. eau",
     "sfc_short": "SFC",
-    "sched_override_hint": "Le planificateur remet peu après les changements manuels à sa valeur cible.",
+    "sched_override_hint": "Les changements manuels suspendent le planning de cette pompe — appuyez sur Automatique pour rendre le contrôle.",
     "group_actuators": "Actionneurs",
     "actuators_visibility": "Afficher les actionneurs",
     "no_actuators": "Aucun actionneur configuré pour cette pompe.",
     "act_color_on": "Couleur actionneur (marche)",
-    "act_color_off": "Couleur actionneur (arrêt)"
+    "act_color_off": "Couleur actionneur (arrêt)",
+    "sched_off": "Aucun planning",
+    "to_automatic": "Automatique"
 }

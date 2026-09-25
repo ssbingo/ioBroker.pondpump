@@ -391,10 +391,12 @@ jeder Auswertung pflegt — sie lassen sich auch in eigenen Skripten oder der Hi
 
 > **Automatik vs. manuell:** Solange für eine Pumpe ein **Zeitplan/Kurve aktiviert** ist, hat der
 > Scheduler die Hoheit. Eine **manuelle Änderung** der Leistung oder von SFC (in diesem oder im
-> Steuer-Widget) wirkt nur **kurz** — der Scheduler erkennt die Abweichung und setzt die Pumpe **wenige
-> Sekunden später** wieder auf seinen Zielwert (und spätestens beim nächsten regulären Durchlauf).
-> Möchtest du eine Pumpe **dauerhaft von Hand** steuern, **deaktiviere ihren Zeitplan** in den
-> Instanz-Einstellungen (Schalter „Zeitplan aktiv" der Pumpe).
+> Steuer-Widget) schaltet die Pumpe in den **Manuell-Modus**: Der Scheduler **pausiert** für diese Pumpe,
+> dein Wert **bleibt stehen**, und oben erscheint das Abzeichen **„Manuell"**. Mit dem grünen Button
+> **„▶ Automatik"** gibst du die Kontrolle jederzeit wieder an den Scheduler zurück — er wendet dann
+> **sofort** seinen Zielwert an. Für **dauerhaft** manuelle Steuerung kannst du alternativ den Zeitplan
+> der Pumpe in den Instanz-Einstellungen deaktivieren. Der Modus liegt auch im **beschreibbaren** State
+> `pumps.<Nr>.schedule.manual` (true = manuell), sodass du ihn per Skript/Widget schalten kannst.
 
 ### 9.5 Aussehen anpassen
 

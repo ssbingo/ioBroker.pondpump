@@ -32,7 +32,7 @@
     "show_controls": "Pokaż pasek sterowania",
     "show_telemetry": "Pokaż telemetrię",
     "sched_active": "Harmonogram aktywny",
-    "sched_manual": "Ręcznie / wył.",
+    "sched_manual": "Ręcznie",
     "sched_failsafe": "Tryb awaryjny",
     "lbl_output": "Wyjście",
     "lbl_target": "Cel",
@@ -51,10 +51,12 @@
     "lbl_sunset": "Zachód słońca",
     "lbl_water_temp": "Temp. wody",
     "sfc_short": "SFC",
-    "sched_override_hint": "Harmonogram wkrótce przywraca ręczne zmiany do swojej wartości docelowej.",
+    "sched_override_hint": "Ręczne zmiany wstrzymują harmonogram tej pompy — naciśnij Automatyka, aby oddać sterowanie.",
     "group_actuators": "Siłowniki",
     "actuators_visibility": "Pokaż siłowniki",
     "no_actuators": "Brak skonfigurowanych siłowników dla tej pompy.",
     "act_color_on": "Kolor siłownika (wł.)",
-    "act_color_off": "Kolor siłownika (wył.)"
+    "act_color_off": "Kolor siłownika (wył.)",
+    "sched_off": "Brak harmonogramu",
+    "to_automatic": "Automatyka"
 }

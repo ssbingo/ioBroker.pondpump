@@ -32,7 +32,7 @@
     "show_controls": "Mostra barra di controllo",
     "show_telemetry": "Mostra telemetria",
     "sched_active": "Scheduler attivo",
-    "sched_manual": "Manuale / spento",
+    "sched_manual": "Manuale",
     "sched_failsafe": "Modalità di emergenza",
     "lbl_output": "Uscita",
     "lbl_target": "Obiettivo",
@@ -51,10 +51,12 @@
     "lbl_sunset": "Tramonto",
     "lbl_water_temp": "Temp. acqua",
     "sfc_short": "SFC",
-    "sched_override_hint": "Lo scheduler riporta poco dopo le modifiche manuali al suo valore obiettivo.",
+    "sched_override_hint": "Le modifiche manuali mettono in pausa la pianificazione di questa pompa — premi Automatico per restituire il controllo.",
     "group_actuators": "Attuatori",
     "actuators_visibility": "Mostra attuatori",
     "no_actuators": "Nessun attuatore configurato per questa pompa.",
     "act_color_on": "Colore attuatore (acceso)",
-    "act_color_off": "Colore attuatore (spento)"
+    "act_color_off": "Colore attuatore (spento)",
+    "sched_off": "Nessuna pianificazione",
+    "to_automatic": "Automatico"
 }

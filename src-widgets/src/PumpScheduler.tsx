@@ -28,6 +28,7 @@ const REL_IDS = [
     "schedule.window",
     "schedule.nextChangeTs",
     "schedule.actuators",
+    "schedule.manual",
     "control.on",
     "control.speed",
     "control.sfc",
@@ -355,6 +356,7 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
 
         const controlled = this.bool("schedule.controlled");
         const failSafe = this.bool("schedule.failSafe");
+        const manual = this.bool("schedule.manual");
         const on = this.bool("control.on") || (this.num("telemetry.speed") ?? 0) > 0;
         const sfcShown = this.displayedSfc();
         const sfcBusy = this.state.sfcPending !== null;
@@ -362,8 +364,21 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
         const actual = Math.round(on ? this.actualSpeedPct() : 0);
         const target = this.num("schedule.targetPower");
 
-        const badgeClass = failSafe ? "pp-badge--off" : controlled ? "pp-badge--on" : "pp-badge--idle";
-        const badgeText = failSafe ? t("sched_failsafe") : controlled ? t("sched_active") : t("sched_manual");
+        // Badge: fail-safe → no schedule → manual override → scheduler active.
+        const badgeClass = failSafe
+            ? "pp-badge--off"
+            : !controlled
+              ? "pp-badge--idle"
+              : manual
+                ? "pp-badge--manual"
+                : "pp-badge--on";
+        const badgeText = failSafe
+            ? t("sched_failsafe")
+            : !controlled
+              ? t("sched_off")
+              : manual
+                ? t("sched_manual")
+                : t("sched_active");
 
         const waterTemp = this.num("telemetry.waterTemperature");
         const hasTemp = waterTemp !== null && Number.isFinite(waterTemp);
@@ -462,6 +477,15 @@ export default class PumpScheduler extends PumpWidgetBase<PumpSchedulerRxData, P
                 {showControls ? (
                     <>
                         <div className="pp-div" />
+                        {controlled && manual ? (
+                            <button
+                                type="button"
+                                className="pp-auto-btn"
+                                onClick={() => this.write("schedule.manual", false)}
+                            >
+                                ▶ {t("to_automatic")}
+                            </button>
+                        ) : null}
                         <div className="pp-onoff">
                             <button
                                 type="button"
