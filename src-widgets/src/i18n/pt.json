@@ -51,7 +51,7 @@
     "lbl_sunset": "Pôr do sol",
     "lbl_water_temp": "Temp. água",
     "sfc_short": "SFC",
-    "sched_override_hint": "O agendador pode reaplicar o seu alvo na próxima execução.",
+    "sched_override_hint": "O agendador repõe as alterações manuais no seu valor-alvo pouco depois.",
     "group_actuators": "Atuadores",
     "actuators_visibility": "Mostrar atuadores",
     "no_actuators": "Nenhum atuador configurado para esta bomba.",

@@ -109,8 +109,10 @@ interface PumpScheduleRuntime {
     smoothedAt?: number;
     /** The temperature the curve was last mapped at (the hysteresis anchor). */
     mappedTemp?: number;
-    /** The last power % actually applied (for "hold" and ramp start). */
+    /** The last power % actually applied (for "hold", ramp start, and the manual-override guard). */
     appliedPower?: number;
+    /** The last SFC state the scheduler applied (for the manual-override guard). */
+    appliedSfc?: boolean;
     /** Wall-clock (ms) of the last applied tick, for the ramp time step. */
     appliedAt?: number;
     /** Whether we last warned about a native-SFC conflict, to avoid log spam. */
@@ -269,8 +271,6 @@ class Pondpump extends utils.Adapter {
     private scheduleTimer?: ioBroker.Timeout;
     /** Whether the scheduler has been started (after the first successful poll). */
     private scheduleStarted = false;
-    /** Last target the scheduler applied per pump device number, to only send commands on change. */
-    private readonly lastScheduleTarget = new Map<number, string>();
     /** State ids the schedules read for their temperature/weather conditions (Phase 11); subscribed. */
     private readonly scheduleSourceOids = new Set<string>();
     /** Debounce timer coalescing bursts of source-state changes before re-evaluating. */
@@ -1561,9 +1561,12 @@ class Pondpump extends utils.Adapter {
     }
 
     /**
-     * Apply a scheduled decision to a pump, but only when it differs from the last applied target, by
-     * writing the control states as commands (ack:false) so the normal command path sends them. When
-     * the pump's power is written, the applied value/time are recorded for "hold" and ramping.
+     * Apply a scheduled decision to a pump by writing the control states as commands (ack:false) — but
+     * only the parts that differ from the pump's **actual current state**, not just from our own last
+     * decision. This is what lets the scheduler **take control back after a manual override**: if someone
+     * sets e.g. 100 % in a widget, the actual speed no longer matches the scheduled target, so the next
+     * evaluation re-asserts it instead of the override sticking forever. When the power is (re)written the
+     * applied value/time are recorded for "hold" and ramping.
      *
      * @param deviceNumber - the pump device number
      * @param sfc - the desired SFC state
@@ -1578,23 +1581,35 @@ class Pondpump extends utils.Adapter {
         rt: PumpScheduleRuntime,
         nowMs: number,
     ): Promise<void> {
-        const key = sfc ? "sfc=true" : `sfc=false;power=${power ?? "hold"}`;
-        if (this.lastScheduleTarget.get(deviceNumber) === key) {
-            this.log.debug(`[schedule] pump ${deviceNumber}: target unchanged (${key}) — nothing sent`);
-            return;
+        const base = `pumps.${deviceNumber}.control`;
+        const sfcState = await this.getStateAsync(`${base}.sfc`);
+        const actualSfc = sfcState?.val === true;
+        const speedState = await this.getStateAsync(`${base}.speed`);
+        const actualSpeed = typeof speedState?.val === "number" ? speedState.val : undefined;
+
+        // Record the scheduler's intended baseline BEFORE writing, so the onStateChange re-assert trigger
+        // recognises our own command echo and does not mistake it for a manual override.
+        rt.appliedSfc = sfc;
+        if (!sfc && power !== undefined) {
+            rt.appliedPower = power;
+            rt.appliedAt = nowMs;
         }
-        this.lastScheduleTarget.set(deviceNumber, key);
-        this.log.info(`[schedule] pump ${deviceNumber}: applying ${key}`);
-        if (sfc) {
-            // SFC on overrides the flow; leave the power setpoint untouched.
-            await this.setState(`pumps.${deviceNumber}.control.sfc`, { val: true, ack: false });
+
+        const changes: string[] = [];
+        if (actualSfc !== sfc) {
+            await this.setState(`${base}.sfc`, { val: sfc, ack: false });
+            changes.push(`SFC ${actualSfc} → ${sfc}`);
+        }
+        if (!sfc && power !== undefined && actualSpeed !== power) {
+            // A mismatch we did not cause is a manual override being corrected.
+            await this.setState(`${base}.speed`, { val: power, ack: false });
+            changes.push(`power ${actualSpeed ?? "?"} % → ${power} %`);
+        }
+
+        if (changes.length) {
+            this.log.info(`[schedule] pump ${deviceNumber}: applying scheduler target (${changes.join(", ")})`);
         } else {
-            await this.setState(`pumps.${deviceNumber}.control.sfc`, { val: false, ack: false });
-            if (power !== undefined) {
-                await this.setState(`pumps.${deviceNumber}.control.speed`, { val: power, ack: false });
-                rt.appliedPower = power;
-                rt.appliedAt = nowMs;
-            }
+            this.log.debug(`[schedule] pump ${deviceNumber}: already at scheduler target — nothing sent`);
         }
     }
 
@@ -1651,7 +1666,46 @@ class Pondpump extends utils.Adapter {
             return;
         }
         this.log.debug(`[cmd] command received: ${id} = ${JSON.stringify(state.val)} (ack=false)`);
+        // A manual power/SFC command on a scheduled pump → re-evaluate soon so the scheduler takes control
+        // back (instead of the manual value sticking until the next window/temperature change).
+        this.maybeReassertAfterManual(id, state.val);
         void this.handleCommand(id, state);
+    }
+
+    /**
+     * When a `control.speed`/`control.sfc` command is written to a pump that the scheduler steers and the
+     * value differs from what the scheduler last applied, it is a manual override — trigger a prompt
+     * re-evaluation so the scheduler re-asserts its target. The scheduler's own command echoes match the
+     * recorded baseline and are ignored, so this cannot loop.
+     *
+     * @param id - the changed state id (full or namespaced)
+     * @param val - the new value
+     */
+    private maybeReassertAfterManual(id: string, val: ioBroker.StateValue): void {
+        if (!this.scheduleStarted || this.stopping) {
+            return;
+        }
+        const m = /\.pumps\.(\d+)\.control\.(speed|sfc)$/.exec(id);
+        if (!m) {
+            return;
+        }
+        const deviceNumber = Number(m[1]);
+        const cfg = this.schedules[String(deviceNumber)];
+        if (!cfg?.enabled || !validatePlans(cfg.plans || []).valid || !this.pumpControl.has(deviceNumber)) {
+            return; // scheduler is not steering this pump — a manual change is fine
+        }
+        const rt = this.scheduleRuntime.get(deviceNumber);
+        // Ignore our own just-applied value (recorded before the write) to avoid needless churn.
+        if (m[2] === "speed" && rt && typeof val === "number" && val === rt.appliedPower) {
+            return;
+        }
+        if (m[2] === "sfc" && rt && val === rt.appliedSfc) {
+            return;
+        }
+        this.log.info(
+            `[schedule] pump ${deviceNumber}: manual ${m[2]} change (${JSON.stringify(val)}) — re-asserting scheduler target shortly`,
+        );
+        this.onScheduleSourceChange(); // debounced runScheduler (~2 s)
     }
 }
 

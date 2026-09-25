@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.12.5 (2026-09-25)
+
+- (ssbingo) **Important fix: the scheduler takes control back after a manual override.** Previously, manually setting a pump's power or SFC (e.g. 100 % in the scheduler widget) while a schedule was active could **stick indefinitely** — `applyScheduleTarget` only re-sent a command when the scheduler's **own decision** changed, so an unchanged decision meant the manual value was never corrected (the reported "ran at 100 % for two days"). Now it compares against the pump's **actual** `control.speed`/`control.sfc` and re-asserts the scheduled target, and a manual change additionally triggers a **prompt re-evaluation (~2 s)** — so the automatic resumes on its own. The command echo of the scheduler's own writes is recognised (via the recorded baseline), so this cannot loop. To drive a pump manually for good, **disable its schedule**. Widget hint + handbook (9.4) clarified
+
 ### 0.12.4 (2026-09-11)
 
 - (ssbingo) **Actuator value fields are now a dropdown (bugfix).** The **on-value** and **off-value** of an actuator schedule window — and the value of the **"Set actuator"** weather rule — are no longer a free-text field. That field re-parsed on every keystroke and fell back to `true` for any partial input, so **typing `false` snapped back to `true`**. They are now a clear **dropdown**: `true` / `false` / `number` (with an inline number field), and the off-value additionally offers **"leave untouched"**. The handbook (10.2) now also clarifies that the `on` field in the `schedule.actuators` status datapoint is the **live window status**, not the on/off value

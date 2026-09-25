@@ -384,12 +384,17 @@ gerade mit der Pumpe macht — und **warum**:
   (Bereich **„Aktoren"**) lässt sich **jeder Aktor einzeln** ein- oder ausblenden, und die **Farbe des
   Flügelrads** für „an" und „aus" ist frei wählbar (Voreinstellung wie bisher).
 - **Wassertemperatur** (farbig), **Leistung** (W) und **Drehzahl** (rpm).
-- Eine **Steuerleiste** mit den Grundfunktionen (An/Aus, Leistungs-Schnellwahl, SFC). Ein Hinweis
-  erinnert daran, dass der Scheduler manuelle Eingriffe beim nächsten Durchlauf wieder überschreiben
-  kann.
+- Eine **Steuerleiste** mit den Grundfunktionen (An/Aus, Leistungs-Schnellwahl, SFC).
 
 Die Werte kommen aus neuen, schreibgeschützten States `pumps.<Nr>.schedule.*`, die der Scheduler bei
 jeder Auswertung pflegt — sie lassen sich auch in eigenen Skripten oder der History nutzen.
+
+> **Automatik vs. manuell:** Solange für eine Pumpe ein **Zeitplan/Kurve aktiviert** ist, hat der
+> Scheduler die Hoheit. Eine **manuelle Änderung** der Leistung oder von SFC (in diesem oder im
+> Steuer-Widget) wirkt nur **kurz** — der Scheduler erkennt die Abweichung und setzt die Pumpe **wenige
+> Sekunden später** wieder auf seinen Zielwert (und spätestens beim nächsten regulären Durchlauf).
+> Möchtest du eine Pumpe **dauerhaft von Hand** steuern, **deaktiviere ihren Zeitplan** in den
+> Instanz-Einstellungen (Schalter „Zeitplan aktiv" der Pumpe).
 
 ### 9.5 Aussehen anpassen
 

@@ -128,8 +128,6 @@ class Pondpump extends utils.Adapter {
   scheduleTimer;
   /** Whether the scheduler has been started (after the first successful poll). */
   scheduleStarted = false;
-  /** Last target the scheduler applied per pump device number, to only send commands on change. */
-  lastScheduleTarget = /* @__PURE__ */ new Map();
   /** State ids the schedules read for their temperature/weather conditions (Phase 11); subscribed. */
   scheduleSourceOids = /* @__PURE__ */ new Set();
   /** Debounce timer coalescing bursts of source-state changes before re-evaluating. */
@@ -1243,9 +1241,12 @@ class Pondpump extends utils.Adapter {
     }
   }
   /**
-   * Apply a scheduled decision to a pump, but only when it differs from the last applied target, by
-   * writing the control states as commands (ack:false) so the normal command path sends them. When
-   * the pump's power is written, the applied value/time are recorded for "hold" and ramping.
+   * Apply a scheduled decision to a pump by writing the control states as commands (ack:false) — but
+   * only the parts that differ from the pump's **actual current state**, not just from our own last
+   * decision. This is what lets the scheduler **take control back after a manual override**: if someone
+   * sets e.g. 100 % in a widget, the actual speed no longer matches the scheduled target, so the next
+   * evaluation re-asserts it instead of the override sticking forever. When the power is (re)written the
+   * applied value/time are recorded for "hold" and ramping.
    *
    * @param deviceNumber - the pump device number
    * @param sfc - the desired SFC state
@@ -1254,22 +1255,29 @@ class Pondpump extends utils.Adapter {
    * @param nowMs - current wall-clock time (ms)
    */
   async applyScheduleTarget(deviceNumber, sfc, power, rt, nowMs) {
-    const key = sfc ? "sfc=true" : `sfc=false;power=${power != null ? power : "hold"}`;
-    if (this.lastScheduleTarget.get(deviceNumber) === key) {
-      this.log.debug(`[schedule] pump ${deviceNumber}: target unchanged (${key}) \u2014 nothing sent`);
-      return;
+    const base = `pumps.${deviceNumber}.control`;
+    const sfcState = await this.getStateAsync(`${base}.sfc`);
+    const actualSfc = (sfcState == null ? void 0 : sfcState.val) === true;
+    const speedState = await this.getStateAsync(`${base}.speed`);
+    const actualSpeed = typeof (speedState == null ? void 0 : speedState.val) === "number" ? speedState.val : void 0;
+    rt.appliedSfc = sfc;
+    if (!sfc && power !== void 0) {
+      rt.appliedPower = power;
+      rt.appliedAt = nowMs;
     }
-    this.lastScheduleTarget.set(deviceNumber, key);
-    this.log.info(`[schedule] pump ${deviceNumber}: applying ${key}`);
-    if (sfc) {
-      await this.setState(`pumps.${deviceNumber}.control.sfc`, { val: true, ack: false });
+    const changes = [];
+    if (actualSfc !== sfc) {
+      await this.setState(`${base}.sfc`, { val: sfc, ack: false });
+      changes.push(`SFC ${actualSfc} \u2192 ${sfc}`);
+    }
+    if (!sfc && power !== void 0 && actualSpeed !== power) {
+      await this.setState(`${base}.speed`, { val: power, ack: false });
+      changes.push(`power ${actualSpeed != null ? actualSpeed : "?"} % \u2192 ${power} %`);
+    }
+    if (changes.length) {
+      this.log.info(`[schedule] pump ${deviceNumber}: applying scheduler target (${changes.join(", ")})`);
     } else {
-      await this.setState(`pumps.${deviceNumber}.control.sfc`, { val: false, ack: false });
-      if (power !== void 0) {
-        await this.setState(`pumps.${deviceNumber}.control.speed`, { val: power, ack: false });
-        rt.appliedPower = power;
-        rt.appliedAt = nowMs;
-      }
+      this.log.debug(`[schedule] pump ${deviceNumber}: already at scheduler target \u2014 nothing sent`);
     }
   }
   /**
@@ -1323,7 +1331,42 @@ class Pondpump extends utils.Adapter {
       return;
     }
     this.log.debug(`[cmd] command received: ${id} = ${JSON.stringify(state.val)} (ack=false)`);
+    this.maybeReassertAfterManual(id, state.val);
     void this.handleCommand(id, state);
+  }
+  /**
+   * When a `control.speed`/`control.sfc` command is written to a pump that the scheduler steers and the
+   * value differs from what the scheduler last applied, it is a manual override — trigger a prompt
+   * re-evaluation so the scheduler re-asserts its target. The scheduler's own command echoes match the
+   * recorded baseline and are ignored, so this cannot loop.
+   *
+   * @param id - the changed state id (full or namespaced)
+   * @param val - the new value
+   */
+  maybeReassertAfterManual(id, val) {
+    if (!this.scheduleStarted || this.stopping) {
+      return;
+    }
+    const m = /\.pumps\.(\d+)\.control\.(speed|sfc)$/.exec(id);
+    if (!m) {
+      return;
+    }
+    const deviceNumber = Number(m[1]);
+    const cfg = this.schedules[String(deviceNumber)];
+    if (!(cfg == null ? void 0 : cfg.enabled) || !(0, import_schedule.validatePlans)(cfg.plans || []).valid || !this.pumpControl.has(deviceNumber)) {
+      return;
+    }
+    const rt = this.scheduleRuntime.get(deviceNumber);
+    if (m[2] === "speed" && rt && typeof val === "number" && val === rt.appliedPower) {
+      return;
+    }
+    if (m[2] === "sfc" && rt && val === rt.appliedSfc) {
+      return;
+    }
+    this.log.info(
+      `[schedule] pump ${deviceNumber}: manual ${m[2]} change (${JSON.stringify(val)}) \u2014 re-asserting scheduler target shortly`
+    );
+    this.onScheduleSourceChange();
   }
 }
 if (require.main !== module) {

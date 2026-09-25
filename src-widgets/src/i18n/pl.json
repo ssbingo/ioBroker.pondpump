@@ -51,7 +51,7 @@
     "lbl_sunset": "Zachód słońca",
     "lbl_water_temp": "Temp. wody",
     "sfc_short": "SFC",
-    "sched_override_hint": "Harmonogram może ponownie zastosować swój cel przy następnym przebiegu.",
+    "sched_override_hint": "Harmonogram wkrótce przywraca ręczne zmiany do swojej wartości docelowej.",
     "group_actuators": "Siłowniki",
     "actuators_visibility": "Pokaż siłowniki",
     "no_actuators": "Brak skonfigurowanych siłowników dla tej pompy.",
