@@ -25,9 +25,9 @@ import translations from "./translations";
  */
 function tr(key: string): string {
     const lang = (typeof window !== "undefined" && (window as { systemLang?: string }).systemLang) || "en";
-    const dict = (translations as Record<string, Record<string, string>>)[lang];
-    const en = (translations as Record<string, Record<string, string>>).en;
-    return dict?.[key] || en?.[key] || key;
+    // `translations` also carries a `prefix: boolean` flag, so go through `unknown` for the lookup cast.
+    const langs = translations as unknown as Record<string, Record<string, string> | undefined>;
+    return langs[lang]?.[key] || langs.en?.[key] || key;
 }
 
 export const ADAPTER = "pondpump";

@@ -1,18 +1,17 @@
 {
     "name": "iobroker.pondpump-widgets",
     "private": true,
-    "version": "0.12.6",
+    "version": "0.12.7",
     "type": "module",
     "dependencies": {
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.1",
-        "@iobroker/adapter-react-v5": "^8.3.3",
         "@iobroker/types-vis-2": "^2.15.4",
-        "@mui/material": "^6.5.0",
-        "@module-federation/vite": "^1.21.2",
+        "@mui/material": "^9.4.0",
+        "@module-federation/vite": "^1.23.0",
         "@vitejs/plugin-react": "^5.2.0",
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
         "typescript": "^5.9.3",
         "vite": "7.3.6",
         "vite-plugin-commonjs": "^0.10.4",
@@ -36,5 +35,9 @@
         "not dead",
         "not ie <= 11",
         "not op_mini all"
-    ]
+    ],
+    "devDependencies": {
+        "@types/react": "^19.2.18",
+        "@types/react-dom": "^19.2.5"
+    }
 }
