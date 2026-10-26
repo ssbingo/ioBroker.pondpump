@@ -77,6 +77,10 @@ All settings are available in the Admin UI (JSON config):
     ### **WORK IN PROGRESS**
 -->
 
+### 0.12.8 (2026-10-26)
+
+- (ssbingo) **Fix: ship the widget set's module-federation manifest.** vis-2 **≥ 2.20** loads a widget set through its **`mf-manifest.json`** (module-federation manifest) rather than the bare `customWidgets.js`. The widget build task copied `customWidgets.js`, `assets`, `img` and `icon-set.json` into `widgets/pondpump/` but **not** `mf-manifest.json` / `mf-stats.json` (the admin build already copied its manifest) — so vis-2 2.20.5 got a **404 on `/vis-2/widgets/pondpump/mf-manifest.json`** and skipped the set. The task now copies both manifests; after updating and an adapter upload the widgets load again
+
 ### 0.12.7 (2026-10-12)
 
 - (ssbingo) **vis-2 React 19 / MUI 9 compatibility for the widget set.** `src-widgets` was still built against **React 18.3 / MUI 6** and declared the deprecated `@iobroker/adapter-react-v5` — exactly the kind of set the upcoming React-19/MUI-9 vis-2 **skips** (its bundled JSX runtime references React-18 internals). The widgets are now built against **React 19 + MUI 9**, the stale `adapter-react-v5` (it was not actually imported) is removed, and `@types/react`/`@types/react-dom` 19 were added; the set type-checks and builds cleanly. The admin was already modern

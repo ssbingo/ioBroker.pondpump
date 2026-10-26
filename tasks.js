@@ -22,6 +22,11 @@ function buildWidgets() {
         .then(() => buildReact(src, { rootDir: __dirname, vite: true }))
         .then(() => {
             copyFiles([`${SRC}build/customWidgets.js`], `widgets/${adapterName}`);
+            // Serve the module-federation manifest next to the entry: vis-2 >= 2.20 loads a widget set
+            // through mf-manifest.json (module-federation manifest) instead of the bare customWidgets.js.
+            // Without it the set 404s on /vis-2/widgets/<set>/mf-manifest.json and is skipped.
+            copyFiles([`${SRC}build/mf-manifest.json`], `widgets/${adapterName}`);
+            copyFiles([`${SRC}build/mf-stats.json`], `widgets/${adapterName}`);
             copyFiles([`${SRC}build/icon-set.json`], `widgets/${adapterName}`);
             copyFiles([`${SRC}build/assets/*.*`], `widgets/${adapterName}/assets`);
             copyFiles([`${SRC}build/img/*`], `widgets/${adapterName}/img`);
