@@ -57,7 +57,7 @@ export interface PumpSchedule {
     onValue?: number | boolean;
     /** Value written to `target` while the window is inactive (omit to leave it untouched outside). */
     offValue?: number | boolean;
-    /** Phase 15 — display name for an "actuator" window (e.g. "Wasserfall"); blank → "Aktor N". */
+    /** Phase 15 — display name for an "actuator" window (e.g. "Wasserfall"); blank → "Actuator N". */
     actuatorName?: string;
     /** Phase 15 — display icon (emoji) for an "actuator" window, shown in the scheduler widget. */
     actuatorIcon?: string;
@@ -441,7 +441,7 @@ function actuatorWrites(plans: PumpSchedule[], nowMin: number, astro: AstroTimes
 
 /** Display descriptor for one "actuator" window (Phase 15), for the scheduler widget. */
 export interface ActuatorStatus {
-    /** Display name; falls back to "Aktor N" when the plan has none. */
+    /** Display name; falls back to "Actuator N" when the plan has none. */
     name: string;
     /** Display icon (emoji), or "" when unset. */
     icon: string;
@@ -472,7 +472,7 @@ export function describeActuators(
         }
         n += 1;
         out.push({
-            name: (plan.actuatorName ?? "").trim() || `Aktor ${n}`,
+            name: (plan.actuatorName ?? "").trim() || `Actuator ${n}`,
             icon: plan.actuatorIcon ?? "",
             target: plan.target ?? "",
             on: planActive(plan, nowMin, astro),

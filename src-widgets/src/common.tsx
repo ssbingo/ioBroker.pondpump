@@ -293,7 +293,7 @@ async function readPumpActuators(socket: SocketLike, instance: string, pumpId: s
             }
             n += 1;
             const target = typeof p.target === "string" ? p.target : "";
-            const name = (typeof p.actuatorName === "string" ? p.actuatorName : "").trim() || `Aktor ${n}`;
+            const name = (typeof p.actuatorName === "string" ? p.actuatorName : "").trim() || `Actuator ${n}`;
             const icon = typeof p.actuatorIcon === "string" && p.actuatorIcon ? p.actuatorIcon : "⚙️";
             out.push({ key: actuatorKey(target, n), name, icon });
         }

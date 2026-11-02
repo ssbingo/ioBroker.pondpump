@@ -500,7 +500,7 @@ describe("schedule conditions (Phase 11)", () => {
             const list = describeActuators(plans, at(12));
             expect(list.length).to.equal(2); // only actuator windows
             expect(list[0]).to.deep.equal({ name: "Wasserfall", icon: "🌊", target: AER, on: true }); // active at 12:00
-            expect(list[1].name).to.equal("Aktor 2"); // no name → "Aktor <ordinal>"
+            expect(list[1].name).to.equal("Actuator 2"); // no name → "Actuator <ordinal>"
             expect(list[1].on).to.equal(false); // 12:00 outside 20:00–22:00
         });
     });
