@@ -10,7 +10,7 @@
         "@iobroker/json-config": "^9.1.2",
         "@module-federation/vite": "^1.23.7",
         "@mui/icons-material": "^9.4.0",
-        "@mui/material": "^9.4.0",
+        "@mui/material": "^9.5.0",
         "@types/react": "^19.2.18",
         "@types/react-dom": "^19.2.5",
         "@vitejs/plugin-react": "^5.2.0",
